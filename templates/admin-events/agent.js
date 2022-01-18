@@ -2,33 +2,59 @@ const {
   Finding, FindingSeverity, FindingType, ethers,
 } = require('forta-agent');
 
-const { getAbi, extractEventArgs } = require('./common');
+function getAbi(abiName) {
+  // eslint-disable-next-line global-require,import/no-dynamic-require
+  const { abi } = require(`./abi/${abiName}`);
+  return abi;
+}
+
+// helper function that identifies key strings in the args array obtained from log parsing
+// these key-value pairs will be added to the metadata as event args
+// all values are converted to strings so that BigNumbers are readable
+function extractEventArgs(args) {
+  const eventArgs = {};
+  Object.keys(args).forEach((key) => {
+    if (Number.isNaN(Number(key))) {
+      eventArgs[key] = args[key].toString();
+    }
+  });
+  return eventArgs;
+}
 
 // load any agent configuration parameters
-const config = require('../agent-config.json');
+const config = require('./agent-config.json');
 
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
 
 // get the Array of events for a given contract
-function getEvents(currContract, adminEvents, contracts) {
-  let events = adminEvents[currContract.name];
+function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
+  const proxyName = contractEventConfig.proxy;
+  let { events } = contractEventConfig;
+
   const eventSignatures = [];
+  let eventNames = [];
   if (events === undefined) {
-    return {}; // no events for this contract
+    if (proxyName === undefined) {
+      return {}; // no events for this contract
+    }
+  } else {
+    eventNames = Object.keys(events);
   }
 
-  const eventNames = Object.keys(events);
-  if (events.Proxy) {
+  if (proxyName) {
     // contract is a proxy, look up the events (if any) for the contract the proxy is pointing to
-    const proxyName = events.Proxy;
-    const proxyEvents = Object.keys(adminEvents[proxyName]);
+    const proxyEvents = adminEvents[proxyName].events;
     if (proxyEvents) {
-      events = { ...events, ...adminEvents[proxyName] };
+      if (events === undefined) {
+        events = { ...proxyEvents };
+      } else {
+        events = { ...events, ...proxyEvents };
+      }
 
       // find the abi for the contract the proxy is pointing to and get the event signatures
       const [proxiedContract] = contracts.filter((contract) => proxyName === contract.name);
-      proxyEvents.forEach((eventName) => {
+      Object.keys(proxyEvents).forEach((eventName) => {
         eventSignatures.push(
           proxiedContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
         );
@@ -37,11 +63,9 @@ function getEvents(currContract, adminEvents, contracts) {
   }
 
   eventNames.forEach((eventName) => {
-    if (eventName !== 'Proxy') {
-      eventSignatures.push(
-        currContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
-      );
-    }
+    eventSignatures.push(
+      currentContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
+    );
   });
 
   return { events, eventSignatures };
@@ -58,6 +82,7 @@ function createAlert(
   everestId,
   protocolName,
   protocolAbbreviation,
+  developerAbbreviation,
 ) {
   const eventArgs = extractEventArgs(args);
   return Finding.fromObject({
@@ -85,6 +110,7 @@ function provideInitialize(data) {
     data.everestId = config.everestId;
     data.protocolName = config.protocolName;
     data.protocolAbbreviation = config.protocolAbbreviation;
+    data.developerAbbreviation = config.developerAbbreviation;
 
     // load the contract addresses, abis, and ethers interfaces
     data.contracts = Object.entries(data.adminEvents).map(([name, entry]) => {
@@ -108,6 +134,16 @@ function provideInitialize(data) {
       return contract;
     });
 
+    data.contracts.forEach((contract) => {
+      const entry = data.adminEvents[contract.name];
+      const {
+        events,
+        eventSignatures,
+      } = getEvents(entry, contract, data.adminEvents, data.contracts);
+      contract.events = events;
+      contract.eventSignatures = eventSignatures;
+    });
+
     /* eslint-enable no-param-reassign */
   };
 }
@@ -115,7 +151,7 @@ function provideInitialize(data) {
 function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
     const {
-      adminEvents, contracts, everestId, protocolName, protocolAbbreviation,
+      contracts, everestId, protocolName, protocolAbbreviation, developerAbbreviation,
     } = data;
     if (!contracts) throw new Error('handleTransaction called before initialization');
 
@@ -124,7 +160,7 @@ function provideHandleTransaction(data) {
     // iterate over each contract name to get the address and events
     contracts.forEach((contract) => {
       // for each contract look up the events of interest
-      const { events, eventSignatures } = getEvents(contract, adminEvents, contracts);
+      const { events, eventSignatures } = contract;
 
       // filter down to only the events we want to alert on
       const parsedLogs = txEvent.filterLog(eventSignatures, contract.address);
@@ -141,6 +177,7 @@ function provideHandleTransaction(data) {
           everestId,
           protocolName,
           protocolAbbreviation,
+          developerAbbreviation,
         ));
       });
     });
