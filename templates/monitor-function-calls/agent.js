@@ -20,16 +20,19 @@ function createAlert(
   functionSeverity,
   args,
   everestId,
+  protocolName,
+  protocolAbbreviation,
+  developerAbbreviation,
 ) {
   const functionArgs = extractFunctionArgs(args);
   return Finding.fromObject({
-    name: '',
+    name: `${protocolName} Function Call`,
     description: `The ${functionName} function was invoked in the ${contractName} contract`,
-    alertId: '',
+    alertId: `${developerAbbreviation}-${protocolAbbreviation}-FUNCTION-CALL`,
     type: FindingType[functionType],
     severity: FindingSeverity[functionSeverity],
     everestId,
-    protocol: '',
+    protocol: protocolName,
     metadata: {
       contractName,
       contractAddress,
@@ -44,6 +47,10 @@ function provideInitialize(data) {
     /* eslint-disable no-param-reassign */
     // assign configurable fields
     data.contractInfo = config.contracts;
+    data.everestId = config.everestId;
+    data.protocolName = config.protocolName;
+    data.protocolAbbreviation = config.protocolAbbreviation;
+    data.developerAbbreviation = config.developerAbbreviation;
 
     // get the contract names that have events that we wish to monitor
     const contractNames = Object.keys(data.contractInfo);
@@ -81,7 +88,13 @@ function provideInitialize(data) {
 
 function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
-    const { contracts, everestId } = data;
+    const {
+      contracts,
+      everestId,
+      protocolName,
+      protocolAbbreviation,
+      developerAbbreviation
+    } = data;
 
     if (!contracts) throw new Error('handleTransaction called before initialization');
 
@@ -109,6 +122,9 @@ function provideHandleTransaction(data) {
           severity,
           parsedFunction.args,
           everestId,
+          protocolName,
+          protocolAbbreviation,
+          developerAbbreviation,
         ));
       });
     });
