@@ -43,17 +43,16 @@ function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
     // assign configurable fields
-    data.monitorFunctions = config.monitorFunctions;
+    data.contractInfo = config.contracts;
 
     // get the contract names that have events that we wish to monitor
-    const contractNames = Object.keys(data.monitorFunctions);
+    const contractNames = Object.keys(data.contractInfo);
 
     // load relevant information for each contract
     data.contracts = contractNames.map((name) => {
-      const { abi: abiName, address } = contractAddresses[name];
-      const abi = getAbi(abiName);
+      const { address, abiFile, functions = {} } = data.contractInfo[name];
+      const abi = getAbi(abiFile);
       const iface = new ethers.utils.Interface(abi);
-      const functions = data.monitorFunctions[name] || {};
       const functionNames = Object.keys(functions);
 
       // attempt to get function signatures for each of the function names in the config file
