@@ -6,7 +6,7 @@ const {
 const { config } = require('../agent-config');
 
 // load any utility functions
-const { getAbi, extractFunctionArgs } = require('../common');
+const { getAbi, extractFunctionArgs } = require('./common');
 
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
