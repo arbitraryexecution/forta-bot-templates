@@ -1,39 +1,40 @@
 const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 
 // load config file
-const config = require('../agent-config.json');
+const config = require('./agent-config.json');
 
 // load configuration data from agent config file
-const everestId = config.everestId || 'No Everest ID Specified';
+const developerAbbrev = config.developerAbbreviation || 'NA';
 const protocolName = config.protocolName || 'No Protocol Name Specified';
 const protocolAbbrev = config.protocolAbbrev || 'NA';
+const everestId = config.everestId || 'No Everest ID Specified';
 const addressList = config.addressList;
 
 
 // get list of addresses to watch
 const addresses = Object.keys(addressList);
 
+function createAlert(name, address, contractName, abbrev, everestId){
+  return Finding.fromObject({
+    name: `${name} Address Watch`,
+    description: `Address ${address} (${contractName}) was involved in a transaction`,
+    alertId: `${developerAbbrev}-${abbrev}-ADDRESS-WATCH`,
+    type: FindingType.Suspicious,
+    severity: FindingSeverity.Low,
+    everestId,
+  })
+}
+
 async function handleTransaction(txEvent) {
   const findings = [];
-  const { from, hash } = txEvent.transaction;
-
+  const txAddrs = Object.keys(txEvent.addresses).map(address => address.toLowerCase());
+  
   // check if an address in the watchlist was the initiator of the transaction
   addresses.forEach((address) => {
-    if (from === address.toLowerCase()) {
-      findings.push(
-        Finding.fromObject({
-          name: `${protocolName} Address Watch`,
-          description: `Address ${address} (${addressList[address]}) was involved in a transaction`,
-          alertId: `AE-${protocolAbbrev}-ADDRESS-WATCH`,
-          type: FindingType.Suspicious,
-          severity: FindingSeverity.Low,
-          metadata: {
-            from,
-            hash,
-          },
-          everestId,
-        }),
-      );
+    if (txAddrs.includes(address.toLowerCase())) {
+      findings.push(createAlert(
+        protocolName, address, addressList[address], protocolAbbrev, everestId
+      ));
     }
   });
 
@@ -42,5 +43,5 @@ async function handleTransaction(txEvent) {
 
 module.exports = {
   handleTransaction,
-  addressList,
+  createAlert,
 };

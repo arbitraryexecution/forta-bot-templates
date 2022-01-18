@@ -15,5 +15,8 @@
     "eslint-plugin-import": "^2.25.4",
     "jest": "^27.4.7",
     "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "forta-agent": "^0.0.34"
   }
 }
