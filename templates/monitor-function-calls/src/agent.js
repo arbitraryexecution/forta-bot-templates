@@ -73,7 +73,7 @@ function provideInitialize(data) {
             // return an empty string
             return '';
           }
-        }
+        },
       );
 
       // filter out any emtpy strings from functionSignatures, an empty string denotes that
@@ -102,7 +102,7 @@ function provideHandleTransaction(data) {
       everestId,
       protocolName,
       protocolAbbreviation,
-      developerAbbreviation
+      developerAbbreviation,
     } = data;
 
     if (!contracts) throw new Error('handleTransaction called before initialization');
@@ -116,7 +116,7 @@ function provideHandleTransaction(data) {
       } = contract;
 
       // filter down to only the functions we want to alert on
-      let parsedFunctions = txEvent.filterFunction(functionSignatures, address);
+      const parsedFunctions = txEvent.filterFunction(functionSignatures, address);
 
       // alert on each item in parsedFunctions
       parsedFunctions.forEach((parsedFunction) => {
