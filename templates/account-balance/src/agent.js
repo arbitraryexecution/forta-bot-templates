@@ -23,7 +23,7 @@ function provideInitialize(data) {
     data.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
       accountName,
       accountAddress: entry.address,
-      accountThreshold: entry.threshold,
+      accountThreshold: entry.thresholdEth,
       startTime: 0,
       numAlertsSinceLastFinding: 0,
       alertType: entry.alert.type,
@@ -50,10 +50,10 @@ function createAlert(
   const threshold = ethers.utils.parseEther(thresholdEth.toString());
   return Finding.fromObject({
     name: `${protocolName} Account Balance`,
-    description: `The ${accountName} account has a balance below ${threshold} ETH`,
+    description: `The ${accountName} account has a balance below ${thresholdEth} ETH`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-LOW-ACCOUNT-BALANCE`,
-    severity: FindingSeverity[alertType],
-    type: FindingType[alertSeverity],
+    severity: FindingSeverity[alertSeverity],
+    type: FindingType[alertType],
     protocol: protocolName,
     everestId,
     metadata: {
@@ -106,6 +106,7 @@ function provideHandleBlock(data) {
             account.numAlertsSinceLastFinding,
             data.protocolName,
             data.developerAbbreviation,
+            data.protocolAbbreviation,
             account.alertType,
             account.alertSeverity,
           ));
