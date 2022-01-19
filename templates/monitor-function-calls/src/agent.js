@@ -83,7 +83,6 @@ function provideInitialize(data) {
       const contract = {
         name,
         address,
-        iface,
         functions,
         functionSignatures,
       };
