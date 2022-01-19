@@ -32,7 +32,7 @@ calls for. Each key in the Object is a contract name that we can specify, where 
 a string that we use as a label when referring to the contract (the string can be any valid string
 that we choose, it will not affect the monitoring by the agent). The Object corresponding to each
 contract name requires an address key/value pair, abi file key/value pair, and a `functions` Object
-containing the names of functions as keys and Objects containing Finding types and severities. For
+containing the names of functions as keys and Objects containing Finding types and severities as values. For
 example, to monitor if `createPool` was called in a Uniswap V3 Factory contract, we would need the
 contract address, the ABI saved locally as a JSON formatted file, the exact function name corresponding
 to what is listed in the ABI file, and a type and severity for the alert:
@@ -142,7 +142,7 @@ the `abiFile` key in the `agent-config.json` file.  This will allow the agent to
 parse transaction logs for function calls.
 
 9. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
-repository.
+repository.  Also update the name and description fields in the `package.json` file.
 
 10. Move files to have the following directory structure:
 ```
@@ -171,4 +171,5 @@ not trigger the agent.  Although not provided here, please create tests that wil
 the agent code for positive cases, negative cases, and edge cases (e.g. when errors occur).
 
 13. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
-documentation.
+documentation:
+  https://docs.forta.network/en/latest/deploying/
