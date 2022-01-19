@@ -150,7 +150,8 @@ the `abiFile` key in the `agent-config.json` file.  This will allow the agent to
 parse transaction logs for events.
 
 10. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
-repository.
+repository.  Also update the `name` and `description` entries in the `package.json` file to appropriately
+reflect who is creating the agent and what the agent monitors.
 
 11. Move files to have the following directory structure:
   admin-events/
