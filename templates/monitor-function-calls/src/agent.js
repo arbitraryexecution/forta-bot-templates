@@ -3,7 +3,7 @@ const {
 } = require('forta-agent');
 
 // load any agent configuration parameters
-const { config } = require('../agent-config');
+const config = require('../agent-config.json');
 
 // load any utility functions
 const { getAbi, extractFunctionArgs } = require('./common');
@@ -63,13 +63,22 @@ function provideInitialize(data) {
       const functionNames = Object.keys(functions);
 
       // attempt to get function signatures for each of the function names in the config file
-      const functionSignatures = functionNames.map(
+      let functionSignatures = functionNames.map(
         (functionName) => {
           try {
-            iface.getFunction(functionName).sighash;
-          } catch {} // ignore error thrown by ethers if it cannot find a suitable function fragment
+            const fragment = iface.getFunction(functionName);
+            return fragment.format(ethers.utils.FormatTypes.full);
+          } catch {
+            // ignore error thrown by ethers if it cannot find a suitable function fragment and
+            // return an empty string
+            return '';
+          }
         }
       );
+
+      // filter out any emtpy strings from functionSignatures, an empty string denotes that
+      // attempting to get the signature for a requested function name failed
+      functionSignatures = functionSignatures.filter((signature) => signature !== '');
 
       const contract = {
         name,

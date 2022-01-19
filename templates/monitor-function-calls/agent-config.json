@@ -6,14 +6,14 @@
   "contracts": {
     "contractName1": {
       "address": "contractAddress1",
-      "abiFile": "./abi/filename1.json",
+      "abiFile": "filename1.json",
       "functions": {
         "FunctionName1": { "type": "Type", "severity": "Severity" }
       }
     },
     "contractName2": {
       "address": "contractAddress2",
-      "abiFile": "./abi/filename2.json",
+      "abiFile": "filename2.json",
       "functions": {
         "FunctionName1": { "type": "Type", "severity": "Severity" },
         "FunctionName2": { "type": "Type", "severity": "Severity" }
