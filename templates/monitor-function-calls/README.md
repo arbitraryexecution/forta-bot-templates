@@ -146,19 +146,19 @@ repository.
 
 10. Move files to have the following directory structure:
 ```
-  monitor-function-calls/
-    README.md
-    Dockerfile
-    forta.config.json
-    package.json
-    agent-config.json
-    abi/
-      ContractABIFile1.json
-      ContractABIFile2.json
-      ...
-      ContractABIFileN.json
-    src/
-      agent.js
+monitor-function-calls
+├── Dockerfile
+├── README.md
+├── abi
+│   ├── ContractABIFile1.json
+│   ├── ContractABIFile2.json
+│   └── ContractABIFileN.json
+├── agent-config.json
+├── forta.config.json
+├── package.json
+└── src
+    ├── agent.js
+    └── common.js
 ```
 
 11. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
