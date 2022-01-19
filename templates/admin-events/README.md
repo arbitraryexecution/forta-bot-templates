@@ -155,6 +155,7 @@ repository.
 11. Move files to have the following directory structure:
   admin-events/
     README.md
+    Dockerfile
     forta.config.json
     package.json
     src/
