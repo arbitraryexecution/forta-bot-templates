@@ -1,0 +1,20 @@
+{
+  "everestId": "",
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
+  "contracts": {
+    "contractName1": {
+      "address": "contractAddress1",
+      "transactionFailuresLimit": "X",
+      "type": "Type",
+      "severity": "Severity"
+    },
+    "contractName2": {
+      "address": "contractAddress2",
+      "transactionFailuresLimit": "X",
+      "type": "Type",
+      "severity": "Severity"
+    }
+  }
+}
