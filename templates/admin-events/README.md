@@ -50,7 +50,7 @@ type and severity for the alert:
 ```
 
 8. If a contract is a proxy for another contract, where events will be emitted as if they are coming from the proxy
-instead of from the underlying implementation contract, the entry in the `agent-config.json` file would look like the
+instead of from the underlying implementation contract, the entry in the `agent-config.json` file may look like the
 following:
 
 ```
@@ -73,8 +73,10 @@ following:
 In this example, all events are emitted by the address corresponding to the "TransparentUpgradableProxy" entry, but
 the ABI for the implementation, containing the definition of those events, is specified by the JSON formatted file
 corresponding to the "NonFungibleTokenPositionDescriptor" entry.  What is critical here is that the string corresponding
-to the `proxy` key must be identical to one of the contract name keys in the `adminEvents` Object.
-
+to the `proxy` key must be identical to one of the contract name keys in the `adminEvents` Object.  It is possible for
+the proxy contract to emit its own events and events from the underlying implementation contract.  In those cases,
+there may be an `"events"` key with corresponding Object value for the proxy contract as well.  Both sets of events
+will be used by the agent when monitoring blockchain transactions.
 
 9. We can obtain the contract ABI from one of several locations.  The most accurate ABI will be the one corresponding
 to the original contract code that was compiled and deployed onto the blockchain.  This typically will come from the
