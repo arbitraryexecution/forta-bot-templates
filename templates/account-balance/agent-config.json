@@ -1,0 +1,24 @@
+{
+  "everestId": "",
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
+  "accountBalance": {
+    "contractName1": {
+      "address": "",
+      "thresholdEth": "",
+      "alert": { "type": "Type", "severity": "Severity" }
+    },
+    "contractName2": {
+      "address": "",
+      "thresholdEth": "",
+      "alert": { "type": "Type", "severity": "Severity" }
+    },
+    "contractName3": {
+      "address": "",
+      "thresholdEth": "",
+      "alert": { "type": "Type", "severity": "Severity" }
+    }
+  },
+  "alertMinimumIntervalSeconds": 86400
+}
