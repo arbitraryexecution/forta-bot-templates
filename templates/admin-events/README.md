@@ -6,8 +6,7 @@ to add/remove/update events and contracts in the agent configuration file.
 
 ## Agent Setup Walkthrough
 
-The following steps will take you from a completely blank template to a functional agent.  The only file that
-needs to be modified for this agent to operate correctly is the configuration file `agent-config.json`.
+The following steps will take you from a completely blank template to a functional agent.
 
 1. Open the `agent-config.json` file.
 
@@ -41,7 +40,7 @@ type and severity for the alert:
   "adminEvents": {
     "GovernorBravo": {
       "address": "0x408ED6354d4973f66138C91495F2f2FCbd8724C3",
-      "abiFile": "./abi/GovernorBravo.json",
+      "abiFile": "GovernorBravo.json",
       "events": {
         "NewAdmin": { "type": "Suspicious", "severity": "Medium" }
       }
@@ -57,12 +56,12 @@ following:
   "adminEvents": {
     "TransparentUpgradableProxy": {
       "address": "0xEe6A57eC80ea46401049E92587E52f5Ec1c24785",
-      "abiFile": "./abi/TransparentUpgradableProxy.json",
+      "abiFile": "TransparentUpgradableProxy.json",
       "proxy": "NonfungibleTokenPositionDescriptor"
     },
     "NonfungibleTokenPositionDescriptor": {
       "address": "0x91ae842A5Ffd8d12023116943e72A606179294f3",
-      "abiFile": "./abi/NonfungibleTokenPositionDescriptor.json",
+      "abiFile": "NonfungibleTokenPositionDescriptor.json",
       "events": {
         "UpdateTokenRatioPriority": { "type": "Info", "severity": "Info" }
       }
@@ -154,6 +153,8 @@ repository.  Also update the `name` and `description` entries in the `package.js
 reflect who is creating the agent and what the agent monitors.
 
 11. Move files to have the following directory structure:
+
+```
   admin-events/
     README.md
     Dockerfile
@@ -162,11 +163,12 @@ reflect who is creating the agent and what the agent monitors.
     src/
       agent.js
       agent-config.json
-      abi/
-        ContractABIFile1.json
-        ContractABIFile2.json
-        ...
-        ContractABIFileN.json
+    abi/
+      ContractABIFile1.json
+      ContractABIFile2.json
+      ...
+      ContractABIFileN.json
+```
 
 12. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
 package.json.

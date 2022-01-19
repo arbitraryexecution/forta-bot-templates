@@ -4,7 +4,7 @@ const {
 
 function getAbi(abiName) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  const { abi } = require(`./abi/${abiName}`);
+  const { abi } = require(`../abi/${abiName}`);
   return abi;
 }
 
@@ -22,7 +22,7 @@ function extractEventArgs(args) {
 }
 
 // load any agent configuration parameters
-const config = require('./agent-config.json');
+const config = require('../agent-config.json');
 
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
