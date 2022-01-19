@@ -14,22 +14,39 @@ function provideInitialize(data) {
     /* eslint-disable no-param-reassign */
     // assign configurable fields
     data.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
+    data.protocolName = config.protocolName;
+    data.protocolAbbreviation = config.protocolAbbreviation;
+    data.developerAbbreviation = config.developerAbbreviation;
+
     data.everestId = config.everestId;
     data.provider = getEthersProvider();
     data.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
-        accountName,
-        accountAddress: entry.address,
-        accountThreshold: entry.threshold,
-        startTime: 0,
-        numAlertsSinceLastFinding: 0,
+      accountName,
+      accountAddress: entry.address,
+      accountThreshold: entry.threshold,
+      startTime: 0,
+      numAlertsSinceLastFinding: 0,
+      alertType: entry.alert.type,
+      alertSeverity: entry.alert.severity,
     }));
     /* eslint-enable no-param-reassign */
   };
 }
 
 // helper function to create alerts
-function createAlert(accountName, accountAddress, accountBalance,
-  thresholdEth, everestId, numAlerts) {
+function createAlert(
+  accountName,
+  accountAddress,
+  accountBalance,
+  thresholdEth,
+  everestId,
+  numAlerts,
+  protocolName,
+  developerAbbreviation,
+  protocolAbbreviation,
+  alertType,
+  alertSeverity,
+) {
   const threshold = ethers.utils.parseEther(thresholdEth.toString());
   return Finding.fromObject({
     name: `${protocolName} Account Balance`,
@@ -87,6 +104,10 @@ function provideHandleBlock(data) {
             accountThreshold,
             everestId,
             account.numAlertsSinceLastFinding,
+            data.protocolName,
+            data.developerAbbreviation,
+            account.alertType,
+            account.alertSeverity,
           ));
 
           // restart the alert counter and update the start time
