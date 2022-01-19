@@ -1,9 +1,6 @@
 const {
-  FindingType,
-  FindingSeverity,
-  Finding,
   ethers,
-  createTransactionEvent
+  createTransactionEvent,
 } = require('forta-agent');
 
 // local definitions
@@ -16,39 +13,39 @@ const config = require('./agent-config.json');
 const everestId = config.everestId || 'No Everest ID Specified';
 const protocolName = config.protocolName || 'No Protocol Name Specified';
 const protocolAbbrev = config.protocolAbbrev || 'NA';
-const addressList = config.addressList;
+const { addressList } = config;
 
 // tests
 describe('handleTransaction', () => {
-    it('returns empty findings if no address match is found', async () => {
-        // build txEvent
-        const txEvent = createTransactionEvent({
-            addresses: {},
-        });
-        txEvent.addresses[ethers.constants.AddressZero] = true;
-
-        // run agent with txEvent
-        const findings = await handleTransaction(txEvent);
-
-        // assertions
-        expect(findings).toStrictEqual([]);
+  it('returns empty findings if no address match is found', async () => {
+    // build txEvent
+    const txEvent = createTransactionEvent({
+      addresses: {},
     });
+    txEvent.addresses[ethers.constants.AddressZero] = true;
 
-    it('returns a finding if a transaction participant is on the watch list', async () => {
-        const testAddr = Object.keys(addressList)[0];
+    // run agent with txEvent
+    const findings = await handleTransaction(txEvent);
 
-        // build txEvent
-        const txEvent = createTransactionEvent({
-            addresses: {},
-        });
-        txEvent.addresses[testAddr] = true;
+    // assertions
+    expect(findings).toStrictEqual([]);
+  });
 
-        // run agent with txEvent
-        const findings = await handleTransaction(txEvent);
+  it('returns a finding if a transaction participant is on the watch list', async () => {
+    const testAddr = Object.keys(addressList)[0];
 
-        // assertions
-        expect(findings).toStrictEqual([
-        createAlert(protocolName, testAddr, addressList[testAddr], protocolAbbrev, everestId)
-        ]);
+    // build txEvent
+    const txEvent = createTransactionEvent({
+      addresses: {},
     });
+    txEvent.addresses[testAddr] = true;
+
+    // run agent with txEvent
+    const findings = await handleTransaction(txEvent);
+
+    // assertions
+    expect(findings).toStrictEqual([
+      createAlert(protocolName, testAddr, addressList[testAddr], protocolAbbrev, everestId),
+    ]);
+  });
 });
