@@ -28,20 +28,26 @@ type in `"Uniswap"` or `"Uniswap V3"`, for the Sushi Swap protocol you may type 
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be abbreviated `"SUSH"`, etc.
 
 7.  The Object value for the `addressList` key corresponds to addresses that we want to monitor.  Each
-key in the Object is an address (either EOA or contract), and 
+key in the Object is an address (either EOA or contract), and each value is another object with three fields:
+  -`name`: the name of the contract or EOA that will be watched
+  -`type`: the type of finding that will be generated when transactions involving this address are detected (see
+  Forta SDK for `Finding` types)
+  -`severity`: the severity of the finding that will be generated when transactions involving this address are
+  detected (see Forta SDK for `Finding` severities)
 
 8. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
-repository.
+repository.  Additionally, update the `name` entry in `package.json` to match the values provided in the 
+`agent-config.json` file.
 
 9. Move files to have the following directory structure:
-  address-watch/
+  ```address-watch/
     README.md
     forta.config.json
     package.json
-    agent-config.json
     src/
+      agent-config.json
       agent.js
-      agent.spec.js
+      agent.spec.js```
 
 10. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
 package.json.

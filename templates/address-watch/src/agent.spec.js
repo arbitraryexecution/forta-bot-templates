@@ -1,19 +1,29 @@
 const {
   ethers,
   createTransactionEvent,
+  Finding,
+  FindingType,
+  FindingSeverity,
 } = require('forta-agent');
 
 // local definitions
-const { handleTransaction, createAlert } = require('./agent');
+const { handleTransaction } = require('./agent');
 
 // load config file
 const config = require('./agent-config.json');
 
 // load configuration data from agent config file
-const everestId = config.everestId || 'No Everest ID Specified';
-const protocolName = config.protocolName || 'No Protocol Name Specified';
-const protocolAbbrev = config.protocolAbbrev || 'NA';
+const developerAbbrev = config.developerAbbreviation;
+const { everestId } = config;
+const { protocolName } = config;
+const { protocolAbbrev } = config;
+
+// get list of addresses to watch
 const { addressList } = config;
+const addresses = Object.keys(addressList);
+if (addresses.length === 0) {
+  throw new Error('Must supply at least one address to watch');
+}
 
 // tests
 describe('handleTransaction', () => {
@@ -33,6 +43,7 @@ describe('handleTransaction', () => {
 
   it('returns a finding if a transaction participant is on the watch list', async () => {
     const testAddr = Object.keys(addressList)[0];
+    const params = addressList[testAddr];
 
     // build txEvent
     const txEvent = createTransactionEvent({
@@ -45,7 +56,14 @@ describe('handleTransaction', () => {
 
     // assertions
     expect(findings).toStrictEqual([
-      createAlert(protocolName, testAddr, addressList[testAddr], protocolAbbrev, everestId),
+      Finding.fromObject({
+        name: `${protocolName} Address Watch`,
+        description: `Address ${testAddr} (${params.name}) was involved in a transaction`,
+        alertId: `${developerAbbrev}-${protocolAbbrev}-ADDRESS-WATCH`,
+        type: FindingType[params.type],
+        severity: FindingSeverity[params.severity],
+        everestId,
+      }),
     ]);
   });
 });
