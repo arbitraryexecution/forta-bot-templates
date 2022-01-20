@@ -6,17 +6,17 @@
   "accountBalance": {
     "contractName1": {
       "address": "",
-      "thresholdEth": "",
+      "thresholdEth": 0,
       "alert": { "type": "Type", "severity": "Severity" }
     },
     "contractName2": {
       "address": "",
-      "thresholdEth": "",
+      "thresholdEth": 0,
       "alert": { "type": "Type", "severity": "Severity" }
     },
     "contractName3": {
       "address": "",
-      "thresholdEth": "",
+      "thresholdEth": 0,
       "alert": { "type": "Type", "severity": "Severity" }
     }
   },
