@@ -1,0 +1,27 @@
+{
+  "everestId": "",
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
+  "adminEvents": {
+    "contractName1": {
+      "address": "contractAddress1",
+      "abiFile": "filename1.json",
+      "events": {
+        "EventName": { "type": "Type", "severity": "Severity" }
+      }
+    },
+    "contractName2": {
+      "address": "contractAddress2",
+      "abiFile": "filename2.json",
+      "events": {
+        "EventName1": { "type": "Type", "severity": "Severity" }
+      }
+    },
+    "contractName3": {
+      "address": "contractAddress3",
+      "abiFile": "filename3.json",
+      "proxy": "contractName2"
+    }
+  }
+}
