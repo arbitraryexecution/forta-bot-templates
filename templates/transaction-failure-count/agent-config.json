@@ -3,7 +3,7 @@
   "developerAbbreviation": "",
   "protocolName": "",
   "protocolAbbreviation": "",
-  "blockWindow": 1,
+  "blockWindow": 25,
   "failedTransactions": {
     "contractName1": {
       "address": "contractAddress1",
