@@ -10,22 +10,22 @@ The following steps will take you from a completely blank template to a function
 
 1. Open the `agent-config.json` file.
 
-1. `everestId` (optional) - Navigate to `https://everest.link` to look up the Everest registry ID for a
+2. `everestId` (optional) - Navigate to `https://everest.link` to look up the Everest registry ID for a
 specific project.  For example, typing `Uniswap` into the search bar (revealed when you click the magnifying glass
 at the top of the page), returns a number of potential matches, one of which is the correct Uniswap entry.  The ID
 for that entry is `0xa2e07f422b5d7cbbfca764e53b251484ecf945fa`.  Copy and paste the Everest registry ID into the
 `agent-config.json` file as the value for the key `everestId`.
 
-1. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
+3. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
 team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
 
-1. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap protocol you may
+4. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap protocol you may
 type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may type in `"Sushi"` or `"SushiSwap"`, etc.
 
-1. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in `protocolName`.  For
+5. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in `protocolName`.  For
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbreviated `"SUSH"`, etc.
 
-1.  `adminEvents` (required) - The Object value for this key corresponds to contracts that we want to monitor events
+6.  `adminEvents` (required) - The Object value for this key corresponds to contracts that we want to monitor events
 for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
 monitoring by the agent).  The Object corresponding to each contract name requires an address key/value pair, abi
@@ -51,7 +51,7 @@ Note that any unused entries in the configuration file must be deleted for the a
 of the configuration file contains several placeholders to show the structure of the file, but these are not valid
 entries for running the agent.
 
-1. If a contract is a proxy for another contract, where events will be emitted as if they are coming from the proxy
+7. If a contract is a proxy for another contract, where events will be emitted as if they are coming from the proxy
 instead of from the underlying implementation contract, the entry in the `agent-config.json` file may look like the
 following:
 
@@ -80,7 +80,7 @@ the proxy contract to emit its own events and events from the underlying impleme
 there may be an `"events"` key with corresponding Object value for the proxy contract as well.  Both sets of events
 will be used by the agent when monitoring blockchain transactions.
 
-1. We can obtain the contract ABI from one of several locations.  The most accurate ABI will be the one
+8. We can obtain the contract ABI from one of several locations.  The most accurate ABI will be the one
 corresponding to the original contract code that was compiled and deployed onto the blockchain.  This typically will
 come from the Github repository of the protocol being monitored.  For the Uniswap example provided thus far, the
 deployed contracts are all present in the Uniswap Github repository here:
@@ -151,11 +151,11 @@ The name of the JSON formatted file containing the ABI needs to have the same pa
 the `abiFile` key in the `agent-config.json` file.  This will allow the agent to load the ABI correctly and
 parse transaction logs for events.
 
-1. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
+9. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
 repository.  Also update the `name` and `description` entries in the `package.json` file to appropriately
 reflect who is creating the agent and what the agent monitors.
 
-1. Move files to have the following directory structure:
+10. Move files to have the following directory structure:
 
 ```
   admin-events/
@@ -173,14 +173,14 @@ reflect who is creating the agent and what the agent monitors.
       ContractABIFileN.json
 ```
 
-1. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
+11. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
 package.json.
 
-1. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
+12. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
 referred to in the `agent-config.json` file, the agent is complete.  Please test the agent against transactions
 that contain events that should trigger the agent.  Please also test the agent against transactions that should
 not trigger the agent.  Although not provided here, please create tests that will verify the functionality of
 the agent code for positive cases, negative cases, and edge cases (e.g. when errors occur).
 
-1. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
+13. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
 documentation.
