@@ -91,7 +91,8 @@ function provideHandleBlock(data) {
 
       /* eslint-disable no-param-reassign */
       // If balance < threshold add an alert to the findings
-      if (accountBalance < (accountThreshold * 1000000000000000000)) {
+      const exponent = ethers.BigNumber.from(10).pow(18);
+      if (accountBalance.lt(ethers.BigNumber.from(accountThreshold).mul(exponent))) {
         // if less than the specified number of hours has elapsed, just increment the counter for
         // the number of alerts that would have been generated
         if (blockTimestamp.minus(account.startTime) < alertMinimumIntervalSeconds) {
