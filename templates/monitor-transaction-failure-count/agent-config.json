@@ -3,16 +3,17 @@
   "developerAbbreviation": "",
   "protocolName": "",
   "protocolAbbreviation": "",
-  "contracts": {
+  "blockWindow": 1,
+  "failedTransactions": {
     "contractName1": {
       "address": "contractAddress1",
-      "transactionFailuresLimit": "X",
+      "transactionFailuresLimit": 2,
       "type": "Type",
       "severity": "Severity"
     },
     "contractName2": {
       "address": "contractAddress2",
-      "transactionFailuresLimit": "X",
+      "transactionFailuresLimit": 10,
       "type": "Type",
       "severity": "Severity"
     }

@@ -2,10 +2,7 @@ const {
   Finding, FindingSeverity, FindingType,
 } = require('forta-agent');
 
-// addresses we are interested in monitoring
-const accountAddresses = require('../../account-addresses.json');
-
-const config = require('../../agent-config.json');
+const config = require('../agent-config.json');
 
 const initializeData = {};
 
@@ -14,21 +11,28 @@ function createAlert(
   name,
   address,
   failedTxs,
+  threshold,
   blockWindow,
   everestId,
+  protocolName,
+  protocolAbbreviation,
+  developerAbbreviation,
+  alertType,
+  alertSeverity,
 ) {
   return Finding.fromObject({
-    name: '',
-    description: `${failedTxs.length} transactions sent to ${contract_addr} have failed in the past`
+    name: `${protocolName} Transaction Failure Count`,
+    description: `${failedTxs.length} transactions sent to ${address} have failed in the past`
     + ` ${blockWindow} blocks`,
-    protocol: '',
-    alertId: '',
-    severity: FindingSeverity['CONFIGURE'],
-    type: FindingType['CONFIGURE'],
+    alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+    protocol: protocolName,
+    severity: FindingSeverity[alertSeverity],
+    type: FindingType[alertType],
     everestId,
     metadata: {
-      name,
-      address,
+      contractName: name,
+      contractAddress: address,
+      txFailureThreshold: threshold,
       failedTxs,
     },
   });
@@ -37,19 +41,22 @@ function createAlert(
 function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
-    data.addresses = {};
-    data.failedTxs = {};
-
-    // add all addresses we will watch as lower case and initialize failed tx object
-    Object.entries(accountAddresses).forEach(([name, address]) => {
-      data.addresses[name] = address.toLowerCase();
-      data.failedTxs[name] = {};
-    });
-
     // assign configurable fields
-    data.blockWindow = config.failedTransactions.blockWindow;
-    data.failedTxLimit = config.failedTransactions.failedTxLimit;
-    //data.everestId = config.;
+    data.protocolName = config.protocolName;
+    data.protocolAbbreviation = config.protocolAbbreviation;
+    data.developerAbbreviation = config.developerAbbreviation;
+    data.everestId = config.everestId;
+    data.blockWindow = config.blockWindow;
+
+    data.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
+      contractName,
+      contractAddress: entry.address.toLowerCase(),
+      txFailureLimit: entry.transactionFailuresLimit,
+      failedTxs: {},
+      alertType: entry.type,
+      alertSeverity: entry.severity,
+    }));
+
     /* eslint-enable no-param-reassign */
   };
 }
@@ -57,9 +64,13 @@ function provideInitialize(data) {
 function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
     const {
-      blockWindow, everestId, addresses, failedTxs, failedTxLimit,
+      contracts,
+      blockWindow,
+      everestId,
+      protocolName,
+      protocolAbbreviation,
+      developerAbbreviation,
     } = data;
-    if (!addresses) throw new Error('called handler before initializing');
 
     const findings = [];
 
@@ -68,31 +79,54 @@ function provideHandleTransaction(data) {
       return findings;
     }
 
-    // check each watched address to see if it failed
-    Object.entries(addresses).forEach(([name, address]) => {
-      // skip addresses we are not interested in
-      if (txEvent.from !== address) return;
+    // check to see if any of the contracts was involved in the failed transaction
+    contracts.forEach((contract) => {
+      const {
+        contractName: name,
+        contractAddress: address,
+        txFailureLimit: limit,
+        alertType,
+        alertSeverity,
+      } = contract;
 
+      if (txEvent.to !== address) return;
+
+      /* eslint-disable no-param-reassign */
       // add new occurrence
-      failedTxs[name][txEvent.hash] = txEvent.blockNumber;
+      contract.failedTxs[txEvent.hash] = txEvent.blockNumber;
 
       // filter out occurrences older than blockWindow
-      Object.entries(failedTxs[name]).forEach(([hash, blockNumber]) => {
+      Object.entries(contract.failedTxs).forEach(([hash, blockNumber]) => {
         if (blockNumber < txEvent.blockNumber - blockWindow) {
-          delete failedTxs[name][hash];
+          delete contract.failedTxs[hash];
         }
       });
 
       // create finding if there are too many failed txs
-      if (Object.keys(failedTxs[name]).length >= failedTxLimit) {
+      const failedTxHashes = Object.keys(contract.failedTxs);
+      if (failedTxHashes.length >= limit) {
         findings.push(
-          createAlert(name, address, Object.keys(failedTxs[name]), blockWindow, everestId),
+          createAlert(
+            name,
+            address,
+            failedTxHashes,
+            limit,
+            blockWindow,
+            everestId,
+            protocolName,
+            protocolAbbreviation,
+            developerAbbreviation,
+            alertType,
+            alertSeverity,
+          ),
         );
 
         // if we raised an alert, clear out the array of failed transactions to avoid over-alerting
-        failedTxs[name] = {};
+        contract.failedTxs = {};
       }
+      /* eslint-enable no-param-reassign */
     });
+
     return findings;
   };
 }

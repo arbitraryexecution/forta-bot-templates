@@ -9,16 +9,8 @@ module.exports = {
     'airbnb-base',
   ],
   parserOptions: {
-    ecmaVersion: 13,
+    ecmaVersion: 12,
   },
   rules: {
   },
-  overrides: [
-    {
-      files: '*',
-      rules: {
-        'no-console': 'off'
-      }
-    }
-  ]
 };
