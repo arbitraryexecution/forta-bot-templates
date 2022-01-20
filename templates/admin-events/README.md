@@ -163,9 +163,9 @@ reflect who is creating the agent and what the agent monitors.
     Dockerfile
     forta.config.json
     package.json
+    agent-config.json
     src/
       agent.js
-      agent-config.json
     abi/
       ContractABIFile1.json
       ContractABIFile2.json
