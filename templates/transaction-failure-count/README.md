@@ -34,7 +34,8 @@ we can specify, where that name is simply a string that we use as a label when r
 (the string can be any valid string that we choose, it will not affect the monitoring by the agent).
 The Object corresponding to each contract name requires an address key/value pair, a key/value pair
 for the limit of failed transctions allowed, a Finding type key/value pair, and a Finding severity
-key/value pair. For example, to monitor a Uniswap V3 Factory for failed transactions, we would need
+key/value pair (Note that using a Finding type and/or Finding severity that is not listed in the Forta SDK
+will cause the agent to throw an error). For example, to monitor a Uniswap V3 Factory for failed transactions, we would need
 the contract address, the number of failed transactions that are allowed to occur before an alert is
 generated, and a type and severity for the alert:
 
@@ -68,11 +69,6 @@ reflect who is creating the agent and what the agent monitors.
     agent-config.json
     src/
       agent.js
-    abi/
-      ContractABIFile1.json
-      ContractABIFile2.json
-      ...
-      ContractABIFileN.json
 ```
 
 10. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
