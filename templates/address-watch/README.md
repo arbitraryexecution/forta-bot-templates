@@ -40,14 +40,16 @@ repository.  Additionally, update the `name` entry in `package.json` to match th
 `agent-config.json` file.
 
 9. Move files to have the following directory structure:
-  ```address-watch/
+  ```
+  address-watch/
     README.md
     forta.config.json
     package.json
     src/
       agent-config.json
       agent.js
-      agent.spec.js```
+      agent.spec.js
+ ```
 
 10. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
 package.json.
