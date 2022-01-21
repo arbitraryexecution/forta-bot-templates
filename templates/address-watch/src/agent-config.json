@@ -1,0 +1,13 @@
+{
+    "developerAbbreviation": "AE",
+    "protocolName": "Aave",
+    "protocolAbbrev": "AAVE",
+    "everestId": "0x55d07cab60a86966a01680e2242c4af4080a5566",
+    "addressList": {
+        "0xFe1A6056EE03235f30f7a48407A5673BBf25eD48" : {
+            "name": "AaveDeployer",
+            "type": "Info",
+            "severity": "Info"
+        }
+    }
+}
