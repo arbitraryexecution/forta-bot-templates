@@ -20,19 +20,20 @@ for that entry is `0xa2e07f422b5d7cbbfca764e53b251484ecf945fa`.  Copy and paste 
 3. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
 team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
 
-4. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap protocol you may
-type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may type in `"Sushi"` or `"SushiSwap"`, etc.
+4. `protocolName` (optional) - Type in the name of the protocol that the addresses are associated with.  For
+example, for the Uniswap protocol you may type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may
+type in `"Sushi"` or `"SushiSwap"`, etc.
 
-5. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in `protocolName`.  For
+5. `protocolAbbreviation` (optional) - Type in an appropriate abbreviation for the value in `protocolName`.  For
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbreviated `"SUSH"`, etc.
 
-6. `accountBalance` (required) - The Object value for this key corresponds to contracts for which we want to monitor
-the account balance.  Each key in the Object is a contract name that we can specify, where that name is simply a
-string that we use as a label when referring to the contract (the string can be any valid string that we choose, it
-will not affect the monitoring by the agent).  The Object corresponding to each contract name requires an address
-key/value pair, a thresholdEth key and integer value, and an alert key with an Object value that specifies the type
-and severity of the alert.  For example, to monitor the Uni contract Ether balance, we would need the contract
-address, the threshold value, and a type and severity for the alert:
+6. `accountBalance` (required) - The Object value for this key corresponds to addresses for which we want to monitor
+the account balance.  Each key in the Object is a name that we can specify, where that name is simply a string that
+we use as a label when referring to the address (the string can be any valid string that we choose, it will not
+affect the monitoring by the agent).  The Object corresponding to each name requires an address key/value pair, a
+thresholdEth key and integer value, and an alert key with an Object value that specifies the type and severity of
+the alert.  For example, to monitor the Uni contract Ether balance, we would need the address, the threshold value,
+and a type and severity for the alert (must be valid type and severity from Forta SDK):
 
 ```
   "accountBalance": {

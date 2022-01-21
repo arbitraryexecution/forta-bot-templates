@@ -48,14 +48,22 @@ function createAlert(
   alertSeverity,
 ) {
   const threshold = ethers.utils.parseEther(thresholdEth.toString());
-  return Finding.fromObject({
-    name: `${protocolName} Account Balance`,
+  const name = protocolName ? `${protocolName} Account Balance` : `Account Balance`;
+
+  let alertId;
+  if (protocolAbbreviation) {
+    alertId = `${developerAbbreviation}-${protocolAbbreviation}-LOW-ACCOUNT-BALANCE`;
+  }
+  else {
+    alertId = `${developerAbbreviation}-LOW-ACCOUNT-BALANCE`;
+  }
+
+  const findingObject = {
+    name,
     description: `The ${accountName} account has a balance below ${thresholdEth} ETH`,
-    alertId: `${developerAbbreviation}-${protocolAbbreviation}-LOW-ACCOUNT-BALANCE`,
+    alertId,
     severity: FindingSeverity[alertSeverity],
     type: FindingType[alertType],
-    protocol: protocolName,
-    everestId,
     metadata: {
       accountName,
       accountAddress,
@@ -63,7 +71,17 @@ function createAlert(
       threshold: threshold.toString(),
       numAlertsSinceLastFinding: numAlerts.toString(),
     },
-  });
+  };
+
+  if (everestId) {
+    findingObject.everestId = everestId;
+  }
+
+  if (protocolName) {
+    findingObject.protocol = protocolName;
+  }
+
+  return Finding.fromObject(findingObject);
 }
 
 function provideHandleBlock(data) {
@@ -76,7 +94,7 @@ function provideHandleBlock(data) {
       accounts, provider, everestId, alertMinimumIntervalSeconds,
     } = data;
 
-    if (!everestId) {
+    if (!provider) {
       throw new Error('handleBlock called before initialization');
     }
 
