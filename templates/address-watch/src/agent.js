@@ -4,11 +4,13 @@ const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 const config = require('./agent-config.json');
 
 // load configuration data from agent config file
-const developerAbbrev = config.developerAbbreviation;
-const { protocolName } = config;
-const { protocolAbbrev } = config;
-const EVEREST_ID = config.everestId;
-const { addressList } = config;
+const {
+  developerAbbreviation: developerAbbrev,
+  protocolName,
+  protocolAbbrev,
+  everestId: EVEREST_ID,
+  addressList
+} = config;
 
 // get list of addresses to watch
 const addresses = Object.keys(addressList);

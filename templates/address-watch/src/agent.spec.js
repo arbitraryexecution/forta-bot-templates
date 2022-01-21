@@ -13,13 +13,15 @@ const { handleTransaction } = require('./agent');
 const config = require('./agent-config.json');
 
 // load configuration data from agent config file
-const developerAbbrev = config.developerAbbreviation;
-const { everestId } = config;
-const { protocolName } = config;
-const { protocolAbbrev } = config;
+const {
+  developerAbbreviation: developerAbbrev,
+  everestId,
+  protocolName,
+  protocolAbbrev,
+  addressList
+} = config;
 
-// get list of addresses to watch
-const { addressList } = config;
+// make sure addresses is populated
 const addresses = Object.keys(addressList);
 if (addresses.length === 0) {
   throw new Error('Must supply at least one address to watch');
