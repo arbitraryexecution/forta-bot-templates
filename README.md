@@ -1,6 +1,6 @@
 # Forta Agent Templates
 
-This repository contains premade agent templates designed to help rapidly develop and deploy Forta agents.
+This repository contains Forta Agent templates that can be used to quickly create and deploy agents simply by creating configuration files.
 
 ## Agent Templates
 
