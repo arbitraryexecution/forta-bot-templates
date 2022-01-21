@@ -24,7 +24,7 @@ function createAlert(
     name: `${protocolName} Transaction Failure Count`,
     description: `${failedTxs.length} transactions sent to ${address} have failed in the past`
     + ` ${blockWindow} blocks`,
-    alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+    alertId: `${developerAbbreviation}-${protocolAbbreviation}-FAILED-TRANSACTIONS`,
     protocol: protocolName,
     severity: FindingSeverity[alertSeverity],
     type: FindingType[alertType],

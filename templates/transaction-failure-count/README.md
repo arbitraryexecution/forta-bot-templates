@@ -26,7 +26,7 @@ type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may type i
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbreviated `"SUSH"`, etc.
 
 6. `blockWindow` (required) - The Integer value for this key corresponds to how long failed
-transactions should be counted for against a contract's failed transactions limit before being removed.
+transactions should be counted against a contract's failed transactions limit before being removed.
 
 7.  `failedTransactions` (required) - The Object value for this key corresponds to contracts that we
 want to monitor the number of failed transactions for. Each key in the Object is a contract name that
@@ -35,7 +35,7 @@ we can specify, where that name is simply a string that we use as a label when r
 The Object corresponding to each contract name requires an address key/value pair, a key/value pair
 for the limit of failed transctions allowed, a Finding type key/value pair, and a Finding severity
 key/value pair (Note that using a Finding type and/or Finding severity that is not listed in the Forta SDK
-will cause the agent to throw an error). For example, to monitor a Uniswap V3 Factory for failed transactions, we would need
+will cause the agent to throw an error). For example, to monitor the Uniswap V3 Factory for failed transactions, we would need
 the contract address, the number of failed transactions that are allowed to occur before an alert is
 generated, and a type and severity for the alert:
 
