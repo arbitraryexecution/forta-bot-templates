@@ -27,6 +27,55 @@ const config = require('../agent-config.json');
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
 
+function evaluateExpression(leftOperand, operator, rightOperand) {
+  switch(operator) {
+    case '===':
+      return leftOperand === rightOperand;
+    case '!==':
+      return leftOperand !== rightOperand;
+    case '>=':
+      return leftOperand.gte(rightOperand);
+    case '<=':
+      return leftOperand.lte(rightOperand);
+    case '>':
+      return leftOperand.gt(rightOperand);
+    case '<':
+      return leftOperand.lt(rightOperand);
+    default:
+      throw new Error(`Operator ${operator} is not supported`);
+  }
+}
+
+function checkLogAgainstExpression(expression, log) {
+  // split the expression given in the config file into an argument name, an operator, and a value
+  const [argName, operator, operand] = expression.split(/(\s+)/).filter(
+    // trim any additional whitespace that may accidentally be present in a passed-in expression
+    (string) => string.trim().length > 0
+  );
+
+  // check to make sure we received an argName, operator, and operand
+  if (argName === undefined || operator === undefined || operand === undefined) {
+    throw new Error("Invalid expression given, one or more values are undefined");
+  }
+
+  if (log.args[argName] === undefined) {
+    // passed-in argument name from config file was not found in the log, which means that the
+    // user's argument name does not coincide with the names of the event ABI
+    const logArgNames = Object.keys(log.args);
+    throw new Error(
+      `Argument name ${argName} does not match any of the arguments found in an ${log.name} log: ${logArgNames}`
+    );
+  }
+
+  // convert the value of argName and the operand value into their corresponding types
+  // we assume that any value prefixed with '0x' is an address as a hex string, otherwise it will
+  // be interpreted as an ethers BigNumber
+  let argValue = log.args[argName];
+  argValue = argValue.substring(0, 2) === '0x' ? argValue : ethers.BigNumber.from(argValue);
+  const operandValue = operand.substring(0, 2) === '0x' ? operand : ethers.BigNumber.from(operand);
+  return evaluateExpression(argValue, operator, operandValue);
+}
+
 // get the Array of events for a given contract
 function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
   const proxyName = contractEventConfig.proxy;
@@ -165,20 +214,24 @@ function provideHandleTransaction(data) {
       // filter down to only the events we want to alert on
       const parsedLogs = txEvent.filterLog(eventSignatures, contract.address);
 
-      // alert on each item in parsedLogs
+      // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
+      // configuration file for each Event log, respectively
       parsedLogs.forEach((parsedLog) => {
-        findings.push(createAlert(
-          parsedLog.name,
-          contract.name,
-          contract.address,
-          events[parsedLog.name].type,
-          events[parsedLog.name].severity,
-          parsedLog.args,
-          everestId,
-          protocolName,
-          protocolAbbreviation,
-          developerAbbreviation,
-        ));
+        const { expression } = events[parsedLog.name];
+        if (checkLogAgainstExpression(expression, parsedLog)) {
+          findings.push(createAlert(
+            parsedLog.name,
+            contract.name,
+            contract.address,
+            events[parsedLog.name].type,
+            events[parsedLog.name].severity,
+            parsedLog.args,
+            everestId,
+            protocolName,
+            protocolAbbreviation,
+            developerAbbreviation,
+          ));
+        }
       });
     });
 
