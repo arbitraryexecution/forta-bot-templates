@@ -1,0 +1,19 @@
+{
+  "everestId": "",
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
+  "contracts": {
+    "AggregationRouterV4": {
+      "address": "0x1111111254fb6c44bac0bed2854e76f90643097d",
+      "abiFile": "AggregationRouterV4.json",
+      "functions": {
+        "uniswapV3Swap": {
+          "expression": "amount > 6000",
+          "type": "Type",
+          "severity": "Severity"
+        }
+      }
+    }
+  }
+}
