@@ -20,6 +20,10 @@ function extractEventArgs(args) {
 }
 
 function isNumeric(valueString) {
+  if (typeof (valueString) !== 'string') {
+    return false;
+  }
+
   // Check the substrings for a valid numeric expression
   // (characters 0-9) (optional decimal) (optional characters 0-9)
   const result = valueString.match(/^[0-9]*?[.]?[0-9]*$/);
@@ -30,6 +34,10 @@ function isNumeric(valueString) {
 }
 
 function isAddress(valueString) {
+  if (typeof (valueString) !== 'string') {
+    return false;
+  }
+
   const result = valueString.match(/^0x[0-9a-fA-F]{40}$/);
   if (result === null) {
     return false;
