@@ -23,25 +23,25 @@ describe('check agent configuration file', () => {
 
   describe('procotolName key required', () => {
     const { protocolName } = config;
-    expect(protocolName).anything();
+    expect(typeof(protocolName)).toBe('string');
     expect(protocolName).not.toBe("");
   });
 
   describe('protocolAbbreviation key required', () => {
     const { protocolAbbreviation } = config;
-    expect(protocolAbbreviation).anything();
+    expect(typeof(protocolAbbreviation)).toBe('string');
     expect(protocolAbbreviation).not.toBe("");
   });
 
   describe('developerAbbreviation key required', () => {
     const { developerAbbreviation } = config;
-    expect(developerAbbreviation).anything();
+    expect(typeof(developerAbbreviation)).toBe('string');
     expect(developerAbbreviation).not.toBe("");
   });
 
   describe('contracts key required', () => {
     const { contracts } = config;
-    expect(contracts).anything();
+    expect(typeof(contracts)).toBe('object');
     expect(contracts).not.toBe({});
   });
 
@@ -69,10 +69,10 @@ describe('check agent configuration file', () => {
         // the expression key can be left out, but if it's present, verify the expression
         if (expression !== undefined) {
           // if the expression is not valid, the call to parseExpression will fail
-          const expressionObject = parseExpression(expression);
+          const expressionObject = utils.parseExpression(expression);
 
           // check the function definition to verify the argument name
-          const { inputs } = entry;
+          const { inputs } = functionObjects[functionName];
           const argumentNames = inputs.map((inputEntry) => inputEntry.name);
 
           // verify that the argument name is present in the function Object
@@ -87,7 +87,6 @@ describe('check agent configuration file', () => {
       });
     });
   });
-
 });
 
 // tests
