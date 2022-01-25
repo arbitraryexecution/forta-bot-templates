@@ -69,24 +69,21 @@ function provideInitialize(data) {
 
       let functionSignatures = functionNames.map((functionName) => {
         const { expression, type, severity } = functions[functionName];
-        try {
-          const fragment = iface.getFunction(functionName);
+        const fragment = iface.getFunction(functionName);
 
-          const result = {
-            functionName,
-            signature: fragment.format(ethers.utils.FormatTypes.full),
-            functionType: type,
-            functionSeverity: severity,
-          };
+        const result = {
+          functionName,
+          signature: fragment.format(ethers.utils.FormatTypes.full),
+          functionType: type,
+          functionSeverity: severity,
+        };
 
-          if (expression !== undefined) {
-            result.expression = expression;
-            result.expressionObject = parseExpression(expression);
-          }
-          return result;
-        } catch {
-          return '';
+        if (expression !== undefined) {
+          result.expression = expression;
+          result.expressionObject = parseExpression(expression);
         }
+
+        return result;
       });
 
       functionSignatures = functionSignatures.filter((result) => result !== '');
