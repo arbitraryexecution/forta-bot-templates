@@ -4,9 +4,12 @@ const {
 
 const config = require('../agent-config.json');
 
-const { getAbi, extractFunctionArgs } = require('./common');
-
-const { parseExpression, checkLogAgainstExpression } = require('./utils');
+const {
+  parseExpression,
+  checkLogAgainstExpression,
+  getAbi,
+  extractFunctionArgs,
+} = require('./utils');
 
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
