@@ -8,14 +8,14 @@ const utils = require('./utils');
 
 const config = require('../agent-config.json');
 
-function getFunctionsFromAbi(abi) {
-  const functionObjects = {};
+function getObjectsFromAbi(abi, objectType) {
+  const contractObjects = {};
   abi.forEach((entry) => {
-    if (entry.type === 'function') {
-      functionObjects[entry.name] = entry;
+    if (entry.type === objectType) {
+      contractObjects[entry.name] = entry;
     }
   });
-  return functionObjects;
+  return contractObjects;
 }
 
 // check the configuration file to verify the values
@@ -57,7 +57,7 @@ describe('check agent configuration file', () => {
       // the call to getAbi will fail if the file does not exist
       const abi = utils.getAbi(abiFile);
 
-      const functionObjects = getFunctionsFromAbi(abi);
+      const functionObjects = getObjectsFromAbi(abi, 'function');
 
       // for all of the functions specified, verify that they exist in the ABI
       Object.keys(functions).forEach((functionName) => {
@@ -89,13 +89,86 @@ describe('check agent configuration file', () => {
   });
 });
 
+function getFunctionFromConfig(abi, functions) {
+  let functionInConfig;
+  let functionNotInConfig;
+  let findingType;
+  let findingSeverity;
+
+  const functionsInConfig = Object.keys(functions);
+  const functionObjects = getObjectsFromAbi(abi, 'function');
+  Object.keys(functionObjects).forEach((name) => {
+    if ((functionNotInConfig !== undefined) && (functionInConfig !== undefined)) {
+      return;
+    }
+
+    if ((functionsInConfig.indexOf(name) === -1) && (functionNotInConfig === undefined)) {
+      functionNotInConfig = functionObjects[name];
+    }
+
+    if ((functionsInConfig.indexOf(name) !== -1) && (functionInConfig === undefined)) {
+      functionInConfig = functionObjects[name];
+      findingType = functions[name].type;
+      findingSeverity = functions[name].severity;
+    }
+  });
+  return { functionInConfig, functionNotInConfig, findingType, findingSeverity };
+}
+
+function createMockArgs(functionObject) {
+  const mockArgs = [];
+  const argNames = [];
+  functionObject.inputs.forEach((entry) => {
+    argNames.push(entry.name);
+    switch (entry.type) {
+      case "uint256":
+        mockArgs.push(ethers.constants.HashZero);
+        break;
+      case "uint256[]":
+        mockArgs.push([ethers.constants.HashZero]);
+        break;
+      case "address":
+        mockArgs.push(ethers.constants.AddressZero);
+        break;
+      case "address[]":
+        mockArgs.push([ethers.constants.AddressZero]);
+        break;
+      case "bytes":
+        throw new Error('bytes not supported yet');
+        break;
+      case "bytes[]":
+        throw new Error('bytes not supported yet');
+        break;
+      case "bytes32":
+        throw new Error('bytes32 not supported yet');
+        break;
+      case "bytes32[]":
+        throw new Error('Array of bytes32 not supported yet');
+        break;
+      case "tuple":
+        throw new Error('tuple not supported yet');
+        break;
+    }
+  });
+  return { mockArgs, argNames };
+}
+
 // tests
 describe('monitor functions that do not emit events', () => {
   describe('handleTransaction', () => {
     let initializeData;
+    let developerAbbreviation;
+    let protocolAbbreviation;
+    let protocolName;
+    let contractName;
     let handleTransaction;
     let mockTrace;
     let mockTxEvent;
+    let iface;
+    let abi;
+    let functionInConfig;
+    let functionNotInConfig;
+    let validContractAddress;
 
     beforeEach(async () => {
       initializeData = {};
@@ -104,7 +177,33 @@ describe('monitor functions that do not emit events', () => {
       await (provideInitialize(initializeData))();
       handleTransaction = provideHandleTransaction(initializeData);
 
-      const { contracts } = initializeData;
+      // grab the first entry from the 'contracts' key in the configuration file
+      const { contracts: configContracts } = config;
+      protocolName = config.protocolName;
+      protocolAbbreviation = config.protocolAbbreviation;
+      developerAbbreviation = config.developerAbbreviation;
+
+      contractName = Object.keys(configContracts)[0];
+      const { abiFile, functions } = configContracts[contractName];
+      validContractAddress = configContracts[contractName].address;
+
+      abi = utils.getAbi(abiFile);
+
+      const results = getFunctionFromConfig(abi, functions);
+      functionInConfig = results.functionInConfig;
+      functionNotInConfig = results.functionNotInConfig;
+      findingType = results.findingType;
+      findingSeverity = results.findingSeverity;
+
+      if (functionInConfig === undefined) {
+        throw new Error('Could not extract valid function from configuration file');
+      }
+
+      if (functionNotInConfig === undefined) {
+        throw new Error('Could not find function from ABI not in configuration file');
+      }
+
+      iface = new ethers.utils.Interface(abi);
 
       // initialize mock trace object with default values
       mockTrace = [
@@ -138,8 +237,8 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address does not match', async () => {
       // encode function data
       // valid function name with valid arguments
-      const mockArgs = [[ethers.constants.AddressZero], [true]];
-      const mockFunctionData = iface.encodeFunctionData('monitoredFunctionName', mockArgs);
+      const { mockArgs } = createMockArgs(functionInConfig);
+      const mockFunctionData = iface.encodeFunctionData(functionInConfig.name, mockArgs);
 
       // update mock trace object with encoded function data
       mockTrace[0].action.input = mockFunctionData;
@@ -155,42 +254,62 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
       // encode function data
       // valid function name with valid arguments
-      const mockArgs = [ethers.constants.AddressZero, ethers.utils.parseEther('1.0')];
-      const mockFunctionData = iface.encodeFunctionData('unmonitoredFunctionName', mockArgs);
+      const { mockArgs } = createMockArgs(functionNotInConfig);
+      const mockFunctionData = iface.encodeFunctionData(functionNotInConfig.name, mockArgs);
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
-      mockTrace[0].action.to = address;
-      mockTrace[0].action.from = address;
+      mockTrace[0].action.to = validContractAddress;
+      mockTrace[0].action.from = validContractAddress;
 
       // update mock transaction event with new mock trace and correct contract address
       mockTxEvent.traces = mockTrace;
-      mockTxEvent.transaction.to = address;
+      mockTxEvent.transaction.to = validContractAddress;
 
       const findings = await handleTransaction(mockTxEvent);
 
       expect(findings).toStrictEqual([]);
     });
 
-    it('returns a finding if a target contract invokes a monitored function', async () => {
+    it('returns a finding if a target contract invokes a monitored function with no expression', async () => {
       // encode function data
       // valid function name with valid arguments
-      const mockArgs = [[ethers.constants.AddressZero], [true]];
-      const mockFunctionData = iface.encodeFunctionData('monitoredFunctionName', mockArgs);
+      const { mockArgs, argNames } = createMockArgs(functionInConfig);
+      const mockFunctionData = iface.encodeFunctionData(functionInConfig.name, mockArgs);
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
-      mockTrace[0].action.to = address;
-      mockTrace[0].action.from = address;
+      mockTrace[0].action.to = validContractAddress;
+      mockTrace[0].action.from = validContractAddress;
 
       // update mock transaction event with new mock trace and correct contract address
       mockTxEvent.traces = mockTrace;
-      mockTxEvent.transaction.to = address;
+      mockTxEvent.transaction.to = validContractAddress;
+
+      // eliminate any expression
+      const functionSignatures = initializeData.contracts[0].functionSignatures;
+      delete functionSignatures[0].expression;
+      delete functionSignatures[0].expressionObject;
 
       const findings = await handleTransaction(mockTxEvent);
 
+      const argumentData = {};
+      argNames.forEach((name) => argumentData[name] = '0');
+
       // create the expected finding
       const testFindings = [Finding.fromObject({
+        alertId: `${developerAbbreviation}-${protocolAbbreviation}-FUNCTION-CALL`,
+        description: `The ${functionInConfig.name} function was invoked in the ${contractName} contract`,
+        name: `${protocolName} Function Call`,
+        protocol: protocolName,
+        severity: FindingSeverity[findingSeverity],
+        type: FindingType[findingType],
+        metadata: {
+          contractAddress: validContractAddress,
+          contractName,
+          functionName: functionInConfig.name,
+          ...argumentData,
+        },
       })];
 
       expect(findings).toStrictEqual(testFindings);
