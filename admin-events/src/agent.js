@@ -28,10 +28,18 @@ const config = require('../agent-config.json');
 const initializeData = {};
 
 function evaluateExpression(leftOperand, operator, rightOperand) {
-  switch(operator) {
+  switch (operator) {
     case '===':
+      if (ethers.BigNumber.isBigNumber(leftOperand) && ethers.BigNumber.isBigNumber(rightOperand)) {
+        return leftOperand.eq(rightOperand);
+      }
+
       return leftOperand === rightOperand;
     case '!==':
+      if (ethers.BigNumber.isBigNumber(leftOperand) && ethers.BigNumber.isBigNumber(rightOperand)) {
+        return !(leftOperand.eq(rightOperand));
+      }
+
       return leftOperand !== rightOperand;
     case '>=':
       return leftOperand.gte(rightOperand);
@@ -50,12 +58,12 @@ function checkLogAgainstExpression(expression, log) {
   // split the expression given in the config file into an argument name, an operator, and a value
   const [argName, operator, operand] = expression.split(/(\s+)/).filter(
     // trim any additional whitespace that may accidentally be present in a passed-in expression
-    (string) => string.trim().length > 0
+    (string) => string.trim().length > 0,
   );
 
   // check to make sure we received an argName, operator, and operand
   if (argName === undefined || operator === undefined || operand === undefined) {
-    throw new Error("Invalid expression given, one or more values are undefined");
+    throw new Error('Invalid expression given, one or more values are undefined');
   }
 
   if (log.args[argName] === undefined) {
@@ -63,7 +71,7 @@ function checkLogAgainstExpression(expression, log) {
     // user's argument name does not coincide with the names of the event ABI
     const logArgNames = Object.keys(log.args);
     throw new Error(
-      `Argument name ${argName} does not match any of the arguments found in an ${log.name} log: ${logArgNames}`
+      `Argument name ${argName} does not match any of the arguments found in a ${log.name} log: ${logArgNames}`,
     );
   }
 
@@ -217,8 +225,8 @@ function provideHandleTransaction(data) {
       // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
       // configuration file for each Event log, respectively
       parsedLogs.forEach((parsedLog) => {
-        const { expression } = events[parsedLog.name];
-        if (checkLogAgainstExpression(expression, parsedLog)) {
+        const { expression, expectedResult } = events[parsedLog.name];
+        if (checkLogAgainstExpression(expression, parsedLog) !== expectedResult) {
           findings.push(createAlert(
             parsedLog.name,
             contract.name,

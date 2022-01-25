@@ -1,5 +1,4 @@
 {
-  "everestId": "",
   "developerAbbreviation": "",
   "protocolName": "",
   "protocolAbbreviation": "",
@@ -10,6 +9,7 @@
       "events": {
         "EventName": {
           "expression": "",
+          "expectedResult": true,
           "type": "Type",
           "severity": "Severity"
         }
@@ -21,6 +21,7 @@
       "events": {
         "EventName1": {
           "expression": "",
+          "expectedResult": false,
           "type": "Type",
           "severity": "Severity"
         }
