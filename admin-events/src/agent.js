@@ -2,24 +2,12 @@ const {
   Finding, FindingSeverity, FindingType, ethers,
 } = require('forta-agent');
 
-function getAbi(abiName) {
-  // eslint-disable-next-line global-require,import/no-dynamic-require
-  const { abi } = require(`../abi/${abiName}`);
-  return abi;
-}
-
-// helper function that identifies key strings in the args array obtained from log parsing
-// these key-value pairs will be added to the metadata as event args
-// all values are converted to strings so that BigNumbers are readable
-function extractEventArgs(args) {
-  const eventArgs = {};
-  Object.keys(args).forEach((key) => {
-    if (Number.isNaN(Number(key))) {
-      eventArgs[key] = args[key].toString();
-    }
-  });
-  return eventArgs;
-}
+const {
+  getAbi,
+  extractEventArgs,
+  parseExpression,
+  checkLogAgainstExpression,
+} = require('./utils');
 
 // load any agent configuration parameters
 const config = require('../agent-config.json');
@@ -27,69 +15,12 @@ const config = require('../agent-config.json');
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
 
-function evaluateExpression(leftOperand, operator, rightOperand) {
-  switch (operator) {
-    case '===':
-      if (ethers.BigNumber.isBigNumber(leftOperand) && ethers.BigNumber.isBigNumber(rightOperand)) {
-        return leftOperand.eq(rightOperand);
-      }
-
-      return leftOperand === rightOperand;
-    case '!==':
-      if (ethers.BigNumber.isBigNumber(leftOperand) && ethers.BigNumber.isBigNumber(rightOperand)) {
-        return !(leftOperand.eq(rightOperand));
-      }
-
-      return leftOperand !== rightOperand;
-    case '>=':
-      return leftOperand.gte(rightOperand);
-    case '<=':
-      return leftOperand.lte(rightOperand);
-    case '>':
-      return leftOperand.gt(rightOperand);
-    case '<':
-      return leftOperand.lt(rightOperand);
-    default:
-      throw new Error(`Operator ${operator} is not supported`);
-  }
-}
-
-function checkLogAgainstExpression(expression, log) {
-  // split the expression given in the config file into an argument name, an operator, and a value
-  const [argName, operator, operand] = expression.split(/(\s+)/).filter(
-    // trim any additional whitespace that may accidentally be present in a passed-in expression
-    (string) => string.trim().length > 0,
-  );
-
-  // check to make sure we received an argName, operator, and operand
-  if (argName === undefined || operator === undefined || operand === undefined) {
-    throw new Error('Invalid expression given, one or more values are undefined');
-  }
-
-  if (log.args[argName] === undefined) {
-    // passed-in argument name from config file was not found in the log, which means that the
-    // user's argument name does not coincide with the names of the event ABI
-    const logArgNames = Object.keys(log.args);
-    throw new Error(
-      `Argument name ${argName} does not match any of the arguments found in a ${log.name} log: ${logArgNames}`,
-    );
-  }
-
-  // convert the value of argName and the operand value into their corresponding types
-  // we assume that any value prefixed with '0x' is an address as a hex string, otherwise it will
-  // be interpreted as an ethers BigNumber
-  let argValue = log.args[argName];
-  argValue = argValue.substring(0, 2) === '0x' ? argValue : ethers.BigNumber.from(argValue);
-  const operandValue = operand.substring(0, 2) === '0x' ? operand : ethers.BigNumber.from(operand);
-  return evaluateExpression(argValue, operator, operandValue);
-}
-
 // get the Array of events for a given contract
 function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
   const proxyName = contractEventConfig.proxy;
   let { events } = contractEventConfig;
+  const eventInfo = [];
 
-  const eventSignatures = [];
   let eventNames = [];
   if (events === undefined) {
     if (proxyName === undefined) {
@@ -112,20 +43,31 @@ function getEvents(contractEventConfig, currentContract, adminEvents, contracts)
       // find the abi for the contract the proxy is pointing to and get the event signatures
       const [proxiedContract] = contracts.filter((contract) => proxyName === contract.name);
       Object.keys(proxyEvents).forEach((eventName) => {
-        eventSignatures.push(
-          proxiedContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
-        );
+        eventInfo.push({
+          name: eventName,
+          // eslint-disable-next-line max-len
+          signature: proxiedContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
+          expressionObject: parseExpression(proxyEvents[eventName].expression),
+          expectedResult: proxyEvents[eventName].expectedResult,
+          type: proxyEvents[eventName].type,
+          severity: proxyEvents[eventName].severity,
+        });
       });
     }
   }
 
   eventNames.forEach((eventName) => {
-    eventSignatures.push(
-      currentContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
-    );
+    eventInfo.push({
+      name: eventName,
+      signature: currentContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
+      expressionObject: parseExpression(events[eventName].expression),
+      expectedResult: events[eventName].expectedResult,
+      type: events[eventName].type,
+      severity: events[eventName].severity,
+    });
   });
 
-  return { events, eventSignatures };
+  return { eventInfo };
 }
 
 // helper function to create alerts
@@ -164,7 +106,6 @@ function provideInitialize(data) {
     /* eslint-disable no-param-reassign */
     // assign configurable fields
     data.adminEvents = config.adminEvents;
-    data.everestId = config.everestId;
     data.protocolName = config.protocolName;
     data.protocolAbbreviation = config.protocolAbbreviation;
     data.developerAbbreviation = config.developerAbbreviation;
@@ -193,12 +134,8 @@ function provideInitialize(data) {
 
     data.contracts.forEach((contract) => {
       const entry = data.adminEvents[contract.name];
-      const {
-        events,
-        eventSignatures,
-      } = getEvents(entry, contract, data.adminEvents, data.contracts);
-      contract.events = events;
-      contract.eventSignatures = eventSignatures;
+      const { eventInfo } = getEvents(entry, contract, data.adminEvents, data.contracts);
+      contract.eventInfo = eventInfo;
     });
 
     /* eslint-enable no-param-reassign */
@@ -208,7 +145,7 @@ function provideInitialize(data) {
 function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
     const {
-      contracts, everestId, protocolName, protocolAbbreviation, developerAbbreviation,
+      contracts, protocolName, protocolAbbreviation, developerAbbreviation,
     } = data;
     if (!contracts) throw new Error('handleTransaction called before initialization');
 
@@ -217,29 +154,39 @@ function provideHandleTransaction(data) {
     // iterate over each contract name to get the address and events
     contracts.forEach((contract) => {
       // for each contract look up the events of interest
-      const { events, eventSignatures } = contract;
+      const { eventInfo } = contract;
 
-      // filter down to only the events we want to alert on
-      const parsedLogs = txEvent.filterLog(eventSignatures, contract.address);
+      // iterate over all events in a give contract's eventInfo field
+      eventInfo.forEach((event) => {
+        const {
+          name,
+          signature,
+          expressionObject,
+          expectedResult,
+          type,
+          severity,
+        } = event;
 
-      // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
-      // configuration file for each Event log, respectively
-      parsedLogs.forEach((parsedLog) => {
-        const { expression, expectedResult } = events[parsedLog.name];
-        if (checkLogAgainstExpression(expression, parsedLog) !== expectedResult) {
-          findings.push(createAlert(
-            parsedLog.name,
-            contract.name,
-            contract.address,
-            events[parsedLog.name].type,
-            events[parsedLog.name].severity,
-            parsedLog.args,
-            everestId,
-            protocolName,
-            protocolAbbreviation,
-            developerAbbreviation,
-          ));
-        }
+        // filter down to only the events we want to alert on
+        const parsedLogs = txEvent.filterLog(signature, contract.address);
+
+        // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
+        // configuration file for each Event log, respectively
+        parsedLogs.forEach((parsedLog) => {
+          if (checkLogAgainstExpression(expressionObject, parsedLog) !== expectedResult) {
+            findings.push(createAlert(
+              name,
+              contract.name,
+              contract.address,
+              type,
+              severity,
+              parsedLog.args,
+              protocolName,
+              protocolAbbreviation,
+              developerAbbreviation,
+            ));
+          }
+        });
       });
     });
 
