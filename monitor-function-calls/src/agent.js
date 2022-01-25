@@ -25,10 +25,11 @@ function createAlert(
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
+  expression,
 ) {
-
   const functionArgs = extractFunctionArgs(args);
-  return Finding.fromObject({
+
+  const finding = {
     name: `${protocolName} Function Call`,
     description: `The ${functionName} function was invoked in the ${contractName} contract`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-FUNCTION-CALL`,
@@ -41,14 +42,19 @@ function createAlert(
       functionName,
       ...functionArgs,
     },
-  });
+  };
+
+  if (expression !== undefined) {
+    finding.description += `, condition met: ${expression}`;
+  }
+
+  return Finding.fromObject(finding);
 }
 
 function provideInitialize(data) {
   return async function initialize() {
 
     data.contractInfo = config.contracts;
-
     data.developerAbbreviation = config.developerAbbreviation;
     data.protocolName = config.protocolName;
     data.protocolAbbreviation = config.protocolAbbreviation;
@@ -65,13 +71,19 @@ function provideInitialize(data) {
         const { expression, type, severity } = functions[functionName];
         try {
           const fragment = iface.getFunction(functionName);
-          return {
+
+          const result = {
             functionName,
             signature: fragment.format(ethers.utils.FormatTypes.full),
-            expressionObject: parseExpression(expression),
             functionType: type,
             functionSeverity: severity,
           };
+
+          if (expression !== undefined) {
+            result.expression = expression;
+            result.expressionObject = parseExpression(expression);
+          }
+          return result;
         } catch {
           return '';
         }
@@ -97,6 +109,7 @@ function provideHandleTransaction(data) {
 
     const findings = [];
 
+    // iterate over all of the contracts from the configuration file
     contracts.forEach((contract) => {
 
       const {
@@ -112,6 +125,7 @@ function provideHandleTransaction(data) {
           functionName,
           signature,
           expressionObject,
+          expression,
           functionType,
           functionSeverity
         } = entry;
@@ -124,19 +138,27 @@ function provideHandleTransaction(data) {
         // loop over the Array of results
         // the transaction may contain more than one function call to the same function
         parsedFunctions.forEach((parsedFunction) => {
-          if (checkLogAgainstExpression(expressionObject, parsedFunction)) {
-            findings.push(createAlert(
-              functionName,
-              name,
-              address,
-              functionType,
-              functionSeverity,
-              parsedFunction.args,
-              protocolName,
-              protocolAbbreviation,
-              developerAbbreviation,
-            ));
+
+          // if there is an expression to check, verify the condition before creating an alert
+          if (expression !== undefined) {
+            if (!checkLogAgainstExpression(expressionObject, parsedFunction)) {
+              return;
+            }
           }
+
+          // create a finding
+          findings.push(createAlert(
+            functionName,
+            name,
+            address,
+            functionType,
+            functionSeverity,
+            parsedFunction.args,
+            protocolName,
+            protocolAbbreviation,
+            developerAbbreviation,
+            expression,
+          ));
         });
       });
     });
