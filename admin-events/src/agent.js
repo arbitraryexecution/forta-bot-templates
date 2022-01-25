@@ -43,28 +43,41 @@ function getEvents(contractEventConfig, currentContract, adminEvents, contracts)
       // find the abi for the contract the proxy is pointing to and get the event signatures
       const [proxiedContract] = contracts.filter((contract) => proxyName === contract.name);
       Object.keys(proxyEvents).forEach((eventName) => {
-        eventInfo.push({
+        const eventObject = {
           name: eventName,
           // eslint-disable-next-line max-len
           signature: proxiedContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
-          expressionObject: parseExpression(proxyEvents[eventName].expression),
-          expectedResult: proxyEvents[eventName].expectedResult,
           type: proxyEvents[eventName].type,
           severity: proxyEvents[eventName].severity,
-        });
+        };
+
+        const { expression } = proxyEvents[eventName];
+        if (expression !== undefined) {
+          eventObject.expression = expression;
+          eventObject.expressionObject = parseExpression(expression);
+          eventObject.expectedResult = proxyEvents[eventName].expectedResult;
+        }
+
+        eventInfo.push(eventObject);
       });
     }
   }
 
   eventNames.forEach((eventName) => {
-    eventInfo.push({
+    const eventObject = {
       name: eventName,
       signature: currentContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
-      expressionObject: parseExpression(events[eventName].expression),
-      expectedResult: events[eventName].expectedResult,
       type: events[eventName].type,
       severity: events[eventName].severity,
-    });
+    };
+
+    const { expression } = events[eventName];
+    if (expression !== undefined) {
+      eventObject.expression = expression;
+      eventObject.expressionObject = parseExpression(expression);
+      eventObject.expectedResult = events[eventName].expectedResult;
+    }
+    eventInfo.push(eventObject);
   });
 
   return { eventInfo };
@@ -78,19 +91,18 @@ function createAlert(
   eventType,
   eventSeverity,
   args,
-  everestId,
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
+  expression,
 ) {
   const eventArgs = extractEventArgs(args);
-  return Finding.fromObject({
+  const finding = Finding.fromObject({
     name: `${protocolName} Admin Event`,
     description: `The ${eventName} event was emitted by the ${contractName} contract`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
     type: FindingType[eventType],
     severity: FindingSeverity[eventSeverity],
-    everestId,
     protocol: protocolName,
     metadata: {
       contractName,
@@ -99,6 +111,12 @@ function createAlert(
       ...eventArgs,
     },
   });
+
+  if (expression !== undefined) {
+    finding.description += ` with condition met: ${expression}`;
+  }
+
+  return Finding.fromObject(finding);
 }
 
 function provideInitialize(data) {
@@ -161,6 +179,7 @@ function provideHandleTransaction(data) {
         const {
           name,
           signature,
+          expression,
           expressionObject,
           expectedResult,
           type,
@@ -173,19 +192,25 @@ function provideHandleTransaction(data) {
         // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
         // configuration file for each Event log, respectively
         parsedLogs.forEach((parsedLog) => {
-          if (checkLogAgainstExpression(expressionObject, parsedLog) !== expectedResult) {
-            findings.push(createAlert(
-              name,
-              contract.name,
-              contract.address,
-              type,
-              severity,
-              parsedLog.args,
-              protocolName,
-              protocolAbbreviation,
-              developerAbbreviation,
-            ));
+          // if there is an expression to check, verify the condition before creating an alert
+          if (expression !== undefined) {
+            if (checkLogAgainstExpression(expressionObject, parsedLog) === expectedResult) {
+              return;
+            }
           }
+
+          findings.push(createAlert(
+            name,
+            contract.name,
+            contract.address,
+            type,
+            severity,
+            parsedLog.args,
+            protocolName,
+            protocolAbbreviation,
+            developerAbbreviation,
+            expression,
+          ));
         });
       });
     });

@@ -8,7 +8,7 @@
       "abiFile": "filename1.json",
       "events": {
         "EventName": {
-          "expression": "",
+          "expression": "address !== 0x0000000000000000000000000000000000000000",
           "expectedResult": true,
           "type": "Type",
           "severity": "Severity"
@@ -20,8 +20,6 @@
       "abiFile": "filename2.json",
       "events": {
         "EventName1": {
-          "expression": "",
-          "expectedResult": false,
           "type": "Type",
           "severity": "Severity"
         }
