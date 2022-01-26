@@ -122,8 +122,10 @@ function getFunctionFromConfig(abi, functions) {
 function createMockArgs(functionObject) {
   const mockArgs = [];
   const argNames = [];
+  const argTypes = [];
   functionObject.inputs.forEach((entry) => {
     argNames.push(entry.name);
+    argTypes.push(entry.type);
     switch (entry.type) {
       case "uint256":
         mockArgs.push(ethers.constants.HashZero);
@@ -154,7 +156,7 @@ function createMockArgs(functionObject) {
         break;
     }
   });
-  return { mockArgs, argNames };
+  return { mockArgs, argNames, argTypes };
 }
 
 // set up test configuration parameters that won't change with each test
@@ -165,32 +167,59 @@ const contractNames = Object.keys(configContracts);
 let contractName;
 let validContractAddress;
 let abi;
-let index = 0;
 let testConfig = {};
 
-// this while loop will check each entry in the configuration file to select a single contract that
-// has a named function to monitor and then, within the corresponding ABI file, has an additional
-// named function that is NOT monitored.  The reason for this is to have positive and negative test
-// cases for this script based on the configuration file.
-while ((testConfig.functionInConfig === undefined) && (testConfig.functionNotInConfig === undefined) && (index < contractNames.length)) {
-  contractName = Object.keys(configContracts)[index];
-  const { abiFile, functions } = configContracts[contractName];
-  validContractAddress = configContracts[contractName].address;
+contractName = Object.keys(configContracts)[0];
+const { abiFile, functions } = configContracts[contractName];
+validContractAddress = configContracts[contractName].address;
 
-  abi = utils.getAbi(abiFile);
-  testConfig = getFunctionFromConfig(abi, functions);
-  index += 1;
+abi = utils.getAbi(abiFile);
+const functionObjects = getObjectsFromAbi(abi, 'function');
+
+// create a fake function name
+function getRandomCharacterString(numCharacters) {
+  let result = "";
+  let charCode;
+  for (let i=0; i<numCharacters; i++) {
+    charCode = Math.floor(Math.random() * 52);
+    if (charCode < 26) {
+      charCode += 65;
+    } else {
+      charCode += 97 - 26;
+    }
+    result += String.fromCharCode(charCode);
+  }
+  return result;
 }
 
+let fakeFunctionName = getRandomCharacterString(16);
+while (Object.keys(functionObjects).indexOf(fakeFunctionName) !== -1) {
+  fakeFunctionName = getRandomCharacterString(16);
+}
+
+// add a fake function to the ABI in preparation for a negative test case
+// do this before creating an ethers Interface with the ABI
+abi.push({
+  inputs: [
+    { internalType: "uint256", name: "fakeInput0", type: "uint256" },
+    { internalType: "uint256", name: "fakeInput1", type: "uint256" },
+    { internalType: "address", name: "fakeInput1", type: "address" },
+  ],
+  name: fakeFunctionName,
+  outputs: [
+    { internalType: "uint256", name: "fakeOutput0", type: "uint256" },
+    { internalType: "address", name: "fakeOutput1", type: "address" }
+  ],
+  stateMutability: "nonpayable",
+  type: "function",
+});
+
+// create an ethers Interface
 let iface = new ethers.utils.Interface(abi);
 
-if (testConfig.functionInConfig === undefined) {
-  throw new Error('Could not extract valid function from configuration file');
-}
-
-if (testConfig.functionNotInConfig === undefined) {
-  throw new Error('Could not find function from ABI not in configuration file');
-}
+// retrieve a function object from the ABI corresponding to a monitored function
+// also retrieve the fake function that we know will be unmonitored
+testConfig = getFunctionFromConfig(abi, functions);
 
 // tests
 describe('monitor functions that do not emit events', () => {
@@ -323,12 +352,19 @@ describe('monitor functions that do not emit events', () => {
 
       // eliminate any expression from the configuration file
       const functionSignatures = initializeData.contracts[0].functionSignatures;
+
       // these delete statements will still work even if the keys don't exist
+      const { expression } = functionSignatures[0];
       const { variableName, operator, value } = functionSignatures[0].expressionObject;
 
       // encode function data
       // valid function name with valid arguments
-      const { mockArgs, argNames } = createMockArgs(testConfig.functionInConfig);
+      const { mockArgs, argNames, argTypes } = createMockArgs(testConfig.functionInConfig);
+
+      const argumentData = {};
+      argNames.forEach((name, argIndex) => {
+        argumentData[name] = '0';
+      });
 
       // find the variable name in the Array of argument names
       // examine the operator and variable type
@@ -339,16 +375,20 @@ describe('monitor functions that do not emit events', () => {
           case '>=':
           case '<=':
           case '===':
-            mockArgs[argIndex] = ethers.utils.BigNumber.from(value.toString()).toHexString();
+            // set the argument equal to the expression value
+            mockArgs[argIndex] = ethers.BigNumber.from(value.toString()).toHexString();
             break;
           case '>':
           case '!==':
-            mockArgs[argIndex] = ethers.utils.BigNumber.from(value.plus(1).toString()).toHexString();
+            // set the argument just slightly higher than the expression value
+            mockArgs[argIndex] = ethers.BigNumber.from(value.plus(1).toString()).toHexString();
             break;
           case '<':
-            mockArgs[argIndex] = ethers.utils.BigNumber.from(value.minus(1).toString()).toHexString();
+            // set the argument just slightly lower than the expression value
+            mockArgs[argIndex] = ethers.BigNumber.from(value.minus(1).toString()).toHexString();
             break;
         }
+        argumentData[argNames[argIndex]] = ethers.BigNumber.from(mockArgs[argIndex]).toString(10);
       }
       else if (typeof(value) === 'boolean') {
       }
@@ -363,6 +403,7 @@ describe('monitor functions that do not emit events', () => {
             }
             break;
         }
+        argumentData[argNames[argIndex]] = mockArgs[argIndex].toString(10);
       }
 
       const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, mockArgs);
@@ -376,20 +417,15 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.traces = mockTrace;
       mockTxEvent.transaction.to = validContractAddress;
 
-      console.log(variableName);
-      console.log(operator);
-      console.log(value);
-
       // run the handler
       const findings = await handleTransaction(mockTxEvent);
 
-      const argumentData = {};
-      argNames.forEach((name) => argumentData[name] = '0');
-
       // create the expected finding
+      const description = `The ${testConfig.functionInConfig.name} function was invoked in the ${contractName} contract, condition met: ${expression}`;
+
       const testFindings = [Finding.fromObject({
         alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-FUNCTION-CALL`,
-        description: `The ${testConfig.functionInConfig.name} function was invoked in the ${contractName} contract`,
+        description,
         name: `${config.protocolName} Function Call`,
         protocol: config.protocolName,
         severity: FindingSeverity[testConfig.findingSeverity],
