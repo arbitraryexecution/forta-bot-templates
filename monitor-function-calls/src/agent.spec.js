@@ -93,23 +93,18 @@ describe('check agent configuration file', () => {
   });
 });
 
-function getFunctionFromConfig(abi, functions) {
+function getFunctionFromConfig(abi, functions, fakeFunctionName) {
   let functionInConfig;
-  let functionNotInConfig;
   let findingType;
   let findingSeverity;
 
+  throw new Error('This does not work because the fake function does not exist in functions');
+
   const functionsInConfig = Object.keys(functions);
+  const functionNotInConfig = functionsInConfig[fakeFunctionName];
+
   const functionObjects = getObjectsFromAbi(abi, 'function');
   Object.keys(functionObjects).forEach((name) => {
-    if ((functionNotInConfig !== undefined) && (functionInConfig !== undefined)) {
-      return;
-    }
-
-    if ((functionsInConfig.indexOf(name) === -1) && (functionNotInConfig === undefined)) {
-      functionNotInConfig = functionObjects[name];
-    }
-
     if ((functionsInConfig.indexOf(name) !== -1) && (functionInConfig === undefined)) {
       functionInConfig = functionObjects[name];
       findingType = functions[name].type;
@@ -249,7 +244,10 @@ let iface = new ethers.utils.Interface(abi);
 
 // retrieve a function object from the ABI corresponding to a monitored function
 // also retrieve the fake function that we know will be unmonitored
-testConfig = getFunctionFromConfig(abi, functions);
+testConfig = getFunctionFromConfig(abi, functions, fakeFunctionName);
+
+console.log('Test Config: ');
+console.log(testConfig);
 
 // tests
 describe('monitor functions that do not emit events', () => {
@@ -414,7 +412,7 @@ describe('monitor functions that do not emit events', () => {
             mockArgs[argIndex] = ethers.BigNumber.from(value.minus(1).toString()).toHexString();
             break;
         }
-        argumentData[argNames[argIndex]] = ethers.BigNumber.from(mockArgs[argIndex]).toString(10);
+        argumentData[argNames[argIndex]] = ethers.BigNumber.from(mockArgs[argIndex]).toString();
       }
       else if (typeof(value) === 'boolean') {
       }
@@ -429,7 +427,7 @@ describe('monitor functions that do not emit events', () => {
             }
             break;
         }
-        argumentData[argNames[argIndex]] = ethers.utils.getAddress(mockArgs[argIndex].toString(10));
+        argumentData[argNames[argIndex]] = ethers.utils.getAddress(mockArgs[argIndex].toString());
       }
 
       const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, mockArgs);
@@ -507,7 +505,7 @@ describe('monitor functions that do not emit events', () => {
             mockArgs[argIndex] = ethers.BigNumber.from(value.plus(1).toString()).toHexString();
             break;
         }
-        argumentData[argNames[argIndex]] = ethers.BigNumber.from(mockArgs[argIndex]).toString(10);
+        argumentData[argNames[argIndex]] = ethers.BigNumber.from(mockArgs[argIndex]).toString();
       }
       else if (typeof(value) === 'boolean') {
       }
@@ -522,7 +520,7 @@ describe('monitor functions that do not emit events', () => {
             }
             break;
         }
-        argumentData[argNames[argIndex]] = ethers.utils.getAddress(mockArgs[argIndex].toString(10));
+        argumentData[argNames[argIndex]] = ethers.utils.getAddress(mockArgs[argIndex].toString());
       }
 
       const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, mockArgs);
