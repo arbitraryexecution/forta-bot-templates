@@ -21,9 +21,9 @@ function isAddress(valueString) {
 function addressComparison(variable, operator, operand) {
   switch (operator) {
     case '===':
-      return variable === operand;
+      return variable.toLowerCase() === operand.toLowerCase();
     case '!==':
-      return variable !== operand;
+      return variable.toLowerCase() !== operand.toLowerCase();
     default:
       throw new Error(`Address operator ${operator} not supported`);
   }
