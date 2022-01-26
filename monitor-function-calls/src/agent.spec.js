@@ -7,6 +7,7 @@ const { provideHandleTransaction, provideInitialize } = require('./agent');
 const utils = require('./utils');
 
 const config = require('../agent-config.json');
+const { default: BigNumber } = require('bignumber.js');
 
 // extract objects of a particular type from an ABI
 // for example, 'function' or 'event'
@@ -166,6 +167,11 @@ let validContractAddress;
 let abi;
 let index = 0;
 let testConfig = {};
+
+// this while loop will check each entry in the configuration file to select a single contract that
+// has a named function to monitor and then, within the corresponding ABI file, has an additional
+// named function that is NOT monitored.  The reason for this is to have positive and negative test
+// cases for this script based on the configuration file.
 while ((testConfig.functionInConfig === undefined) && (testConfig.functionNotInConfig === undefined) && (index < contractNames.length)) {
   contractName = Object.keys(configContracts)[index];
   const { abiFile, functions } = configContracts[contractName];
@@ -282,11 +288,13 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.traces = mockTrace;
       mockTxEvent.transaction.to = validContractAddress;
 
-      // eliminate any expression
+      // eliminate any expression from the configuration file
       const functionSignatures = initializeData.contracts[0].functionSignatures;
+      // these delete statements will still work even if the keys don't exist
       delete functionSignatures[0].expression;
       delete functionSignatures[0].expressionObject;
 
+      // run the handler
       const findings = await handleTransaction(mockTxEvent);
 
       const argumentData = {};
@@ -310,5 +318,93 @@ describe('monitor functions that do not emit events', () => {
 
       expect(findings).toStrictEqual(testFindings);
     });
+
+    it('returns a finding if a target contract invokes a monitored function when the expression condition is met', async () => {
+
+      // eliminate any expression from the configuration file
+      const functionSignatures = initializeData.contracts[0].functionSignatures;
+      // these delete statements will still work even if the keys don't exist
+      const { variableName, operator, value } = functionSignatures[0].expressionObject;
+
+      // encode function data
+      // valid function name with valid arguments
+      const { mockArgs, argNames } = createMockArgs(testConfig.functionInConfig);
+
+      // find the variable name in the Array of argument names
+      // examine the operator and variable type
+      // reset the appropriate value in the mockArgs Array to meet the condition
+      const argIndex = argNames.indexOf(variableName);
+      if (BigNumber.isBigNumber(value)) {
+        switch (operator) {
+          case '>=':
+          case '<=':
+          case '===':
+            mockArgs[argIndex] = ethers.utils.BigNumber.from(value.toString()).toHexString();
+            break;
+          case '>':
+          case '!==':
+            mockArgs[argIndex] = ethers.utils.BigNumber.from(value.plus(1).toString()).toHexString();
+            break;
+          case '<':
+            mockArgs[argIndex] = ethers.utils.BigNumber.from(value.minus(1).toString()).toHexString();
+            break;
+        }
+      }
+      else if (typeof(value) === 'boolean') {
+      }
+      else if (typeof(value) === 'address') {
+        switch (operator) {
+          case '===':
+            mockArgs[argIndex] = value.toString();
+            break;
+          case '!==':
+            if (mockArgs[argIndex] === value) {
+              mockArgs[argIndex] = (new BigNumber(value)).plus(1).toString();
+            }
+            break;
+        }
+      }
+
+      const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, mockArgs);
+
+      // update mock trace object with encoded function data and correct contract address
+      mockTrace[0].action.input = mockFunctionData;
+      mockTrace[0].action.to = validContractAddress;
+      mockTrace[0].action.from = validContractAddress;
+
+      // update mock transaction event with new mock trace and correct contract address
+      mockTxEvent.traces = mockTrace;
+      mockTxEvent.transaction.to = validContractAddress;
+
+      console.log(variableName);
+      console.log(operator);
+      console.log(value);
+
+      // run the handler
+      const findings = await handleTransaction(mockTxEvent);
+
+      const argumentData = {};
+      argNames.forEach((name) => argumentData[name] = '0');
+
+      // create the expected finding
+      const testFindings = [Finding.fromObject({
+        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-FUNCTION-CALL`,
+        description: `The ${testConfig.functionInConfig.name} function was invoked in the ${contractName} contract`,
+        name: `${config.protocolName} Function Call`,
+        protocol: config.protocolName,
+        severity: FindingSeverity[testConfig.findingSeverity],
+        type: FindingType[testConfig.findingType],
+        metadata: {
+          contractAddress: validContractAddress,
+          contractName,
+          functionName: testConfig.functionInConfig.name,
+          ...argumentData,
+        },
+      })];
+
+      expect(findings).toStrictEqual(testFindings);
+    });
+
+
   });
 });
