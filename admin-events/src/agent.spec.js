@@ -116,56 +116,109 @@ function getEventFromConfig(abi, events) {
   };
 }
 
-function createMockArgs(eventObject, iface) {
+function createMockEventLogs(eventObject, iface) {
   const mockArgs = [];
   const mockTopics = [];
-  const argNames = [];
+  const eventTypes = [];
+  const defaultData = [];
+  const abiCoder = ethers.utils.defaultAbiCoder;
 
   // push the topic hash of the event to mockTopics - this is the first item in a topics array
   const fragment = iface.getEvent(eventObject.name);
   mockTopics.push(iface.getEventTopic(fragment));
 
   eventObject.inputs.forEach((entry) => {
-    argNames.push(entry.name);
     switch (entry.type) {
       case 'uint256':
-        mockTopics.push(2);
-        mockArgs[entry.name] = 2;
+        if (entry.indexed) {
+          mockTopics.push(0);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push(0);
+        }
+        mockArgs[entry.name] = 0;
         break;
       case 'uint256[]':
-        mockTopics.push([1]);
-        mockArgs[entry.name] = 1;
+        if (entry.indexed) {
+          mockTopics.push([1]);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push([1]);
+        }
+        mockArgs[entry.name] = [1];
         break;
       case 'address':
-        mockTopics.push(ethers.constants.AddressZero);
+        if (entry.indexed) {
+          mockTopics.push(ethers.constants.AddressZero);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push(ethers.constants.AddressZero);
+        }
         mockArgs[entry.name] = ethers.constants.AddressZero;
         break;
       case 'address[]':
-        mockTopics.push(ethers.constants.AddressZero);
+        if (entry.indexed) {
+          mockTopics.push(ethers.constants.AddressZero);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push([ethers.constants.AddressZero]);
+        }
         mockArgs[entry.name] = ethers.constants.AddressZero;
         break;
       case 'bytes':
-        mockTopics.push(0xFF);
-        mockArgs[entry.name] = 0xFF;
+        if (entry.indexed) {
+          mockTopics.push('0xff');
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push('0xff');
+        }
+        mockArgs[entry.name] = '0xff';
         break;
       case 'bytes[]':
-        mockTopics.push([0xFF]);
-        mockArgs[entry.name] = [0xFF];
+        if (entry.indexed) {
+          mockTopics.push(['0xff']);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push(['0xff']);
+        }
+        mockArgs[entry.name] = ['0xff'];
         break;
       case 'bytes32':
-        mockTopics.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        if (entry.indexed) {
+          mockTopics.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        }
         mockArgs[entry.name] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
         break;
       case 'bytes32[]':
-        mockTopics.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
-        mockArgs[entry.name] = [0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF];
+        if (entry.indexed) {
+          mockTopics.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
+        }
+        mockArgs[entry.name] = [
+          0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+        ];
         break;
       case 'string':
-        mockTopics.push('test');
+        if (entry.indexed) {
+          mockTopics.push('test');
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push('test');
+        }
         mockArgs[entry.name] = 'test';
         break;
       case 'string[]':
-        mockTopics.push(['0xTEST']);
+        if (entry.indexed) {
+          throw new Error('indexed string[] array not supported');
+        } else {
+          eventTypes.push(entry.type);
+          defaultData.push(['test']);
+        }
         mockArgs[entry.name] = ['test'];
         break;
       case 'tuple':
@@ -174,7 +227,9 @@ function createMockArgs(eventObject, iface) {
         throw new Error('Type passed in is not supported');
     }
   });
-  return { mockArgs, mockTopics, argNames };
+
+  const data = abiCoder.encode(eventTypes, defaultData);
+  return { mockArgs, mockTopics, data };
 }
 
 // tests
@@ -186,7 +241,6 @@ describe('monitor emitted events', () => {
     let protocolName;
     let contractName;
     let handleTransaction;
-    let mockTrace;
     let mockTxEvent;
     let iface;
     let abi;
@@ -226,7 +280,7 @@ describe('monitor emitted events', () => {
       }
 
       if (eventNotInConfig === undefined) {
-        // if no other events were present in the ABI, generate a default config so the tests can
+        // if no other events were present in the ABI, generate a default event so the tests can
         // be run
         eventNotInConfig = {
           anonymous: false,
@@ -241,6 +295,9 @@ describe('monitor emitted events', () => {
           name: 'TESTMockEvent',
           type: 'event',
         };
+
+        // push fake event to abi before creating the interface
+        abi.push(eventNotInConfig);
       }
 
       iface = new ethers.utils.Interface(abi);
@@ -262,55 +319,48 @@ describe('monitor emitted events', () => {
       });
     });
 
-    /*
     it('returns empty findings if no monitored events were emitted in the transaction', async () => {
       const findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
-    */
 
     it('returns empty findings if contract address does not match', async () => {
       // encode event data
       // valid event name with valid name, signature, topic, and args
-      const { mockArgs, mockTopics } = createMockArgs(eventInConfig, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.receipt.logs;
       defaultLog.name = contractName;
-      defaultLog.address = validContractAddress;
+      defaultLog.address = ethers.constants.AddressZero;
       defaultLog.topics = mockTopics;
       defaultLog.args = mockArgs;
+      defaultLog.data = data;
       defaultLog.signature = iface
         .getEvent(eventInConfig.name)
         .format(ethers.utils.FormatTypes.minimal)
         .substring(6);
 
-      mockTxEvent = createTransactionEvent({
-        receipt: { logs: [defaultLog] },
-        addresses: { [validContractAddress]: true },
-      });
-
-      console.log(defaultLog);
       const findings = await handleTransaction(mockTxEvent);
 
       expect(findings).toStrictEqual([]);
     });
 
-    /*
     it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
-      // encode function data
-      // valid function name with valid arguments
-      const { mockArgs } = createMockArgs(eventNotInConfig);
-      const mockFunctionData = iface.encodeFunctionData(eventNotInConfig.name, mockArgs);
+      // encode event data - valid event with valid arguments
+      const { mockArgs, mockTopics, data } = createMockEventLogs(eventNotInConfig, iface);
 
-      // update mock trace object with encoded function data and correct contract address
-      mockTrace[0].action.input = mockFunctionData;
-      mockTrace[0].action.to = validContractAddress;
-      mockTrace[0].action.from = validContractAddress;
-
-      // update mock transaction event with new mock trace and correct contract address
-      mockTxEvent.traces = mockTrace;
-      mockTxEvent.transaction.to = validContractAddress;
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.receipt.logs;
+      defaultLog.name = contractName;
+      defaultLog.address = ethers.constants.AddressZero;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(eventNotInConfig.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
 
       const findings = await handleTransaction(mockTxEvent);
 
@@ -318,49 +368,54 @@ describe('monitor emitted events', () => {
     });
 
     it('returns a finding if a target contract invokes a monitored function with no expression', async () => {
-      // encode function data
-      // valid function name with valid arguments
-      const { mockArgs, argNames } = createMockArgs(eventInConfig);
-      const mockFunctionData = iface.encodeFunctionData(eventInConfig.name, mockArgs);
+      // encode event data - valid event with valid arguments
+      const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
-      // update mock trace object with encoded function data and correct contract address
-      mockTrace[0].action.input = mockFunctionData;
-      mockTrace[0].action.to = validContractAddress;
-      mockTrace[0].action.from = validContractAddress;
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.receipt.logs;
+      defaultLog.name = contractName;
+      defaultLog.address = validContractAddress;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(eventInConfig.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
 
-      // update mock transaction event with new mock trace and correct contract address
-      mockTxEvent.traces = mockTrace;
-      mockTxEvent.transaction.to = validContractAddress;
+      console.log(defaultLog);
 
       // eliminate any expression
-      const { functionSignatures } = initializeData.contracts[0];
-      delete functionSignatures[0].expression;
-      delete functionSignatures[0].expressionObject;
+      const { eventInfo } = initializeData.contracts[0];
+      delete eventInfo[0].expression;
+      delete eventInfo[0].expressionObject;
+
+      let expectedMetaData = {};
+      Object.keys(mockArgs).forEach((name) => {
+        expectedMetaData[name] = mockArgs[name];
+      });
+      expectedMetaData = utils.extractEventArgs(expectedMetaData);
+      console.log(expectedMetaData);
 
       const findings = await handleTransaction(mockTxEvent);
 
-      const argumentData = {};
-      // eslint-disable-next-line no-return-assign
-      argNames.forEach((name) => argumentData[name] = '0');
-
       // create the expected finding
       const testFindings = [Finding.fromObject({
-        alertId: `${developerAbbreviation}-${protocolAbbreviation}-FUNCTION-CALL`,
-        description: `The ${eventInConfig.name} function was invoked in the ${contractName} contract`,
-        name: `${protocolName} Function Call`,
+        alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+        description: `The ${eventInConfig.name} event was emitted by the ${contractName} contract`,
+        name: `${protocolName} Admin Event`,
         protocol: protocolName,
         severity: FindingSeverity[findingSeverity],
         type: FindingType[findingType],
         metadata: {
           contractAddress: validContractAddress,
           contractName,
-          functionName: eventInConfig.name,
-          ...argumentData,
+          eventName: eventInConfig.name,
+          ...expectedMetaData,
         },
       })];
 
       expect(findings).toStrictEqual(testFindings);
     });
-    */
   });
 });

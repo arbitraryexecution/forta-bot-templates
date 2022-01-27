@@ -187,11 +187,8 @@ function provideHandleTransaction(data) {
         } = event;
 
         // filter down to only the events we want to alert on
-        // console.log(txEvent.receipt.logs[0].topics[0]);
-        const iface = new ethers.utils.Interface([signature]);
-        console.log(iface.parseLog(txEvent.receipt.logs[0]));
-        console.log(txEvent.receipt.logs[0]);
         const parsedLogs = txEvent.filterLog(signature, contract.address);
+        console.log(parsedLogs);
 
         // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
         // configuration file for each Event log, respectively
