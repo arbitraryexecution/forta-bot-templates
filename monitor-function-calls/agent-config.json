@@ -1,22 +1,17 @@
 {
-  "everestId": "",
-  "developerAbbreviation": "",
-  "protocolName": "",
-  "protocolAbbreviation": "",
+  "developerAbbreviation": "AE",
+  "protocolName": "Uniswap",
+  "protocolAbbreviation": "UNI",
   "contracts": {
-    "contractName1": {
-      "address": "contractAddress1",
-      "abiFile": "filename1.json",
+    "AggregationRouterV4": {
+      "address": "0x1111111254fb6c44bac0bed2854e76f90643097d",
+      "abiFile": "AggregationRouterV4.json",
       "functions": {
-        "FunctionName1": { "type": "Type", "severity": "Severity" }
-      }
-    },
-    "contractName2": {
-      "address": "contractAddress2",
-      "abiFile": "filename2.json",
-      "functions": {
-        "FunctionName1": { "type": "Type", "severity": "Severity" },
-        "FunctionName2": { "type": "Type", "severity": "Severity" }
+        "uniswapV3Swap": {
+          "expression": "amount > 6000",
+          "type": "Info",
+          "severity": "Info"
+        }
       }
     }
   }
