@@ -114,75 +114,88 @@ function getFunctionFromConfig(abi, functions, fakeFunctionName) {
   return { functionInConfig, functionNotInConfig, findingType, findingSeverity };
 }
 
-function createMockArgs(iface, functionObject) {
+function createMockArgs(functionObject) {
   const argValues = [];
   const argNames = [];
   const argTypes = [];
 
-  const functionFragment = iface.getFunction(testConfig.functionInConfig.name);
-
   functionObject.inputs.forEach((entry) => {
     argNames.push(entry.name);
     argTypes.push(entry.type);
-    const paramType = ethers.utils.ParamType.from(entry.type);
-    switch (paramType.baseType) {
+    switch (entry.type) {
       case "uint256":
         argValues.push(0);
+        break;
+      case "uint256[]":
+        argValues.push([0]);
         break;
       case "address":
         argValues.push(ethers.constants.AddressZero);
         break;
-      case "bool":
-        argValues.push(false);
-        break;
-      case "string":
-        argValues.push("");
+      case "address[]":
+        argValues.push([ethers.constants.AddressZero]);
         break;
       case "bytes":
-        argValues.push("0xFF");
+        argValues.push('0xff');
         break;
-      case "array":
-        argValues.push([0]);
+      case "bytes[]":
+        argValues.push(['0xff']);
+        break;
+      case "bytes32":
+        argValues.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        break;
+      case "bytes32[]":
+        argValues.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
+        break;
+      case "string":
+        argValues.push("placeholderstring");
+        break;
+      case "string[]":
+        argValues.push(["placeholderstring"]);
         break;
       case "tuple":
-        argValues.push([0]);
-        break;
+        throw new Error('tuple not supported yet');
+      default:
+        throw new Error(`Type passed in is not support: ${entry.type}`);
     }
   });
 
-  const dataHexString = iface._abiCoder.encode(argTypes, argValues);
-  const functionData = functionFragment + dataHexString.slice(2);
-  return { functionData, dataHexString, argValues, argNames, argTypes };
+  return { argValues, argNames, argTypes };
 }
 
-function createArgumentData(mockArgs, argNames, argTypes) {
-  const argumentData = {};
-  let tempVariable;
-  argNames.forEach((name, argIndex) => {
-    switch (argTypes[argIndex]) {
-      case 'address':
-      case 'bytes32':
-      case 'bytes':
-        argumentData[name] = mockArgs[argIndex].toLowerCase();
-        break;
-      case 'address[]':
-      case 'bytes32[]':
-      case 'bytes[]':
-        tempVariable = "";
-        mockArgs[argIndex].forEach((temp, i) => {
-          if (i === 0) {
-            tempVariable += temp.toLowerCase();
-          } else {
-            tempVariable += temp.slice(2).toLowerCase();
-          }
-        });
-        argumentData[name] = tempVariable;
-        break;
-      default:
-        argumentData[name] = '0';
+function getFunctionData(iface, functionName, argTypes, argValues) {
+  const sighash = iface.getSighash(functionName);
+
+  // this should throw if a value specified does not match a type
+  const dataHexString = iface._abiCoder.encode(argTypes, argValues);
+
+  // concatenate hex strings to create function 'data' field
+  const functionData = sighash + dataHexString.slice(2);
+
+  return functionData;
+}
+
+function overrideArgument(argValues, argNames, argOverride) {
+  // if an argument override is specified, attempt to set it
+  if (argOverride !== undefined) {
+    if (argOverride.name === undefined) {
+      throw new Error('Must specify name field in argOverride Object');
     }
-  });
-  return argumentData;
+
+    // determine if the argument name specified is in the Array of argument names
+    const argIndex = argNames.indexOf(argOverride.name);
+    if (argIndex === -1) {
+      throw new Error(`Argument name specified in argOverride variable not found in function ABI. argOverride name: ${argOverride.name}, argNames: ${argNames}`);
+    }
+
+    // check that a value is specified in the argOverride Object
+    if (argOverride.value === undefined) {
+      throw new Error('Must specify a value field in argOverride Object');
+    }
+
+    // update the argument value
+    argValues[argIndex] = argOverride.value;
+  }
 }
 
 // set up test configuration parameters that won't change with each test
@@ -294,8 +307,8 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address does not match', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { functionData: mockFunctionData } = createMockArgs(iface, testConfig.functionInConfig);
-      // const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, mockArgs);
+      const { argTypes, argValues } = createMockArgs(testConfig.functionInConfig);
+      const mockFunctionData = getFunctionData(iface, testConfig.functionInConfig.name, argTypes, argValues);
 
       // update mock trace object with encoded function data
       mockTrace[0].action.input = mockFunctionData;
@@ -311,7 +324,8 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { functionData: mockFunctionData } = createMockArgs(iface, testConfig.functionNotInConfig);
+      const { argTypes, argValues } = createMockArgs(testConfig.functionNotInConfig);
+      const mockFunctionData = getFunctionData(iface, testConfig.functionNotInConfig.name, argTypes, argValues);
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -330,12 +344,8 @@ describe('monitor functions that do not emit events', () => {
     it('returns a finding if a target contract invokes a monitored function with no expression', async () => {
       // encode function data
       // valid function name with valid arguments
-      const {
-        functionData: mockFunctionData,
-        argValues,
-        argTypes,
-        argNames
-      } = createMockArgs(iface, testConfig.functionInConfig);
+      const { argValues, argTypes, argNames } = createMockArgs(testConfig.functionInConfig);
+      const mockFunctionData = getFunctionData(iface, testConfig.functionInConfig.name, argTypes, argValues);
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -347,17 +357,26 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.transaction.to = validContractAddress;
 
       // eliminate any expression from the configuration file
-      const functionSignatures = initializeData.contracts[0].functionSignatures;
-      // these delete statements will still work even if the keys don't exist
-      delete functionSignatures[0].expression;
-      delete functionSignatures[0].expressionObject;
-
-      console.log(mockTrace[0].action);
+      initializeData.contracts.forEach((contract) => {
+        const { functionSignatures } = contract;
+        functionSignatures.forEach((functionSignature) => {
+          if (functionSignature.functionName === testConfig.functionInConfig.name) {
+            // these delete statements will still work even if the keys don't exist
+            delete functionSignature.expression;
+            delete functionSignature.expressionObject;
+          }
+        });
+      });
 
       // run the handler
       const findings = await handleTransaction(mockTxEvent);
 
-      const argumentData = createArgumentData(argValues, argNames, argTypes);
+      const argumentData = {};
+      argNames.forEach((name, argIndex) => {
+        if (argumentData[name] == null) {
+          argumentData[name] = argValues[argIndex].toString();
+        }
+      });
 
       // create the expected finding
       const testFindings = [Finding.fromObject({
@@ -380,60 +399,85 @@ describe('monitor functions that do not emit events', () => {
 
     it('returns a finding if a target contract invokes a monitored function when the expression condition is met', async () => {
 
-      // eliminate any expression from the configuration file
-      const functionSignatures = initializeData.contracts[0].functionSignatures;
-
-      // these delete statements will still work even if the keys don't exist
-      const { expression } = functionSignatures[0];
-      const { variableName, operator, value } = functionSignatures[0].expressionObject;
+      let expression;
+      let expressionObject;
+      initializeData.contracts.forEach((contract) => {
+        const { functionSignatures } = contract;
+        functionSignatures.forEach((functionSignature) => {
+          if (functionSignature.functionName === testConfig.functionInConfig.name) {
+            expressionObject = functionSignature.expressionObject;
+            expression = functionSignature.expression;
+          }
+        });
+      });
+      const { variableName, operator, value } = expressionObject;
 
       // encode function data
       // valid function name with valid arguments
-      const { argValues, argNames, argTypes } = createMockArgs(iface, testConfig.functionInConfig);
+      const { argValues, argNames, argTypes } = createMockArgs(testConfig.functionInConfig);
 
-      const argumentData = createArgumentData(argValues, argNames, argTypes);
-
-      // find the variable name in the Array of argument names
-      // examine the operator and variable type
-      // reset the appropriate value in the argValues Array to meet the condition
-      const argIndex = argNames.indexOf(variableName);
+      // override the argument value that corresponds to the expression condition
+      const argOverride = { name: variableName };
       if (BigNumber.isBigNumber(value)) {
         switch (operator) {
-          case '>=':
-          case '<=':
-          case '===':
-            // set the argument equal to the expression value
-            argValues[argIndex] = ethers.BigNumber.from(value.toString()).toHexString();
+          case ">=":
+          case "<=":
+          case "===":
+            argOverride.value = value.toString();
             break;
-          case '>':
-          case '!==':
-            // set the argument just slightly higher than the expression value
-            argValues[argIndex] = ethers.BigNumber.from(value.plus(1).toString()).toHexString();
+          case ">":
+          case "!==":
+            argOverride.value = value.plus(1).toString();
             break;
-          case '<':
-            // set the argument just slightly lower than the expression value
-            argValues[argIndex] = ethers.BigNumber.from(value.minus(1).toString()).toHexString();
+          case "<":
+            argOverride.value = value.minus(1).toString();
             break;
+          default:
+            throw new Error(`Unknown operator: ${operator}`);
         }
-        argumentData[argNames[argIndex]] = ethers.BigNumber.from(argValues[argIndex]).toString();
-      }
-      else if (typeof(value) === 'boolean') {
-      }
-      else if (utils.isAddress(value)) {
-        switch (operator) {
-          case '===':
-            argValues[argIndex] = value.toString();
-            break;
-          case '!==':
-            if (argValues[argIndex] === value) {
-              argValues[argIndex] = (new BigNumber(value)).plus(1).toString();
-            }
-            break;
+      } else if (typeof(value) === 'string') {
+        if (utils.isAddress(value)) {
+          switch (operator) {
+            case "===":
+              argOverride.value = value;
+              break;
+            case "!==":
+              let temp = ethers.BigNumber.from(value);
+              if (temp.eq(0)) {
+                temp = temp.add(1);
+              } else {
+                temp = temp.sub(1);
+              }
+              argOverride.value = ethers.utils.hexZeroPad(temp.toHexString(), 20);
+              break;
+            default:
+              throw new Error(`Unsupported operator ${operator} for address comparison`);
+          }
+        } else if (ethers.utils.isHexString(value)) {
+          switch (operator) {
+            case "===":
+              argOverride.value = value;
+              break;
+            case "!==":
+              const numBytes = ethers.utils.hexDataLength(value);
+              let temp = ethers.BigNumber.from(value);
+              if (temp.eq(0)) {
+                temp = temp.add(1);
+              } else {
+                temp = temp.sub(1);
+              }
+              argOverride.value = ethers.utils.hexZeroPad(temp.toHexString(), numBytes);
+              break;
+            default:
+              throw new Error(`Unsupported operator ${operator} for hexString comparison`);
+          }
         }
-        argumentData[argNames[argIndex]] = ethers.utils.getAddress(argValues[argIndex].toString());
+      } else {
+        throw new Error(`Unsupported variable type ${typeof(value)} for comparison`);
       }
+      overrideArgument(argValues, argNames, argOverride);
 
-      const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, argValues);
+      const mockFunctionData = getFunctionData(iface, testConfig.functionInConfig.name, argTypes, argValues);
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -448,6 +492,14 @@ describe('monitor functions that do not emit events', () => {
       const findings = await handleTransaction(mockTxEvent);
 
       // create the expected finding
+
+      const argumentData = {};
+      argNames.forEach((name, argIndex) => {
+        if (argumentData[name] == null) {
+          argumentData[name] = argValues[argIndex].toString();
+        }
+      });
+
       const description = `The ${testConfig.functionInConfig.name} function was invoked in the ${contractName} contract, condition met: ${expression}`;
 
       const testFindings = [Finding.fromObject({
@@ -470,61 +522,84 @@ describe('monitor functions that do not emit events', () => {
 
     it('returns no finding if a target contract invokes a monitored function when the expression condition is not met', async () => {
 
-      // eliminate any expression from the configuration file
-      const functionSignatures = initializeData.contracts[0].functionSignatures;
-
-      // these delete statements will still work even if the keys don't exist
-      const { expression } = functionSignatures[0];
-      const { variableName, operator, value } = functionSignatures[0].expressionObject;
+      let expression;
+      let expressionObject;
+      initializeData.contracts.forEach((contract) => {
+        const { functionSignatures } = contract;
+        functionSignatures.forEach((functionSignature) => {
+          if (functionSignature.functionName === testConfig.functionInConfig.name) {
+            expressionObject = functionSignature.expressionObject;
+            expression = functionSignature.expression;
+          }
+        });
+      });
+      const { variableName, operator, value } = expressionObject;
 
       // encode function data
       // valid function name with valid arguments
-      const { argValues, argNames, argTypes } = createMockArgs(iface, testConfig.functionInConfig);
+      const { argValues, argNames, argTypes } = createMockArgs(testConfig.functionInConfig);
 
-      const argumentData = {};
-      argNames.forEach((name, argIndex) => {
-        argumentData[name] = '0';
-      });
-
-      // find the variable name in the Array of argument names
-      // examine the operator and variable type
-      // reset the appropriate value in the mockArgs Array to NOT meet the condition
-      const argIndex = argNames.indexOf(variableName);
+      // override the argument value that corresponds to the expression condition
+      // explicitly set the value so that the condition is not met
+      const argOverride = { name: variableName };
       if (BigNumber.isBigNumber(value)) {
         switch (operator) {
-          case '>=':
-          case '>':
-          case '===':
-            // set the argument just slightly lower than the expression value
-            argValues[argIndex] = ethers.BigNumber.from(value.minus(1).toString()).toHexString();
+          case ">":
+          case ">=":
+          case "===":
+            argOverride.value = value.minus(1).toString();
             break;
-          case '!==':
-            // set the argument equal to the expression value
-            argValues[argIndex] = ethers.BigNumber.from(value.toString()).toHexString();
+          case "<":
+          case "<=":
+            argOverride.value = value.plus(1).toString();
             break;
-          case '<':
-          case '<=':
-            // set the argument just slightly higher than the expression value
-            argValues[argIndex] = ethers.BigNumber.from(value.plus(1).toString()).toHexString();
+          case "!==":
+            argOverride.value = value.toString();
             break;
+          default:
+            throw new Error(`Unknown operator: ${operator}`);
         }
-        argumentData[argNames[argIndex]] = ethers.BigNumber.from(argValues[argIndex]).toString();
-      }
-      else if (typeof(value) === 'boolean') {
-      }
-      else if (utils.isAddress(value)) {
-        switch (operator) {
-          case '!==':
-            argValues[argIndex] = value.toString();
-            break;
-          case '===':
-            if (argValues[argIndex] === value) {
-              argValues[argIndex] = (new BigNumber(value)).plus(1).toString();
-            }
-            break;
+      } else if (typeof(value) === 'string') {
+        if (utils.isAddress(value)) {
+          switch (operator) {
+            case "!==":
+              argOverride.value = value;
+              break;
+            case "===":
+              let temp = ethers.BigNumber.from(value);
+              if (temp.eq(0)) {
+                temp = temp.add(1);
+              } else {
+                temp = temp.sub(1);
+              }
+              argOverride.value = ethers.utils.hexZeroPad(temp.toHexString(), 20);
+              break;
+            default:
+              throw new Error(`Unsupported operator ${operator} for address comparison`);
+          }
+        } else if (ethers.utils.isHexString(value)) {
+          switch (operator) {
+            case "!==":
+              argOverride.value = value;
+              break;
+            case "===":
+              const numBytes = ethers.utils.hexDataLength(value);
+              let temp = ethers.BigNumber.from(value);
+              if (temp.eq(0)) {
+                temp = temp.add(1);
+              } else {
+                temp = temp.sub(1);
+              }
+              argOverride.value = ethers.utils.hexZeroPad(temp.toHexString(), numBytes);
+              break;
+            default:
+              throw new Error(`Unsupported operator ${operator} for hexString comparison`);
+          }
         }
-        argumentData[argNames[argIndex]] = ethers.utils.getAddress(argValues[argIndex].toString());
+      } else {
+        throw new Error(`Unsupported variable type ${typeof(value)} for comparison`);
       }
+      overrideArgument(argValues, argNames, argOverride);
 
       const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, argValues);
 
