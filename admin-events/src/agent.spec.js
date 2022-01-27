@@ -144,7 +144,7 @@ function createMockEventLogs(eventObject, iface) {
         break;
       case 'uint256[]':
         if (entry.indexed) {
-          mockTopics.push([1]);
+          throw new Error('indexed uint256[] array not supported');
         } else {
           eventTypes.push(entry.type);
           defaultData.push([1]);
@@ -168,7 +168,7 @@ function createMockEventLogs(eventObject, iface) {
         break;
       case 'address[]':
         if (entry.indexed) {
-          mockTopics.push(ethers.constants.AddressZero);
+          throw new Error('indexed address[] array not supported');
         } else {
           eventTypes.push(entry.type);
           defaultData.push([ethers.constants.AddressZero]);
@@ -192,7 +192,7 @@ function createMockEventLogs(eventObject, iface) {
         break;
       case 'bytes[]':
         if (entry.indexed) {
-          mockTopics.push(['0xff']);
+          throw new Error('indexed bytes[] array not supported');
         } else {
           eventTypes.push(entry.type);
           defaultData.push(['0xff']);
@@ -216,7 +216,7 @@ function createMockEventLogs(eventObject, iface) {
         break;
       case 'bytes32[]':
         if (entry.indexed) {
-          mockTopics.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
+          throw new Error('indexed bytes32[] array not supported');
         } else {
           eventTypes.push(entry.type);
           defaultData.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
