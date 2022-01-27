@@ -136,7 +136,11 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push(0);
         }
-        mockArgs[entry.name] = 0;
+
+        // do not overwrite reserved JS words!
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = 0;
+        }
         break;
       case 'uint256[]':
         if (entry.indexed) {
@@ -145,7 +149,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push([1]);
         }
-        mockArgs[entry.name] = [1];
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = [1];
+        }
         break;
       case 'address':
         if (entry.indexed) {
@@ -154,7 +161,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push(ethers.constants.AddressZero);
         }
-        mockArgs[entry.name] = ethers.constants.AddressZero;
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = ethers.constants.AddressZero;
+        }
         break;
       case 'address[]':
         if (entry.indexed) {
@@ -163,7 +173,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push([ethers.constants.AddressZero]);
         }
-        mockArgs[entry.name] = ethers.constants.AddressZero;
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = ethers.constants.AddressZero;
+        }
         break;
       case 'bytes':
         if (entry.indexed) {
@@ -172,7 +185,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push('0xff');
         }
-        mockArgs[entry.name] = '0xff';
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = '0xff';
+        }
         break;
       case 'bytes[]':
         if (entry.indexed) {
@@ -181,7 +197,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push(['0xff']);
         }
-        mockArgs[entry.name] = ['0xff'];
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = ['0xff'];
+        }
         break;
       case 'bytes32':
         if (entry.indexed) {
@@ -190,7 +209,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
         }
-        mockArgs[entry.name] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        }
         break;
       case 'bytes32[]':
         if (entry.indexed) {
@@ -199,9 +221,12 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
         }
-        mockArgs[entry.name] = [
-          0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
-        ];
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = [
+            0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+          ];
+        }
         break;
       case 'string':
         if (entry.indexed) {
@@ -210,7 +235,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push('test');
         }
-        mockArgs[entry.name] = 'test';
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = 'test';
+        }
         break;
       case 'string[]':
         if (entry.indexed) {
@@ -219,7 +247,10 @@ function createMockEventLogs(eventObject, iface) {
           eventTypes.push(entry.type);
           defaultData.push(['test']);
         }
-        mockArgs[entry.name] = ['test'];
+
+        if (mockArgs[entry.name] == null) {
+          mockArgs[entry.name] = ['test'];
+        }
         break;
       case 'tuple':
         throw new Error('tuple not supported yet');
@@ -383,8 +414,6 @@ describe('monitor emitted events', () => {
         .format(ethers.utils.FormatTypes.minimal)
         .substring(6);
 
-      console.log(defaultLog);
-
       // eliminate any expression
       const { eventInfo } = initializeData.contracts[0];
       delete eventInfo[0].expression;
@@ -395,7 +424,6 @@ describe('monitor emitted events', () => {
         expectedMetaData[name] = mockArgs[name];
       });
       expectedMetaData = utils.extractEventArgs(expectedMetaData);
-      console.log(expectedMetaData);
 
       const findings = await handleTransaction(mockTxEvent);
 
