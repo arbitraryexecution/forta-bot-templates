@@ -2,7 +2,7 @@
   "developerAbbreviation": "",
   "protocolName": "",
   "protocolAbbreviation": "",
-  "adminEvents": {
+  "contracts": {
     "contractName1": {
       "address": "contractAddress1",
       "abiFile": "filename1.json",
