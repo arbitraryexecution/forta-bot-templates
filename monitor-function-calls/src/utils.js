@@ -3,7 +3,7 @@ const BigNumber = require('bignumber.js');
 function isNumeric(valueString) {
   // Check the substrings for a valid numeric expression
   // (characters 0-9) (optional decimal) (optional characters 0-9)
-  const result = valueString.match(/^[0-9]*?[\.]?[0-9]*$/);
+  const result = valueString.match(/^[0-9]*?[.]?[0-9]*$/);
   if (result === null) {
     return false;
   }
@@ -68,7 +68,7 @@ function parseExpression(expression) {
     throw new Error('Expression must contain three terms: variable operator value');
   }
 
-  const [ variableName, operator, value ] = parts;
+  const [variableName, operator, value] = parts;
 
   // Address
   if (isAddress(value)) {
@@ -84,7 +84,7 @@ function parseExpression(expression) {
     };
   }
   // Boolean
-  else if ((value.toLowerCase() === 'true') || (value.toLowerCase() === 'false')) {
+  if ((value.toLowerCase() === 'true') || (value.toLowerCase() === 'false')) {
     // Check the operator
     if (['===', '!=='].indexOf(operator) === -1) {
       throw new Error(`Unsupported Boolean operator "${operator}": must be "===" or "!=="`);
@@ -93,11 +93,11 @@ function parseExpression(expression) {
       variableName,
       operator,
       comparisonFunction: booleanComparison,
-      value: value.toLowerCase() === 'true' ? true : false,
+      value: value.toLowerCase() === 'true',
     };
   }
   // Number
-  else if (isNumeric(value)) {
+  if (isNumeric(value)) {
     // Check the operator
     if (['<', '<=', '===', '!==', '>=', '>'].indexOf(operator) === -1) {
       throw new Error(`Unsupported BN operator "${operator}": must be <, <=, ===, !==, >=, or >`);
@@ -110,13 +110,14 @@ function parseExpression(expression) {
     };
   }
   // Unhandled
-  else {
-    throw new Error(`Unsupported string specifying value: ${value}`);
-  }
+
+  throw new Error(`Unsupported string specifying value: ${value}`);
 }
 
 function checkLogAgainstExpression(expressionObject, log) {
-  const { variableName: argName, operator, comparisonFunction, value: operand } = expressionObject;
+  const {
+    variableName: argName, operator, comparisonFunction, value: operand,
+  } = expressionObject;
 
   if (log.args[argName] === undefined) {
     // passed-in argument name from config file was not found in the log, which means that the

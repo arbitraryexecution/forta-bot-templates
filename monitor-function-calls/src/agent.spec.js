@@ -2,12 +2,12 @@ const {
   Finding, FindingType, FindingSeverity, createTransactionEvent, ethers,
 } = require('forta-agent');
 
+const { default: BigNumber } = require('bignumber.js');
 const { provideHandleTransaction, provideInitialize } = require('./agent');
 
 const utils = require('./utils');
 
 const config = require('../agent-config.json');
-const { default: BigNumber } = require('bignumber.js');
 
 // extract objects of a particular type from an ABI
 // for example, 'function' or 'event'
@@ -23,28 +23,27 @@ function getObjectsFromAbi(abi, objectType) {
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-
   describe('procotolName key required', () => {
     const { protocolName } = config;
-    expect(typeof(protocolName)).toBe('string');
-    expect(protocolName).not.toBe("");
+    expect(typeof (protocolName)).toBe('string');
+    expect(protocolName).not.toBe('');
   });
 
   describe('protocolAbbreviation key required', () => {
     const { protocolAbbreviation } = config;
-    expect(typeof(protocolAbbreviation)).toBe('string');
-    expect(protocolAbbreviation).not.toBe("");
+    expect(typeof (protocolAbbreviation)).toBe('string');
+    expect(protocolAbbreviation).not.toBe('');
   });
 
   describe('developerAbbreviation key required', () => {
     const { developerAbbreviation } = config;
-    expect(typeof(developerAbbreviation)).toBe('string');
-    expect(developerAbbreviation).not.toBe("");
+    expect(typeof (developerAbbreviation)).toBe('string');
+    expect(developerAbbreviation).not.toBe('');
   });
 
   describe('contracts key required', () => {
     const { contracts } = config;
-    expect(typeof(contracts)).toBe('object');
+    expect(typeof (contracts)).toBe('object');
     expect(contracts).not.toBe({});
   });
 
@@ -111,7 +110,9 @@ function getFunctionFromConfig(abi, functions, fakeFunctionName) {
       functionNotInConfig = functionObjects[name];
     }
   });
-  return { functionInConfig, functionNotInConfig, findingType, findingSeverity };
+  return {
+    functionInConfig, functionNotInConfig, findingType, findingSeverity,
+  };
 }
 
 function createMockArgs(functionObject) {
@@ -123,37 +124,37 @@ function createMockArgs(functionObject) {
     argNames.push(entry.name);
     argTypes.push(entry.type);
     switch (entry.type) {
-      case "uint256":
+      case 'uint256':
         argValues.push(0);
         break;
-      case "uint256[]":
+      case 'uint256[]':
         argValues.push([0]);
         break;
-      case "address":
+      case 'address':
         argValues.push(ethers.constants.AddressZero);
         break;
-      case "address[]":
+      case 'address[]':
         argValues.push([ethers.constants.AddressZero]);
         break;
-      case "bytes":
+      case 'bytes':
         argValues.push('0xff');
         break;
-      case "bytes[]":
+      case 'bytes[]':
         argValues.push(['0xff']);
         break;
-      case "bytes32":
+      case 'bytes32':
         argValues.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
         break;
-      case "bytes32[]":
+      case 'bytes32[]':
         argValues.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
         break;
-      case "string":
-        argValues.push("placeholderstring");
+      case 'string':
+        argValues.push('placeholderstring');
         break;
-      case "string[]":
-        argValues.push(["placeholderstring"]);
+      case 'string[]':
+        argValues.push(['placeholderstring']);
         break;
-      case "tuple":
+      case 'tuple':
         throw new Error('tuple not supported yet');
       default:
         throw new Error(`Type passed in is not support: ${entry.type}`);
@@ -217,9 +218,9 @@ const functionObjects = getObjectsFromAbi(abi, 'function');
 
 // create a fake function name
 function getRandomCharacterString(numCharacters) {
-  let result = "";
+  let result = '';
   let charCode;
-  for (let i=0; i<numCharacters; i++) {
+  for (let i = 0; i < numCharacters; i++) {
     charCode = Math.floor(Math.random() * 52);
     if (charCode < 26) {
       charCode += 65;
@@ -240,21 +241,21 @@ while (Object.keys(functionObjects).indexOf(fakeFunctionName) !== -1) {
 // do this before creating an ethers Interface with the ABI
 abi.push({
   inputs: [
-    { internalType: "uint256", name: "fakeInput0", type: "uint256" },
-    { internalType: "uint256", name: "fakeInput1", type: "uint256" },
-    { internalType: "address", name: "fakeInput1", type: "address" },
+    { internalType: 'uint256', name: 'fakeInput0', type: 'uint256' },
+    { internalType: 'uint256', name: 'fakeInput1', type: 'uint256' },
+    { internalType: 'address', name: 'fakeInput1', type: 'address' },
   ],
   name: fakeFunctionName,
   outputs: [
-    { internalType: "uint256", name: "fakeOutput0", type: "uint256" },
-    { internalType: "address", name: "fakeOutput1", type: "address" }
+    { internalType: 'uint256', name: 'fakeOutput0', type: 'uint256' },
+    { internalType: 'address', name: 'fakeOutput1', type: 'address' },
   ],
-  stateMutability: "nonpayable",
-  type: "function",
+  stateMutability: 'nonpayable',
+  type: 'function',
 });
 
 // create an ethers Interface
-let iface = new ethers.utils.Interface(abi);
+const iface = new ethers.utils.Interface(abi);
 
 // retrieve a function object from the ABI corresponding to a monitored function
 // also retrieve the fake function that we know will be unmonitored
@@ -398,7 +399,6 @@ describe('monitor functions that do not emit events', () => {
     });
 
     it('returns a finding if a target contract invokes a monitored function when the expression condition is met', async () => {
-
       let expression;
       let expressionObject;
       initializeData.contracts.forEach((contract) => {
@@ -420,28 +420,28 @@ describe('monitor functions that do not emit events', () => {
       const argOverride = { name: variableName };
       if (BigNumber.isBigNumber(value)) {
         switch (operator) {
-          case ">=":
-          case "<=":
-          case "===":
+          case '>=':
+          case '<=':
+          case '===':
             argOverride.value = value.toString();
             break;
-          case ">":
-          case "!==":
+          case '>':
+          case '!==':
             argOverride.value = value.plus(1).toString();
             break;
-          case "<":
+          case '<':
             argOverride.value = value.minus(1).toString();
             break;
           default:
             throw new Error(`Unknown operator: ${operator}`);
         }
-      } else if (typeof(value) === 'string') {
+      } else if (typeof (value) === 'string') {
         if (utils.isAddress(value)) {
           switch (operator) {
-            case "===":
+            case '===':
               argOverride.value = value;
               break;
-            case "!==":
+            case '!==':
               let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
                 temp = temp.add(1);
@@ -455,10 +455,10 @@ describe('monitor functions that do not emit events', () => {
           }
         } else if (ethers.utils.isHexString(value)) {
           switch (operator) {
-            case "===":
+            case '===':
               argOverride.value = value;
               break;
-            case "!==":
+            case '!==':
               const numBytes = ethers.utils.hexDataLength(value);
               let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
@@ -473,7 +473,7 @@ describe('monitor functions that do not emit events', () => {
           }
         }
       } else {
-        throw new Error(`Unsupported variable type ${typeof(value)} for comparison`);
+        throw new Error(`Unsupported variable type ${typeof (value)} for comparison`);
       }
       overrideArgument(argValues, argNames, argOverride);
 
@@ -521,7 +521,6 @@ describe('monitor functions that do not emit events', () => {
     });
 
     it('returns no finding if a target contract invokes a monitored function when the expression condition is not met', async () => {
-
       let expression;
       let expressionObject;
       initializeData.contracts.forEach((contract) => {
@@ -544,28 +543,28 @@ describe('monitor functions that do not emit events', () => {
       const argOverride = { name: variableName };
       if (BigNumber.isBigNumber(value)) {
         switch (operator) {
-          case ">":
-          case ">=":
-          case "===":
+          case '>':
+          case '>=':
+          case '===':
             argOverride.value = value.minus(1).toString();
             break;
-          case "<":
-          case "<=":
+          case '<':
+          case '<=':
             argOverride.value = value.plus(1).toString();
             break;
-          case "!==":
+          case '!==':
             argOverride.value = value.toString();
             break;
           default:
             throw new Error(`Unknown operator: ${operator}`);
         }
-      } else if (typeof(value) === 'string') {
+      } else if (typeof (value) === 'string') {
         if (utils.isAddress(value)) {
           switch (operator) {
-            case "!==":
+            case '!==':
               argOverride.value = value;
               break;
-            case "===":
+            case '===':
               let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
                 temp = temp.add(1);
@@ -579,10 +578,10 @@ describe('monitor functions that do not emit events', () => {
           }
         } else if (ethers.utils.isHexString(value)) {
           switch (operator) {
-            case "!==":
+            case '!==':
               argOverride.value = value;
               break;
-            case "===":
+            case '===':
               const numBytes = ethers.utils.hexDataLength(value);
               let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
@@ -597,7 +596,7 @@ describe('monitor functions that do not emit events', () => {
           }
         }
       } else {
-        throw new Error(`Unsupported variable type ${typeof(value)} for comparison`);
+        throw new Error(`Unsupported variable type ${typeof (value)} for comparison`);
       }
       overrideArgument(argValues, argNames, argOverride);
 
@@ -618,7 +617,5 @@ describe('monitor functions that do not emit events', () => {
       // create the expected finding
       expect(findings).toStrictEqual([]);
     });
-
-
   });
 });

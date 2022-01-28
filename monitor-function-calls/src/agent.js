@@ -53,7 +53,7 @@ function createAlert(
 
 function provideInitialize(data) {
   return async function initialize() {
-
+    /* eslint-disable no-param-reassign */
     data.contractInfo = config.contracts;
     data.developerAbbreviation = config.developerAbbreviation;
     data.protocolName = config.protocolName;
@@ -97,23 +97,24 @@ function provideInitialize(data) {
 
       return contract;
     });
+  /* eslint-enable no-param-reassign */
   };
 }
 
 function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
-    const { contracts, developerAbbreviation, protocolName, protocolAbbreviation } = data;
+    const {
+      contracts, developerAbbreviation, protocolName, protocolAbbreviation,
+    } = data;
 
     const findings = [];
 
     // iterate over all of the contracts from the configuration file
     contracts.forEach((contract) => {
-
       const {
         name,
         address,
-        functions,
-        functionSignatures
+        functionSignatures,
       } = contract;
 
       // iterate over all function signatures
@@ -124,7 +125,7 @@ function provideHandleTransaction(data) {
           expressionObject,
           expression,
           functionType,
-          functionSeverity
+          functionSeverity,
         } = entry;
 
         // filterFunction accepts either a string or an Array of strings
@@ -135,7 +136,6 @@ function provideHandleTransaction(data) {
         // loop over the Array of results
         // the transaction may contain more than one function call to the same function
         parsedFunctions.forEach((parsedFunction) => {
-
           // if there is an expression to check, verify the condition before creating an alert
           if (expression !== undefined) {
             if (!checkLogAgainstExpression(expressionObject, parsedFunction)) {
