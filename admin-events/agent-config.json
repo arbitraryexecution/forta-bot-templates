@@ -9,7 +9,6 @@
       "events": {
         "EventName": {
           "expression": "address !== 0x0000000000000000000000000000000000000000",
-          "expectedResult": true,
           "type": "Type",
           "severity": "Severity"
         }
