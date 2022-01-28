@@ -2,6 +2,19 @@ const BigNumber = require('bignumber.js');
 const { ethers } = require('forta-agent');
 const utils = require('./utils');
 
+const defaultTypeMap = {
+  uint256: 0,
+  'uint256[]': [0],
+  address: ethers.constants.AddressZero,
+  'address[]': [ethers.constants.AddressZero],
+  bytes: '0xff',
+  'bytes[]': ['0xff'],
+  bytes32: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+  'bytes32[]': [0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF],
+  string: 'test',
+  'string[]': ['test'],
+};
+
 function getObjectsFromAbi(abi, objectType) {
   const contractObjects = {};
   abi.forEach((entry) => {
@@ -159,195 +172,42 @@ function createMockEventLogs(eventObject, iface, override = undefined) {
 
   eventObject.inputs.forEach((entry) => {
     let value;
-    switch (entry.type) {
-      case 'uint256':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = 0;
-        }
 
-        if (entry.indexed) {
-          mockTopics.push(value);
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
+    // check to make sure type is supported
+    if (defaultTypeMap[entry.type] === undefined) {
+      throw new Error(`Type ${entry.type} is not supported`);
+    }
 
-        // do not overwrite reserved JS words!
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'uint256[]':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = [1];
-        }
+    // check to make sure any array types are not indexed
+    if ((entry.type in ['uint256[]', 'address[]', 'bytes[]', 'bytes32[]', 'string[]'])
+      && entry.indexed) {
+      throw new Error(`Indexed type ${entry.type} is not supported`);
+    }
 
-        if (entry.indexed) {
-          throw new Error('indexed uint256[] array not supported');
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
+    // determine whether to take the default value for the type, or if an override is given, take
+    // that value
+    if (override && entry.name === override.name) {
+      ({ value } = override);
+    } else {
+      value = defaultTypeMap[entry.type];
+    }
 
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'address':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = ethers.constants.AddressZero;
-        }
+    // push the values into the correct array, indexed arguments go into topics, otherwise they go
+    // into data
+    if (entry.indexed) {
+      mockTopics.push(value);
+    } else {
+      eventTypes.push(entry.type);
+      defaultData.push(value);
+    }
 
-        if (entry.indexed) {
-          mockTopics.push(value);
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'address[]':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = [ethers.constants.AddressZero];
-        }
-
-        if (entry.indexed) {
-          throw new Error('indexed address[] array not supported');
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'bytes':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = '0xff';
-        }
-
-        if (entry.indexed) {
-          mockTopics.push(value);
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'bytes[]':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = ['0xff'];
-        }
-
-        if (entry.indexed) {
-          throw new Error('indexed bytes[] array not supported');
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'bytes32':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        }
-
-        if (entry.indexed) {
-          mockTopics.push(value);
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'bytes32[]':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = [0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF];
-        }
-
-        if (entry.indexed) {
-          throw new Error('indexed bytes32[] array not supported');
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'string':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = 'test';
-        }
-
-        if (entry.indexed) {
-          mockTopics.push(value);
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'string[]':
-        if (override && entry.name === override.name) {
-          ({ value } = override);
-        } else {
-          value = ['test'];
-        }
-
-        if (entry.indexed) {
-          throw new Error('indexed string[] array not supported');
-        } else {
-          eventTypes.push(entry.type);
-          defaultData.push(value);
-        }
-
-        if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = value;
-        }
-        break;
-      case 'tuple':
-        throw new Error('tuple not supported yet');
-      default:
-        throw new Error('Type passed in is not supported');
+    // do not overwrite reserved JS words!
+    if (mockArgs[entry.name] == null) {
+      mockArgs[entry.name] = value;
     }
   });
 
+  // encode the data array given the types array
   const data = abiCoder.encode(eventTypes, defaultData);
   return { mockArgs, mockTopics, data };
 }
