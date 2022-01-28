@@ -1,3 +1,4 @@
+const BigNumber = require('bignumber.js');
 const {
   Finding, FindingType, FindingSeverity, createTransactionEvent, ethers,
 } = require('forta-agent');
@@ -6,7 +7,7 @@ const { provideHandleTransaction, provideInitialize } = require('./agent');
 
 const utils = require('./utils');
 
-const config = require('../agent-config-test.json');
+const config = require('../agent-config.json');
 
 function getObjectsFromAbi(abi, objectType) {
   const contractObjects = {};
@@ -116,7 +117,113 @@ function getEventFromConfig(abi, events) {
   };
 }
 
-function createMockEventLogs(eventObject, iface) {
+function getExpressionOperand(operator, value, expectedResult) {
+  // given a value, an operator, and a corresponding expected result, return a value that
+  // meets the expected result
+  let leftOperand;
+  /* eslint-disable no-case-declarations */
+  if (BigNumber.isBigNumber(value)) {
+    switch (operator) {
+      case '>=':
+        if (expectedResult) {
+          leftOperand = value.toString();
+        } else {
+          leftOperand = value.minus(1).toString();
+        }
+        break;
+      case '<=':
+        if (expectedResult) {
+          leftOperand = value.toString();
+        } else {
+          leftOperand = value.plus(1).toString();
+        }
+        break;
+      case '===':
+        if (expectedResult) {
+          leftOperand = value.toString();
+        } else {
+          leftOperand = value.minus(1).toString();
+        }
+        break;
+      case '>':
+      case '!==':
+        if (expectedResult) {
+          leftOperand = value.plus(1).toString();
+        } else {
+          leftOperand = value.toString();
+        }
+        break;
+      case '<':
+        if (expectedResult) {
+          leftOperand = value.minus(1).toString();
+        } else {
+          leftOperand = value.plus(1).toString();
+        }
+        break;
+      default:
+        throw new Error(`Unknown operator: ${operator}`);
+    }
+  } else if (ethers.utils.isHexString(value)) {
+    switch (operator) {
+      case '===':
+        if (expectedResult) {
+          leftOperand = value;
+        } else {
+          leftOperand = ethers.constants.AddressZero;
+        }
+        break;
+      case '!==':
+        if (expectedResult) {
+          leftOperand = ethers.constants.AddressZero;
+        } else {
+          leftOperand = value;
+        }
+        break;
+      default:
+        throw new Error(`Unsupported operator ${operator} for hexString comparison`);
+    }
+  } else if (typeof (value) === 'string') {
+    if (utils.isAddress(value)) {
+      switch (operator) {
+        case '===':
+          if (expectedResult) {
+            leftOperand = value;
+          } else {
+            let temp = ethers.BigNumber.from(value);
+            if (temp.eq(0)) {
+              temp = temp.add(1);
+            } else {
+              temp = temp.sub(1);
+            }
+            leftOperand = ethers.utils.hexZeroPad(temp.toHexString(), 20);
+          }
+          break;
+        case '!==':
+          if (expectedResult) {
+            let temp = ethers.BigNumber.from(value);
+            if (temp.eq(0)) {
+              temp = temp.add(1);
+            } else {
+              temp = temp.sub(1);
+            }
+            leftOperand = ethers.utils.hexZeroPad(temp.toHexString(), 20);
+          } else {
+            leftOperand = value;
+          }
+          break;
+        default:
+          throw new Error(`Unsupported operator ${operator} for address comparison`);
+      }
+    }
+  } else {
+    throw new Error(`Unsupported variable type ${typeof (value)} for comparison`);
+  }
+
+  /* eslint-enable no-case-declarations */
+  return leftOperand;
+}
+
+function createMockEventLogs(eventObject, iface, override = undefined) {
   const mockArgs = [];
   const mockTopics = [];
   const eventTypes = [];
@@ -128,128 +235,187 @@ function createMockEventLogs(eventObject, iface) {
   mockTopics.push(iface.getEventTopic(fragment));
 
   eventObject.inputs.forEach((entry) => {
+    let value;
     switch (entry.type) {
       case 'uint256':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = 0;
+        }
+
         if (entry.indexed) {
-          mockTopics.push(0);
+          mockTopics.push(value);
         } else {
           eventTypes.push(entry.type);
-          defaultData.push(0);
+          defaultData.push(value);
         }
 
         // do not overwrite reserved JS words!
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = 0;
+          mockArgs[entry.name] = value;
         }
         break;
       case 'uint256[]':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = [1];
+        }
+
         if (entry.indexed) {
           throw new Error('indexed uint256[] array not supported');
         } else {
           eventTypes.push(entry.type);
-          defaultData.push([1]);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = [1];
+          mockArgs[entry.name] = value;
         }
         break;
       case 'address':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = ethers.constants.AddressZero;
+        }
+
         if (entry.indexed) {
-          mockTopics.push(ethers.constants.AddressZero);
+          mockTopics.push(value);
         } else {
           eventTypes.push(entry.type);
-          defaultData.push(ethers.constants.AddressZero);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = ethers.constants.AddressZero;
+          mockArgs[entry.name] = value;
         }
         break;
       case 'address[]':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = [ethers.constants.AddressZero];
+        }
+
         if (entry.indexed) {
           throw new Error('indexed address[] array not supported');
         } else {
           eventTypes.push(entry.type);
-          defaultData.push([ethers.constants.AddressZero]);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = ethers.constants.AddressZero;
+          mockArgs[entry.name] = value;
         }
         break;
       case 'bytes':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = '0xff';
+        }
+
         if (entry.indexed) {
-          mockTopics.push('0xff');
+          mockTopics.push(value);
         } else {
           eventTypes.push(entry.type);
-          defaultData.push('0xff');
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = '0xff';
+          mockArgs[entry.name] = value;
         }
         break;
       case 'bytes[]':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = ['0xff'];
+        }
+
         if (entry.indexed) {
           throw new Error('indexed bytes[] array not supported');
         } else {
           eventTypes.push(entry.type);
-          defaultData.push(['0xff']);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = ['0xff'];
+          mockArgs[entry.name] = value;
         }
         break;
       case 'bytes32':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        }
+
         if (entry.indexed) {
-          mockTopics.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+          mockTopics.push(value);
         } else {
           eventTypes.push(entry.type);
-          defaultData.push(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+          mockArgs[entry.name] = value;
         }
         break;
       case 'bytes32[]':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = [0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF];
+        }
+
         if (entry.indexed) {
           throw new Error('indexed bytes32[] array not supported');
         } else {
           eventTypes.push(entry.type);
-          defaultData.push([0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = [
-            0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
-          ];
+          mockArgs[entry.name] = value;
         }
         break;
       case 'string':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = 'test';
+        }
+
         if (entry.indexed) {
-          mockTopics.push('test');
+          mockTopics.push(value);
         } else {
           eventTypes.push(entry.type);
-          defaultData.push('test');
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = 'test';
+          mockArgs[entry.name] = value;
         }
         break;
       case 'string[]':
+        if (override && entry.name === override.name) {
+          ({ value } = override);
+        } else {
+          value = ['test'];
+        }
+
         if (entry.indexed) {
           throw new Error('indexed string[] array not supported');
         } else {
           eventTypes.push(entry.type);
-          defaultData.push(['test']);
+          defaultData.push(value);
         }
 
         if (mockArgs[entry.name] == null) {
-          mockArgs[entry.name] = ['test'];
+          mockArgs[entry.name] = value;
         }
         break;
       case 'tuple':
@@ -444,6 +610,93 @@ describe('monitor emitted events', () => {
       })];
 
       expect(findings).toStrictEqual(testFindings);
+    });
+
+    it('returns a finding if a target contract emits a monitored event and the expression condition is met', async () => {
+      // get the expression object information from the config
+      const { eventInfo } = initializeData.contracts[0];
+      const { expressionObject, expression } = eventInfo[0];
+      const { variableName: argName, operator, value: operand } = expressionObject;
+
+      // determine what the argument value should be given the expression, so that the expression
+      // will evaluate to true
+      const overrideValue = getExpressionOperand(operator, operand, true);
+
+      // encode event data with argument override value
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        eventInConfig, iface, { name: argName, value: overrideValue },
+      );
+
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.receipt.logs;
+      defaultLog.name = contractName;
+      defaultLog.address = validContractAddress;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(eventInConfig.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
+
+      let expectedMetaData = {};
+      Object.keys(mockArgs).forEach((name) => {
+        expectedMetaData[name] = mockArgs[name];
+      });
+      expectedMetaData = utils.extractEventArgs(expectedMetaData);
+
+      const findings = await handleTransaction(mockTxEvent);
+
+      // create the expected finding
+      const testFindings = [Finding.fromObject({
+        alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+        description: `The ${eventInConfig.name} event was emitted by the ${contractName}`
+          + ` contract with condition met: ${expression}`,
+        name: `${protocolName} Admin Event`,
+        protocol: protocolName,
+        severity: FindingSeverity[findingSeverity],
+        type: FindingType[findingType],
+        metadata: {
+          contractAddress: validContractAddress,
+          contractName,
+          eventName: eventInConfig.name,
+          ...expectedMetaData,
+        },
+      })];
+
+      expect(findings).toStrictEqual(testFindings);
+    });
+
+    it('returns no finding if a target contract emits a monitored event and the expression condition is not met', async () => {
+      // get the expression object information from the config
+      const { eventInfo } = initializeData.contracts[0];
+      const { expressionObject } = eventInfo[0];
+      const { variableName: argName, operator, value: operand } = expressionObject;
+
+      // determine what the argument value should be given the expression, so that the expression
+      // will evaluate to false
+      const overrideValue = getExpressionOperand(operator, operand, false);
+
+      // encode event data with argument override value
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        eventInConfig, iface, { name: argName, value: overrideValue },
+      );
+
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.receipt.logs;
+      defaultLog.name = contractName;
+      defaultLog.address = validContractAddress;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(eventInConfig.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
+
+      const findings = await handleTransaction(mockTxEvent);
+
+      expect(findings).toStrictEqual([]);
     });
   });
 });

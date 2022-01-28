@@ -10,7 +10,7 @@ const {
 } = require('./utils');
 
 // load any agent configuration parameters
-const config = require('../agent-config-test.json');
+const config = require('../agent-config.json');
 
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
@@ -55,7 +55,6 @@ function getEvents(contractEventConfig, currentContract, adminEvents, contracts)
         if (expression !== undefined) {
           eventObject.expression = expression;
           eventObject.expressionObject = parseExpression(expression);
-          eventObject.expectedResult = proxyEvents[eventName].expectedResult;
         }
 
         eventInfo.push(eventObject);
@@ -75,7 +74,6 @@ function getEvents(contractEventConfig, currentContract, adminEvents, contracts)
     if (expression !== undefined) {
       eventObject.expression = expression;
       eventObject.expressionObject = parseExpression(expression);
-      eventObject.expectedResult = events[eventName].expectedResult;
     }
     eventInfo.push(eventObject);
   });
@@ -181,7 +179,6 @@ function provideHandleTransaction(data) {
           signature,
           expression,
           expressionObject,
-          expectedResult,
           type,
           severity,
         } = event;
@@ -194,7 +191,7 @@ function provideHandleTransaction(data) {
         parsedLogs.forEach((parsedLog) => {
           // if there is an expression to check, verify the condition before creating an alert
           if (expression !== undefined) {
-            if (checkLogAgainstExpression(expressionObject, parsedLog) === expectedResult) {
+            if (!checkLogAgainstExpression(expressionObject, parsedLog)) {
               return;
             }
           }
