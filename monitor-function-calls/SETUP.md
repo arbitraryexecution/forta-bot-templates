@@ -192,3 +192,14 @@ not trigger the agent.
 12. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
 documentation:
   https://docs.forta.network/en/latest/deploying/
+
+## Appendix
+
+### Expression Compatibility Table
+
+|          | __Expression__ | ===  | !== | >= | <= | < | > |
+| -------- | -------------- | ---- | --- | -- | -- | - | - |
+| __Type__ |                |      |     |    |    |   |   |
+| String   |                |  ✅  | ✅   |    |    |   |   |
+| Boolean  |                |  ✅  | ✅   |    |    |   |   |
+| Number   |                |  ✅  | ✅   | ✅ | ✅ | ✅ | ✅ |
