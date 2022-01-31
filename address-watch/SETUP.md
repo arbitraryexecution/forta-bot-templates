@@ -11,23 +11,16 @@ needs to be modified for this agent to operate correctly is the configuration fi
 
 1. Open the `agent-config.json` file.
 
-2. Navigate to `https://everest.link` to look up the Everest registry ID for a specific project.  For example,
-typing `Uniswap` into the search bar (revealed when you click the magnifying glass at the top of the page),
-returns a number of potential matches, one of which is the correct Uniswap entry.  The ID for that entry is
-`0xa2e07f422b5d7cbbfca764e53b251484ecf945fa`.
-
-3. Copy and paste the Everest registry ID into the `agent-config.json` file as the value for the key `everestId`.
-
-4. For the `developerAbbreviation` key, type in your desired abbreviation to specify your name or your development
+2. For the `developerAbbreviation` key, type in your desired abbreviation to specify your name or your development
 team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
 
-5. For the `protocolName` key, type in the name of the protocol.  For example, for the Uniswap protocol you may
+3. For the `protocolName` key, type in the name of the protocol.  For example, for the Uniswap protocol you may
 type in `"Uniswap"` or `"Uniswap V3"`, for the Sushi Swap protocol you may type in `"Sushi"` or `"SushiSwap"`, etc.
 
-6. For the `protocolAbbreviation` key, type in an appropriate abbreviation for the value in `protocolName`.  For
+4. For the `protocolAbbreviation` key, type in an appropriate abbreviation for the value in `protocolName`.  For
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be abbreviated `"SUSH"`, etc.
 
-7.  The Object value for the `addressList` key corresponds to addresses that we want to monitor.  Each
+5.  The Object value for the `addressList` key corresponds to addresses that we want to monitor.  Each
 key in the Object is an address (either EOA or contract), and each value is another object with three fields:
   -`name`: the name of the contract or EOA that will be watched
   -`type`: the type of finding that will be generated when transactions involving this address are detected (see
@@ -35,28 +28,29 @@ key in the Object is an address (either EOA or contract), and each value is anot
   -`severity`: the severity of the finding that will be generated when transactions involving this address are
   detected (see Forta SDK for `Finding` severities)
 
-8. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
+6. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
 repository.  Additionally, update the `name` entry in `package.json` to match the values provided in the 
 `agent-config.json` file.
 
-9. Move files to have the following directory structure:
+7. Move files to have the following directory structure:
   ```
   address-watch/
+    Dockerfile
     README.md
     forta.config.json
     package.json
+    agent-config.json
     src/
-      agent-config.json
       agent.js
       agent.spec.js
  ```
 
-10. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
+8. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
 package.json.
 
-11. Once the `agent-config.json` file is populated the agent is complete.  Please test the agent against transactions
+9. Once the `agent-config.json` file is populated the agent is complete.  Please test the agent against transactions
 that contain events that should trigger the agent.  Please also test the agent against transactions that should
 not trigger the agent.  An example test is provided here.  It includes a positive and negative case, but please also
 consider edge cases that may arise in production.
 
-12. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK.
+10. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK.
