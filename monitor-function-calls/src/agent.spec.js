@@ -83,10 +83,10 @@ describe('check agent configuration file', () => {
         }
 
         // check type, this will fail if 'type' is not valid
-        expect(FindingType.hasOwnProperty(type)).toBe(true);
+        expect(FindingType[type] !== undefined).toBe(true);
 
         // check severity, this will fail if 'severity' is not valid
-        expect(FindingSeverity.hasOwnProperty(severity)).toBe(true);
+        expect(FindingSeverity[severity] !== undefined).toBe(true);
       });
     });
   });
@@ -164,18 +164,6 @@ function createMockArgs(functionObject) {
   return { argValues, argNames, argTypes };
 }
 
-function getFunctionData(iface, functionName, argTypes, argValues) {
-  const sighash = iface.getSighash(functionName);
-
-  // this should throw if a value specified does not match a type
-  const dataHexString = iface._abiCoder.encode(argTypes, argValues);
-
-  // concatenate hex strings to create function 'data' field
-  const functionData = sighash + dataHexString.slice(2);
-
-  return functionData;
-}
-
 function overrideArgument(argValues, argNames, argOverride) {
   // if an argument override is specified, attempt to set it
   if (argOverride !== undefined) {
@@ -195,6 +183,7 @@ function overrideArgument(argValues, argNames, argOverride) {
     }
 
     // update the argument value
+    // eslint-disable-next-line no-param-reassign
     argValues[argIndex] = argOverride.value;
   }
 }
@@ -202,18 +191,14 @@ function overrideArgument(argValues, argNames, argOverride) {
 // set up test configuration parameters that won't change with each test
 // grab the first entry from the 'contracts' key in the configuration file
 const { contracts: configContracts } = config;
-const contractNames = Object.keys(configContracts);
 
-let contractName;
-let validContractAddress;
-let abi;
 let testConfig = {};
 
-contractName = Object.keys(configContracts)[0];
+const contractName = Object.keys(configContracts)[0];
 const { abiFile, functions } = configContracts[contractName];
-validContractAddress = configContracts[contractName].address;
+const validContractAddress = configContracts[contractName].address;
 
-abi = utils.getAbi(abiFile);
+const abi = utils.getAbi(abiFile);
 const functionObjects = getObjectsFromAbi(abi, 'function');
 
 // create a fake function name
@@ -308,8 +293,11 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address does not match', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { argTypes, argValues } = createMockArgs(testConfig.functionInConfig);
-      const mockFunctionData = getFunctionData(iface, testConfig.functionInConfig.name, argTypes, argValues);
+      const { argValues } = createMockArgs(testConfig.functionInConfig);
+      const mockFunctionData = iface.encodeFunctionData(
+        testConfig.functionInConfig.name,
+        argValues,
+      );
 
       // update mock trace object with encoded function data
       mockTrace[0].action.input = mockFunctionData;
@@ -325,8 +313,11 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { argTypes, argValues } = createMockArgs(testConfig.functionNotInConfig);
-      const mockFunctionData = getFunctionData(iface, testConfig.functionNotInConfig.name, argTypes, argValues);
+      const { argValues } = createMockArgs(testConfig.functionNotInConfig);
+      const mockFunctionData = iface.encodeFunctionData(
+        testConfig.functionNotInConfig.name,
+        argValues,
+      );
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -345,8 +336,11 @@ describe('monitor functions that do not emit events', () => {
     it('returns a finding if a target contract invokes a monitored function with no expression', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { argValues, argTypes, argNames } = createMockArgs(testConfig.functionInConfig);
-      const mockFunctionData = getFunctionData(iface, testConfig.functionInConfig.name, argTypes, argValues);
+      const { argValues, argNames } = createMockArgs(testConfig.functionInConfig);
+      const mockFunctionData = iface.encodeFunctionData(
+        testConfig.functionInConfig.name,
+        argValues,
+      );
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -363,8 +357,10 @@ describe('monitor functions that do not emit events', () => {
         functionSignatures.forEach((functionSignature) => {
           if (functionSignature.functionName === testConfig.functionInConfig.name) {
             // these delete statements will still work even if the keys don't exist
+            /* eslint-disable no-param-reassign */
             delete functionSignature.expression;
             delete functionSignature.expressionObject;
+            /* eslint-enable no-param-reassign */
           }
         });
       });
@@ -414,7 +410,7 @@ describe('monitor functions that do not emit events', () => {
 
       // encode function data
       // valid function name with valid arguments
-      const { argValues, argNames, argTypes } = createMockArgs(testConfig.functionInConfig);
+      const { argValues, argNames } = createMockArgs(testConfig.functionInConfig);
 
       // override the argument value that corresponds to the expression condition
       const argOverride = { name: variableName };
@@ -437,12 +433,12 @@ describe('monitor functions that do not emit events', () => {
         }
       } else if (typeof (value) === 'string') {
         if (utils.isAddress(value)) {
+          let temp = ethers.BigNumber.from(value);
           switch (operator) {
             case '===':
               argOverride.value = value;
               break;
             case '!==':
-              let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
                 temp = temp.add(1);
               } else {
@@ -454,13 +450,13 @@ describe('monitor functions that do not emit events', () => {
               throw new Error(`Unsupported operator ${operator} for address comparison`);
           }
         } else if (ethers.utils.isHexString(value)) {
+          const numBytes = ethers.utils.hexDataLength(value);
+          let temp = ethers.BigNumber.from(value);
           switch (operator) {
             case '===':
               argOverride.value = value;
               break;
             case '!==':
-              const numBytes = ethers.utils.hexDataLength(value);
-              let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
                 temp = temp.add(1);
               } else {
@@ -477,7 +473,10 @@ describe('monitor functions that do not emit events', () => {
       }
       overrideArgument(argValues, argNames, argOverride);
 
-      const mockFunctionData = getFunctionData(iface, testConfig.functionInConfig.name, argTypes, argValues);
+      const mockFunctionData = iface.encodeFunctionData(
+        testConfig.functionInConfig.name,
+        argValues,
+      );
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -521,14 +520,12 @@ describe('monitor functions that do not emit events', () => {
     });
 
     it('returns no finding if a target contract invokes a monitored function when the expression condition is not met', async () => {
-      let expression;
       let expressionObject;
       initializeData.contracts.forEach((contract) => {
         const { functionSignatures } = contract;
         functionSignatures.forEach((functionSignature) => {
           if (functionSignature.functionName === testConfig.functionInConfig.name) {
             expressionObject = functionSignature.expressionObject;
-            expression = functionSignature.expression;
           }
         });
       });
@@ -536,7 +533,7 @@ describe('monitor functions that do not emit events', () => {
 
       // encode function data
       // valid function name with valid arguments
-      const { argValues, argNames, argTypes } = createMockArgs(testConfig.functionInConfig);
+      const { argValues, argNames } = createMockArgs(testConfig.functionInConfig);
 
       // override the argument value that corresponds to the expression condition
       // explicitly set the value so that the condition is not met
@@ -560,12 +557,12 @@ describe('monitor functions that do not emit events', () => {
         }
       } else if (typeof (value) === 'string') {
         if (utils.isAddress(value)) {
+          let temp = ethers.BigNumber.from(value);
           switch (operator) {
             case '!==':
               argOverride.value = value;
               break;
             case '===':
-              let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
                 temp = temp.add(1);
               } else {
@@ -577,13 +574,13 @@ describe('monitor functions that do not emit events', () => {
               throw new Error(`Unsupported operator ${operator} for address comparison`);
           }
         } else if (ethers.utils.isHexString(value)) {
+          const numBytes = ethers.utils.hexDataLength(value);
+          let temp = ethers.BigNumber.from(value);
           switch (operator) {
             case '!==':
               argOverride.value = value;
               break;
             case '===':
-              const numBytes = ethers.utils.hexDataLength(value);
-              let temp = ethers.BigNumber.from(value);
               if (temp.eq(0)) {
                 temp = temp.add(1);
               } else {
@@ -600,7 +597,10 @@ describe('monitor functions that do not emit events', () => {
       }
       overrideArgument(argValues, argNames, argOverride);
 
-      const mockFunctionData = iface.encodeFunctionData(testConfig.functionInConfig.name, argValues);
+      const mockFunctionData = iface.encodeFunctionData(
+        testConfig.functionInConfig.name,
+        argValues,
+      );
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
