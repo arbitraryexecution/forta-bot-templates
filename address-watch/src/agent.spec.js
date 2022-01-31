@@ -10,12 +10,11 @@ const {
 const { handleTransaction } = require('./agent');
 
 // load config file
-const config = require('./agent-config.json');
+const config = require('../agent-config.json');
 
 // load configuration data from agent config file
 const {
   developerAbbreviation: developerAbbrev,
-  everestId,
   protocolName,
   protocolAbbrev,
   addressList
@@ -64,7 +63,6 @@ describe('handleTransaction', () => {
         alertId: `${developerAbbrev}-${protocolAbbrev}-ADDRESS-WATCH`,
         type: FindingType[params.type],
         severity: FindingSeverity[params.severity],
-        everestId,
       }),
     ]);
   });
