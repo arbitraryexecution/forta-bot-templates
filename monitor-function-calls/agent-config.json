@@ -3,14 +3,24 @@
   "protocolName": "Uniswap",
   "protocolAbbreviation": "UNI",
   "contracts": {
-    "AggregationRouterV4": {
-      "address": "0x1111111254fb6c44bac0bed2854e76f90643097d",
-      "abiFile": "AggregationRouterV4.json",
+    "contractName1": {
+      "address": "contractAddress1",
+      "abiFile": "contractAbiFileName1.json",
       "functions": {
-        "uniswapV3Swap": {
+        "FunctionName1": {
           "expression": "amount > 6000",
-          "type": "Info",
-          "severity": "Info"
+          "type": "Type",
+          "severity": "Severity"
+        }
+      }
+    },
+    "contractName2" : {
+      "address": "contractAddress2",
+      "abiFile": "contractAbiFileName2.json",
+      "functions": {
+        "FunctionName2": {
+          "type": "Type",
+          "severity": "Severity"
         }
       }
     }
