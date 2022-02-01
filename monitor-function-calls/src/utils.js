@@ -1,17 +1,26 @@
 const BigNumber = require('bignumber.js');
+const { ethers } = require('forta-agent');
+
+// create a fake function name
+function getRandomCharacterString(numCharacters) {
+  let result = '';
+  let charCode;
+  for (let i = 0; i < numCharacters; i++) {
+    charCode = Math.floor(Math.random() * 52);
+    if (charCode < 26) {
+      charCode += 65;
+    } else {
+      charCode += 97 - 26;
+    }
+    result += String.fromCharCode(charCode);
+  }
+  return result;
+}
 
 function isNumeric(valueString) {
   // Check the substrings for a valid numeric expression
   // (characters 0-9) (optional decimal) (optional characters 0-9)
   const result = valueString.match(/^[0-9]*?[.]?[0-9]*$/);
-  if (result === null) {
-    return false;
-  }
-  return (result[0].length === result.input.length);
-}
-
-function isAddress(valueString) {
-  const result = valueString.match(/^0x[0-9a-f]{40}$/);
   if (result === null) {
     return false;
   }
@@ -71,7 +80,7 @@ function parseExpression(expression) {
   const [variableName, operator, value] = parts;
 
   // Address
-  if (isAddress(value)) {
+  if (ethers.utils.isHexString(value, 20)) {
     // Check the operator
     if (['===', '!=='].indexOf(operator) === -1) {
       throw new Error(`Unsupported address operator "${operator}": must be "===" or "!=="`);
@@ -162,10 +171,10 @@ module.exports = {
   getAbi,
   extractFunctionArgs,
   isNumeric,
-  isAddress,
   addressComparison,
   booleanComparison,
   bigNumberComparison,
   parseExpression,
   checkLogAgainstExpression,
+  getRandomCharacterString,
 };
