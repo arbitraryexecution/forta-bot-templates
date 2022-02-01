@@ -82,7 +82,7 @@ function bigNumberComparison(variable, operator, operand) {
     case '<':
       return variable.lt(operand);
     default:
-      throw new Error(`BigNumber operator ${operator} no supported`);
+      throw new Error(`BigNumber operator ${operator} not supported`);
   }
 }
 

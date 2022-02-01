@@ -111,19 +111,19 @@ describe('check parsing', () => {
       expect(comparisonFunction).toBe(bigNumberComparison);
     });
 
-    it('throws an error if an invalid operand is passed for an address condition', () => {
+    it('throws an error if an invalid operator is passed for an address condition', () => {
       expect(() => {
         parseExpression('address >= 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
       }).toThrow('Unsupported address operator ">=": must be "===" or "!=="');
     });
 
-    it('throws an error if an invalid operand is passed for a boolean condition', () => {
+    it('throws an error if an invalid operator is passed for a boolean condition', () => {
       expect(() => {
         parseExpression('true > false');
       }).toThrow('Unsupported Boolean operator ">": must be "===" or "!=="');
     });
 
-    it('throws an error if an invalid operand is passed for a number condition', () => {
+    it('throws an error if an invalid operator is passed for a number condition', () => {
       expect(() => {
         parseExpression('123 + 456');
       }).toThrow('Unsupported BN operator "+": must be <, <=, ===, !==, >=, or >');

@@ -23,7 +23,7 @@ example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbrevi
 for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
 monitoring by the agent).  The Object corresponding to each contract name requires an address key/value pair, abi
-file key/value pair, and either an `events` key or a `proxy` key.  For the case of an `events` key, the corresponding
+file key/value pair, and an `events` key, `proxy` key, or both.  For the case of an `events` key, the corresponding
 value is an Object containing the names of events as keys. The value for each event name is an Object containing:
     * type (required) - Forta Finding Type
     * severity (required) - Forta Finding Severity
@@ -209,8 +209,7 @@ package.json.
 11. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
 referred to in the `agent-config.json` file, the agent is complete.  Please test the agent against transactions
 that contain events that should trigger the agent.  Please also test the agent against transactions that should
-not trigger the agent.  Although not provided here, please create tests that will verify the functionality of
-the agent code for positive cases, negative cases, and edge cases (e.g. when errors occur).
+not trigger the agent.
 
 12. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
 documentation.
