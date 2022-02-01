@@ -83,10 +83,10 @@ describe('check agent configuration file', () => {
         }
 
         // check type, this will fail if 'type' is not valid
-        expect(FindingType[type] !== undefined).toBe(true);
+        expect(Object.prototype.hasOwnProperty.call(FindingType, type)).toBe(true);
 
         // check severity, this will fail if 'severity' is not valid
-        expect(FindingSeverity[severity] !== undefined).toBe(true);
+        expect(Object.prototype.hasOwnProperty.call(FindingSeverity, severity)).toBe(true);
       });
     });
   });
