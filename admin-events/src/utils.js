@@ -1,4 +1,5 @@
 const BigNumber = require('bignumber.js');
+const { ethers } = require('forta-agent');
 
 function getAbi(abiName) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
@@ -34,15 +35,7 @@ function isNumeric(valueString) {
 }
 
 function isAddress(valueString) {
-  if (typeof (valueString) !== 'string') {
-    return false;
-  }
-
-  const result = valueString.match(/^0x[0-9a-fA-F]{40}$/);
-  if (result === null) {
-    return false;
-  }
-  return (result[0].length === result.input.length);
+  return ethers.utils.isHexString(valueString, 20);
 }
 
 function addressComparison(variable, operator, operand) {

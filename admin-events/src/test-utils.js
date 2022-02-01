@@ -93,63 +93,42 @@ function getExpressionOperand(operator, value, expectedResult) {
         if (expectedResult) {
           leftOperand = value.minus(1).toString();
         } else {
-          leftOperand = value.plus(1).toString();
+          leftOperand = value.toString();
         }
         break;
       default:
         throw new Error(`Unknown operator: ${operator}`);
     }
-  } else if (ethers.utils.isHexString(value)) {
+  } else if (utils.isAddress(value)) {
     switch (operator) {
       case '===':
         if (expectedResult) {
           leftOperand = value;
         } else {
-          leftOperand = ethers.constants.AddressZero;
+          let temp = ethers.BigNumber.from(value);
+          if (temp.eq(0)) {
+            temp = temp.add(1);
+          } else {
+            temp = temp.sub(1);
+          }
+          leftOperand = ethers.utils.getAddress(ethers.utils.hexZeroPad(temp.toHexString(), 20));
         }
         break;
       case '!==':
         if (expectedResult) {
-          leftOperand = ethers.constants.AddressZero;
+          let temp = ethers.BigNumber.from(value);
+          if (temp.eq(0)) {
+            temp = temp.add(1);
+          } else {
+            temp = temp.sub(1);
+          }
+          leftOperand = ethers.utils.getAddress(ethers.utils.hexZeroPad(temp.toHexString(), 20));
         } else {
           leftOperand = value;
         }
         break;
       default:
-        throw new Error(`Unsupported operator ${operator} for hexString comparison`);
-    }
-  } else if (typeof (value) === 'string') {
-    if (utils.isAddress(value)) {
-      switch (operator) {
-        case '===':
-          if (expectedResult) {
-            leftOperand = value;
-          } else {
-            let temp = ethers.BigNumber.from(value);
-            if (temp.eq(0)) {
-              temp = temp.add(1);
-            } else {
-              temp = temp.sub(1);
-            }
-            leftOperand = ethers.utils.hexZeroPad(temp.toHexString(), 20);
-          }
-          break;
-        case '!==':
-          if (expectedResult) {
-            let temp = ethers.BigNumber.from(value);
-            if (temp.eq(0)) {
-              temp = temp.add(1);
-            } else {
-              temp = temp.sub(1);
-            }
-            leftOperand = ethers.utils.hexZeroPad(temp.toHexString(), 20);
-          } else {
-            leftOperand = value;
-          }
-          break;
-        default:
-          throw new Error(`Unsupported operator ${operator} for address comparison`);
-      }
+        throw new Error(`Unsupported operator ${operator} for address comparison`);
     }
   } else {
     throw new Error(`Unsupported variable type ${typeof (value)} for comparison`);
