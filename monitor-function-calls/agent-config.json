@@ -14,7 +14,7 @@
         }
       }
     },
-    "contractName2" : {
+    "contractName2": {
       "address": "contractAddress2",
       "abiFile": "contractAbiFileName2.json",
       "functions": {
