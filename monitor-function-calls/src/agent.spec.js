@@ -9,7 +9,7 @@ const {
   getObjectsFromAbi,
   getExpressionOperand,
   createMockFunctionArgs,
- } = require('./test-utils');
+} = require('./test-utils');
 
 const utils = require('./utils');
 
@@ -86,8 +86,6 @@ describe('check agent configuration file', () => {
   });
 });
 
-
-
 // tests
 describe('monitor functions that do not emit events', () => {
   describe('handleTransaction', () => {
@@ -112,7 +110,7 @@ describe('monitor functions that do not emit events', () => {
       // set up test configuration parameters that won't change with each test
       // grab the first entry from the 'contracts' key in the configuration file
       ({ contracts: configContracts } = config);
-      contractName = Object.keys(configContracts)[0];
+      [contractName] = Object.keys(configContracts);
       const { abiFile, functions } = configContracts[contractName];
       validContractAddress = configContracts[contractName].address;
       abi = utils.getAbi(abiFile);
@@ -293,7 +291,7 @@ describe('monitor functions that do not emit events', () => {
       const { mockArgs, data: mockFunctionData } = createMockFunctionArgs(
         functionInConfig,
         iface,
-        { name: variableName, value: overrideValue }
+        { name: variableName, value: overrideValue },
       );
 
       // update mock trace object with encoded function data and correct contract address
@@ -351,10 +349,10 @@ describe('monitor functions that do not emit events', () => {
 
       // encode function data
       // valid function name with valid arguments
-      const { mockArgs, data: mockFunctionData } = createMockFunctionArgs(
+      const { data: mockFunctionData } = createMockFunctionArgs(
         functionInConfig,
         iface,
-        { name: variableName, value: overrideValue }
+        { name: variableName, value: overrideValue },
       );
 
       // update mock trace object with encoded function data and correct contract address

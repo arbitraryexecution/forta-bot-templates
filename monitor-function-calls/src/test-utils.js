@@ -1,6 +1,5 @@
 const BigNumber = require('bignumber.js');
 const { ethers } = require('forta-agent');
-const utils = require('./utils');
 
 const defaultTypeMap = {
   uint256: 0,
@@ -144,7 +143,7 @@ function createMockFunctionArgs(functionObject, iface, override = undefined) {
     // check to make sure type is supported
     if (defaultTypeMap[entry.type] === undefined) {
       throw new Error(`Type ${entry.type} is not supported`);
-    } 
+    }
 
     // determine whether to take the default value for the type, or if an override is given, take
     // that value
@@ -161,7 +160,6 @@ function createMockFunctionArgs(functionObject, iface, override = undefined) {
     if (mockArgs[entry.name] == null) {
       mockArgs[entry.name] = value;
     }
-
   });
 
   const data = iface.encodeFunctionData(functionObject.name, argValues);

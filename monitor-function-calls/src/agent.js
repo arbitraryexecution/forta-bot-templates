@@ -67,7 +67,7 @@ function provideInitialize(data) {
       const iface = new ethers.utils.Interface(abi);
       const functionNames = Object.keys(functions);
 
-      let functionSignatures = functionNames.map((functionName) => {
+      const functionSignatures = functionNames.map((functionName) => {
         const { expression, type, severity } = functions[functionName];
         const fragment = iface.getFunction(functionName);
 
