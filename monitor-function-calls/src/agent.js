@@ -86,8 +86,6 @@ function provideInitialize(data) {
         return result;
       });
 
-      functionSignatures = functionSignatures.filter((result) => result !== '');
-
       const contract = {
         name,
         address,
