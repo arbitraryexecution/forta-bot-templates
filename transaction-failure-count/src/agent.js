@@ -13,7 +13,6 @@ function createAlert(
   failedTxs,
   threshold,
   blockWindow,
-  everestId,
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
@@ -28,7 +27,6 @@ function createAlert(
     protocol: protocolName,
     severity: FindingSeverity[alertSeverity],
     type: FindingType[alertType],
-    everestId,
     metadata: {
       contractName: name,
       contractAddress: address,
@@ -45,7 +43,6 @@ function provideInitialize(data) {
     data.protocolName = config.protocolName;
     data.protocolAbbreviation = config.protocolAbbreviation;
     data.developerAbbreviation = config.developerAbbreviation;
-    data.everestId = config.everestId;
     data.blockWindow = config.blockWindow;
 
     data.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
@@ -66,7 +63,6 @@ function provideHandleTransaction(data) {
     const {
       contracts,
       blockWindow,
-      everestId,
       protocolName,
       protocolAbbreviation,
       developerAbbreviation,
@@ -112,7 +108,6 @@ function provideHandleTransaction(data) {
             failedTxHashes,
             limit,
             blockWindow,
-            everestId,
             protocolName,
             protocolAbbreviation,
             developerAbbreviation,

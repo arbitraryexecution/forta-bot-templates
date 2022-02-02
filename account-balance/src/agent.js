@@ -18,7 +18,6 @@ function provideInitialize(data) {
     data.protocolAbbreviation = config.protocolAbbreviation;
     data.developerAbbreviation = config.developerAbbreviation;
 
-    data.everestId = config.everestId;
     data.provider = getEthersProvider();
     data.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
       accountName,
@@ -39,7 +38,6 @@ function createAlert(
   accountAddress,
   accountBalance,
   thresholdEth,
-  everestId,
   numAlerts,
   protocolName,
   developerAbbreviation,
@@ -73,10 +71,6 @@ function createAlert(
     },
   };
 
-  if (everestId) {
-    findingObject.everestId = everestId;
-  }
-
   if (protocolName) {
     findingObject.protocol = protocolName;
   }
@@ -91,7 +85,7 @@ function provideHandleBlock(data) {
     const findings = [];
 
     const {
-      accounts, provider, everestId, alertMinimumIntervalSeconds,
+      accounts, provider, alertMinimumIntervalSeconds,
     } = data;
 
     if (!provider) {
@@ -121,7 +115,6 @@ function provideHandleBlock(data) {
             accountAddress,
             accountBalance,
             accountThreshold,
-            everestId,
             account.numAlertsSinceLastFinding,
             data.protocolName,
             data.developerAbbreviation,
