@@ -87,7 +87,7 @@ function getExpressionOperand(operator, value, expectedResult) {
         if (expectedResult) {
           leftOperand = value.minus(1).toString();
         } else {
-          leftOperand = value.plus(1).toString();
+          leftOperand = value.toString();
         }
         break;
       default:
