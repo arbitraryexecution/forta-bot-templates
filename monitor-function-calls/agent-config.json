@@ -1,7 +1,7 @@
 {
-  "developerAbbreviation": "AE",
-  "protocolName": "Uniswap",
-  "protocolAbbreviation": "UNI",
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
   "contracts": {
     "contractName1": {
       "address": "contractAddress1",
