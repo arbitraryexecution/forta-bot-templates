@@ -17,7 +17,15 @@ function getRandomCharacterString(numCharacters) {
   return result;
 }
 
+function isAddress(valueString) {
+  return ethers.utils.isHexString(valueString, 20);
+}
+
 function isNumeric(valueString) {
+  if (typeof(valueString) !== 'string') {
+    return false;
+  }
+
   // Check the substrings for a valid numeric expression
   // (characters 0-9) (optional decimal) (optional characters 0-9)
   const result = valueString.match(/^[0-9]*?[.]?[0-9]*$/);
@@ -52,9 +60,9 @@ function booleanComparison(variable, operator, operand) {
 function bigNumberComparison(variable, operator, operand) {
   switch (operator) {
     case '===':
-      return variable === operand;
+      return variable.eq(operand);
     case '!==':
-      return variable !== operand;
+      return !(variable.eq(operand));
     case '>=':
       return variable.gte(operand);
     case '>':
@@ -171,6 +179,7 @@ module.exports = {
   getAbi,
   extractFunctionArgs,
   isNumeric,
+  isAddress,
   addressComparison,
   booleanComparison,
   bigNumberComparison,
