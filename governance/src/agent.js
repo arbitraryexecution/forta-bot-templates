@@ -197,11 +197,11 @@ function provideInitialize(data) {
     const { abiFile } = agentConfig.governance;
     data.abi = getAbi(abiFile);
 
-    const iface = new ethers.utils.Interface(data.abi);
+    data.iface = new ethers.utils.Interface(data.abi);
 
-    const names = Object.keys(iface.events);
+    const names = Object.keys(data.iface.events);
     const ftype = ethers.utils.FormatTypes.full;
-    data.eventSignatures = names.map((name) => iface.getEvent(name).format(ftype));
+    data.eventSignatures = names.map((name) => data.iface.getEvent(name).format(ftype));
     /* eslint-enable no-param-reassign */
   };
 }
