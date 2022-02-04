@@ -108,7 +108,6 @@ describe('monitor governance contracts for emitted events', () => {
       const eventsInAbi = getObjectsFromAbi(abi, 'event');
       validEvent = eventsInAbi[validEventName];
 
-
       // initialize mock transaction event with default values
       mockTxEvent = createTransactionEvent({
         receipt: {
@@ -157,7 +156,7 @@ describe('monitor governance contracts for emitted events', () => {
       expect(findings).toStrictEqual([]);
     });
 
-    it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
+    it('returns empty findings if contract address matches but no monitored event was emitted', async () => {
       // encode event data - valid event with valid arguments
       const { mockArgs, mockTopics, data } = createMockEventLogs(invalidEvent, iface);
 
@@ -176,6 +175,51 @@ describe('monitor governance contracts for emitted events', () => {
       const findings = await handleTransaction(mockTxEvent);
 
       expect(findings).toStrictEqual([]);
+    });
+
+    it('returns findings if contract address matches and monitored event was emitted', async () => {
+      // encode event data - valid event with valid arguments
+      const { mockArgs, mockTopics, data } = createMockEventLogs(validEvent, iface);
+
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.receipt.logs;
+      defaultLog.name = mockContractName;
+      defaultLog.address = validContractAddress;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(validEvent.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
+
+      const findings = await handleTransaction(mockTxEvent);
+
+      const proposal = {
+        proposalId: '0',
+        _values: '0',
+        calldatas: '0xff',
+        description: 'test',
+        endBlock: '0',
+        startBlock: '0',
+        targets: ethers.constants.AddressZero,
+        proposer: ethers.constants.AddressZero,
+        signatures: 'test',
+      };
+      const expectedFinding = Finding.fromObject({
+        name: `${config.protocolName} Governance Proposal Created`,
+        description: `Governance Proposal ${proposal.proposalId} was just created`,
+        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-PROPOSAL-CREATED`,
+        type: 'Info',
+        severity: 'Info',
+        protocol: config.protocolName,
+        metadata: {
+          address: validContractAddress,
+          ...proposal,
+        },
+      });
+
+      expect(findings).toStrictEqual([expectedFinding]);
     });
   });
 });
