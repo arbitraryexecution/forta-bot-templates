@@ -220,7 +220,6 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      // eslint-disable-next-line prefer-destructuring
       initializeData.variableInfoList = [initializeData.variableInfoList[0]];
       const [variableInfo] = initializeData.variableInfoList;
 
@@ -265,7 +264,6 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      // eslint-disable-next-line prefer-destructuring
       initializeData.variableInfoList = [initializeData.variableInfoList[0]];
       const [variableInfo] = initializeData.variableInfoList;
 
@@ -286,6 +284,7 @@ describe('monitor contract variables', () => {
       // update the value returned by the target getter function to be greater than the
       // upperThresholdPercent change
       const newValue = ((newThresholdLimit / 100) * initialGetterValue) + initialGetterValue + 1;
+      const percentChange = ((newValue - initialGetterValue) / initialGetterValue) * 100;
       mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(newValue);
 
       // run the agent again now that we have seen the minimum number of data points
@@ -304,7 +303,7 @@ describe('monitor contract variables', () => {
           variableName: functionInConfig.name,
           thresholdPosition: 'upper',
           thresholdPercentLimit: `${newThresholdLimit}`,
-          actualPercentChange: '20',
+          actualPercentChange: `${percentChange}`,
         },
       })];
 
@@ -317,7 +316,6 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      // eslint-disable-next-line prefer-destructuring
       initializeData.variableInfoList = [initializeData.variableInfoList[0]];
       const [variableInfo] = initializeData.variableInfoList;
 
@@ -351,7 +349,6 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      // eslint-disable-next-line prefer-destructuring
       initializeData.variableInfoList = [initializeData.variableInfoList[0]];
       const [variableInfo] = initializeData.variableInfoList;
 
@@ -372,6 +369,7 @@ describe('monitor contract variables', () => {
       // update the value returned by the target getter function to be greater than the
       // lowerThresholdPercent change
       const newValue = (initialGetterValue - ((newThresholdLimit / 100) * initialGetterValue)) - 1;
+      const percentChange = ((initialGetterValue - newValue) / initialGetterValue) * 100;
       mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(newValue);
 
       // run the agent again now that we have seen the minimum number of data points
@@ -390,7 +388,7 @@ describe('monitor contract variables', () => {
           variableName: functionInConfig.name,
           thresholdPosition: 'lower',
           thresholdPercentLimit: `${newThresholdLimit}`,
-          actualPercentChange: '20',
+          actualPercentChange: `${percentChange}`,
         },
       })];
 
@@ -403,7 +401,6 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      // eslint-disable-next-line prefer-destructuring
       initializeData.variableInfoList = [initializeData.variableInfoList[0]];
       const [variableInfo] = initializeData.variableInfoList;
 
