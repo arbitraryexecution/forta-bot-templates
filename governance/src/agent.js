@@ -89,6 +89,69 @@ function proposalExecutedFinding(proposalId, address, devAbbr, protAbbr, protNam
   });
 }
 
+function proposalQueuedFinding(proposalId, address, devAbbr, protAbbr, protName, eta) {
+  return Finding.fromObject({
+    name: `${protName} Governance Proposal Queued`,
+    description: `Governance Proposal ${proposalId} has been queued`,
+    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-PROPOSAL-QUEUED`,
+    type: 'Info',
+    severity: 'Info',
+    protocol: protName,
+    metadata: {
+      address,
+      eta,
+    },
+  });
+}
+
+function quorumNumeratorUpdatedFinding(address, devAbbr, protAbbr, protName, oldNum, newNum) {
+  return Finding.fromObject({
+    name: `${protName} Governance Quorum Numerator Updated`,
+    description: `Quorum numerator updated from ${oldNum} to ${newNum}`,
+    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-QUORUM-NUMERATOR-UPDATED`,
+    type: 'Info',
+    severity: 'Info',
+    protocol: protName,
+    metadata: {
+      address,
+      oldNumerator: oldNum,
+      newNumerator: newNum,
+    },
+  });
+}
+
+function timelockChangeFinding(address, devAbbr, protAbbr, protName, oldAddress, newAddress) {
+  return Finding.fromObject({
+    name: `${protName} Governance Timelock Address Change`,
+    description: `Timelock address changed from ${oldAddress} to ${newAddress}`,
+    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-TIMELOCK-ADDRESS-CHANGED`,
+    type: 'Info',
+    severity: 'Info',
+    protocol: protName,
+    metadata: {
+      address,
+      oldTimelockAddress: oldAddress,
+      newTimelockAddress: newAddress,
+    },
+  });
+}
+
+function votingDelaySetFinding(address, devAbbr, protAbbr, protName, oldDelay, newDelay) {
+  return Finding.fromObject({
+    name: `${protName} Governance Voting Delay Set`,
+    description: `Voting delay change from ${oldDelay} to ${newDelay}`,
+    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-VOTING-DELAY-SET`,
+    type: 'Info',
+    severity: 'Info',
+    protocol: protName,
+    metadata: {
+      address,
+      oldVotingDelay: oldDelay,
+      newVotingDelay: newDelay,
+    },
+  });
+}
+
 function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
@@ -126,13 +189,14 @@ function provideHandleTransaction(data) {
 
     const findings = [];
 
+    console.log(eventSignatures);
+
     const logs = txEvent.filterLog(eventSignatures, address);
 
     // iterate over all logs to determine what governance actions were taken
     let results = logs.map((log) => {
       let proposal;
       let voteInfo;
-      console.log(log.name);
       switch (log.name) {
         case 'ProposalCreated':
           // create a finding for a new proposal
@@ -153,6 +217,7 @@ function provideHandleTransaction(data) {
             weight: log.args.weight,
             reason: log.args.reason,
           };
+          // create a finding indicating that the vote was cast
           return voteCastFinding(
             voteInfo,
             contract.address,
@@ -178,6 +243,46 @@ function provideHandleTransaction(data) {
             protocolAbbreviation,
             protocolName,
           );
+        case 'QuorumNumeratorUpdated':
+          return quorumNumeratorUpdatedFinding(
+            contract.address,
+            developerAbbreviation,
+            protocolAbbreviation,
+            protocolName,
+            log.args.oldQuorumNumerator.toString(),
+            log.args.newQuorumNumerator.toString(),
+          );
+        case 'ProposalQueued':
+          return proposalQueuedFinding(
+            log.args.proposalId.toString(),
+            contract.address,
+            developerAbbreviation,
+            protocolAbbreviation,
+            protocolName,
+            log.args.eta.toString(),
+          );
+        case 'TimelockChange':
+          return timelockChangeFinding(
+            contract.address,
+            developerAbbreviation,
+            protocolAbbreviation,
+            protocolName,
+            log.args.oldTimelock,
+            log.args.newTimelock,
+          );
+        case 'VotingDelaySet':
+          return votingDelaySetFinding(
+            contract.address,
+            developerAbbreviation,
+            protocolAbbreviation,
+            protocolName,
+            log.args.oldVotingDelay.toString(),
+            log.args.newVotingDelay.toString(),
+          );
+        case 'VotingPeriodSet':
+          return [];
+        case 'ProposalThresholdSet':
+          return [];
         default:
           return [];
       }
