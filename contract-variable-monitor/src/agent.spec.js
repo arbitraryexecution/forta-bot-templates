@@ -22,7 +22,7 @@ const {
   getObjectsFromAbi, getFunctionFromConfig, getRandomCharacterString,
 } = require('./test-utils');
 const utils = require('./utils');
-const config = require('../agent-config-test.json');
+const config = require('../agent-config.json');
 
 const checkThresholdSpy = jest.spyOn(utils, 'checkThreshold');
 

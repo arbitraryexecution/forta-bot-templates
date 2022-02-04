@@ -6,7 +6,7 @@ const {
 const utils = require('./utils');
 
 // load any agent configuration parameters
-const config = require('../agent-config-test.json');
+const config = require('../agent-config.json');
 
 // set up a variable to hold initialization data used in the handler
 const initializeData = {};
