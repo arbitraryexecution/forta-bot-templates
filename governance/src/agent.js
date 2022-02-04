@@ -3,9 +3,9 @@
 // ProposalExecuted Tx: 0xd1924e6d2b04303262fe90d6a354f92d795a6ce4bd7908cd77869aae50e77f43
 // ProposalQueued Tx: 0x1a9692a039baebcedc28b13447e3528a6a469b8ae9e8241df14f50a5cbad25dd
 // ProposalCanceled Tx: 0xc09ea70ee0f2e05eff9ff63b09195a6714681c18a145c019de8e5fbc9e01e675
-const { Finding, ethers, getEthersProvider } = require('forta-agent');
+const { Finding, ethers } = require('forta-agent');
 
-const config = require('../agent-config.json');
+const agentConfig = require('../agent-config.json');
 
 const { getAbi, createProposalFromLog } = require('./utils');
 
@@ -13,14 +13,14 @@ const { getAbi, createProposalFromLog } = require('./utils');
 const initializeData = {};
 
 // alert for when a new governance proposal is created
-function proposalCreatedFinding(proposal, address, devAbbr, protAbbr, protName) {
+function proposalCreatedFinding(proposal, address, config) {
   return Finding.fromObject({
-    name: `${protName} Governance Proposal Created`,
+    name: `${config.protocolName} Governance Proposal Created`,
     description: `Governance Proposal ${proposal.proposalId} was just created`,
-    alertId: `${devAbbr}-${protAbbr}-PROPOSAL-CREATED`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-PROPOSAL-CREATED`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       ...proposal,
@@ -28,7 +28,7 @@ function proposalCreatedFinding(proposal, address, devAbbr, protAbbr, protName) 
   });
 }
 
-function voteCastFinding(voteInfo, address, devAbbr, protAbbr, protName) {
+function voteCastFinding(voteInfo, address, config) {
   let description = `Vote cast with weight ${voteInfo.weight.toString()}`;
   switch (voteInfo.support) {
     case 0:
@@ -46,12 +46,12 @@ function voteCastFinding(voteInfo, address, devAbbr, protAbbr, protName) {
   description += ` proposal ${voteInfo.proposalId}`;
 
   return Finding.fromObject({
-    name: `${protName} Governance Proposal Vote Cast`,
+    name: `${config.protocolName} Governance Proposal Vote Cast`,
     description,
-    alertId: `${devAbbr}-${protAbbr}-VOTE-CAST`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-VOTE-CAST`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       voter: voteInfo.voter,
@@ -61,42 +61,42 @@ function voteCastFinding(voteInfo, address, devAbbr, protAbbr, protName) {
   });
 }
 
-function proposalCanceledFinding(proposalId, address, devAbbr, protAbbr, protName) {
+function proposalCanceledFinding(proposalId, address, config) {
   return Finding.fromObject({
-    name: `${protName} Governance Proposal Canceled`,
+    name: `${config.protocolName} Governance Proposal Canceled`,
     description: `Governance proposal ${proposalId} has been canceled`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-PROPOSAL-CANCELED`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-PROPOSAL-CANCELED`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
     },
   });
 }
 
-function proposalExecutedFinding(proposalId, address, devAbbr, protAbbr, protName) {
+function proposalExecutedFinding(proposalId, address, config) {
   return Finding.fromObject({
-    name: `${protName} Governance Proposal Executed`,
+    name: `${config.protocolName} Governance Proposal Executed`,
     description: `Governance proposal ${proposalId} has been executed`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-PROPOSAL-EXECUTED`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-PROPOSAL-EXECUTED`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
     },
   });
 }
 
-function proposalQueuedFinding(proposalId, address, devAbbr, protAbbr, protName, eta) {
+function proposalQueuedFinding(proposalId, address, config, eta) {
   return Finding.fromObject({
-    name: `${protName} Governance Proposal Queued`,
+    name: `${config.protocolName} Governance Proposal Queued`,
     description: `Governance Proposal ${proposalId} has been queued`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-PROPOSAL-QUEUED`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-PROPOSAL-QUEUED`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       eta,
@@ -104,14 +104,14 @@ function proposalQueuedFinding(proposalId, address, devAbbr, protAbbr, protName,
   });
 }
 
-function quorumNumeratorUpdatedFinding(address, devAbbr, protAbbr, protName, oldNum, newNum) {
+function quorumNumeratorUpdatedFinding(address, config, oldNum, newNum) {
   return Finding.fromObject({
-    name: `${protName} Governance Quorum Numerator Updated`,
+    name: `${config.protocolName} Governance Quorum Numerator Updated`,
     description: `Quorum numerator updated from ${oldNum} to ${newNum}`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-QUORUM-NUMERATOR-UPDATED`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-QUORUM-NUMERATOR-UPDATED`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       oldNumerator: oldNum,
@@ -120,14 +120,14 @@ function quorumNumeratorUpdatedFinding(address, devAbbr, protAbbr, protName, old
   });
 }
 
-function timelockChangeFinding(address, devAbbr, protAbbr, protName, oldAddress, newAddress) {
+function timelockChangeFinding(address, config, oldAddress, newAddress) {
   return Finding.fromObject({
-    name: `${protName} Governance Timelock Address Change`,
+    name: `${config.protocolName} Governance Timelock Address Change`,
     description: `Timelock address changed from ${oldAddress} to ${newAddress}`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-TIMELOCK-ADDRESS-CHANGED`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-TIMELOCK-ADDRESS-CHANGED`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       oldTimelockAddress: oldAddress,
@@ -136,14 +136,14 @@ function timelockChangeFinding(address, devAbbr, protAbbr, protName, oldAddress,
   });
 }
 
-function votingDelaySetFinding(address, devAbbr, protAbbr, protName, oldDelay, newDelay) {
+function votingDelaySetFinding(address, config, oldDelay, newDelay) {
   return Finding.fromObject({
-    name: `${protName} Governance Voting Delay Set`,
+    name: `${config.protocolName} Governance Voting Delay Set`,
     description: `Voting delay change from ${oldDelay} to ${newDelay}`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-VOTING-DELAY-SET`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-VOTING-DELAY-SET`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       oldVotingDelay: oldDelay,
@@ -152,14 +152,14 @@ function votingDelaySetFinding(address, devAbbr, protAbbr, protName, oldDelay, n
   });
 }
 
-function votingPeriodSetFinding(address, devAbbr, protAbbr, protName, oldPeriod, newPeriod) {
+function votingPeriodSetFinding(address, config, oldPeriod, newPeriod) {
   return Finding.fromObject({
-    name: `${protName} Governance Voting Period Set`,
+    name: `${config.protocolName} Governance Voting Period Set`,
     description: `Voting period change from ${oldPeriod} to ${newPeriod}`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-VOTING-PERIOD-SET`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-VOTING-PERIOD-SET`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       oldVotingPeriod: oldPeriod,
@@ -168,14 +168,14 @@ function votingPeriodSetFinding(address, devAbbr, protAbbr, protName, oldPeriod,
   });
 }
 
-function proposalThresholdSetFinding(address, devAbbr, protAbbr, protName, oldThresh, newThresh) {
+function proposalThresholdSetFinding(address, config, oldThresh, newThresh) {
   return Finding.fromObject({
-    name: `${protName} Governance Proposal Threshold Set`,
+    name: `${config.protocolName} Governance Proposal Threshold Set`,
     description: `Proposal threshold change from ${oldThresh} to ${newThresh}`,
-    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-PROPOSAL-THRESHOLD-SET`,
+    alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-GOVERNANCE-PROPOSAL-THRESHOLD-SET`,
     type: 'Info',
     severity: 'Info',
-    protocol: protName,
+    protocol: config.protocolName,
     metadata: {
       address,
       oldThreshold: oldThresh,
@@ -187,12 +187,14 @@ function proposalThresholdSetFinding(address, devAbbr, protAbbr, protName, oldTh
 function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
-    data.developerAbbreviation = config.developerAbbreviation;
-    data.protocolName = config.protocolName;
-    data.protocolAbbreviation = config.protocolAbbreviation;
-    data.address = config.governance.address;
+    data.config = {
+      developerAbbreviation: agentConfig.developerAbbreviation,
+      protocolName: agentConfig.protocolName,
+      protocolAbbreviation: agentConfig.protocolAbbreviation,
+    };
+    data.address = agentConfig.governance.address;
 
-    const { abiFile } = config.governance;
+    const { abiFile } = agentConfig.governance;
     data.abi = getAbi(abiFile);
 
     const iface = new ethers.utils.Interface(data.abi);
@@ -200,10 +202,6 @@ function provideInitialize(data) {
     const names = Object.keys(iface.events);
     const ftype = ethers.utils.FormatTypes.full;
     data.eventSignatures = names.map((name) => iface.getEvent(name).format(ftype));
-
-    // set up an ethers contract object to interact with the contract
-    data.contract = new ethers.Contract(data.address, data.abi, getEthersProvider());
-
     /* eslint-enable no-param-reassign */
   };
 }
@@ -211,12 +209,9 @@ function provideInitialize(data) {
 function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
     const {
-      developerAbbreviation,
-      protocolName,
-      protocolAbbreviation,
+      config,
       address,
       eventSignatures,
-      contract,
     } = data;
 
     const findings = [];
@@ -234,9 +229,7 @@ function provideHandleTransaction(data) {
           return proposalCreatedFinding(
             proposal,
             address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
+            config,
           );
         case 'VoteCast':
           // add the vote to the corresponding proposal object
@@ -248,82 +241,47 @@ function provideHandleTransaction(data) {
             reason: log.args.reason,
           };
           // create a finding indicating that the vote was cast
-          return voteCastFinding(
-            voteInfo,
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
-          );
+          return voteCastFinding(voteInfo, address, config);
         case 'ProposalCanceled':
           // create a finding indicating that the proposal has been canceled,
-          return proposalCanceledFinding(
-            log.args.proposalId.toString(),
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
-          );
+          return proposalCanceledFinding(log.args.proposalId.toString(), address, config);
         case 'ProposalExecuted':
           // create a finding indicating that the proposal has been executed,
-          return proposalExecutedFinding(
-            log.args.proposalId.toString(),
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
-          );
+          return proposalExecutedFinding(log.args.proposalId.toString(), address, config);
         case 'QuorumNumeratorUpdated':
           return quorumNumeratorUpdatedFinding(
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
+            address,
+            config,
             log.args.oldQuorumNumerator.toString(),
             log.args.newQuorumNumerator.toString(),
           );
         case 'ProposalQueued':
           return proposalQueuedFinding(
             log.args.proposalId.toString(),
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
+            address,
+            config,
             log.args.eta.toString(),
           );
         case 'TimelockChange':
-          return timelockChangeFinding(
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
-            log.args.oldTimelock,
-            log.args.newTimelock,
-          );
+          return timelockChangeFinding(address, config, log.args.oldTimelock, log.args.newTimelock);
         case 'VotingDelaySet':
           return votingDelaySetFinding(
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
+            address,
+            config,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
           );
         case 'VotingPeriodSet':
           return votingPeriodSetFinding(
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
+            address,
+            config,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
           );
         case 'ProposalThresholdSet':
           return proposalThresholdSetFinding(
-            contract.address,
-            developerAbbreviation,
-            protocolAbbreviation,
-            protocolName,
+            address,
+            config,
             log.args.oldProposalThreshold.toString(),
             log.args.newProposalThreshold.toString(),
           );
