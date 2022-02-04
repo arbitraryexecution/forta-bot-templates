@@ -8,7 +8,7 @@ to add/remove/update events and contracts in the agent configuration file.
 
 The following steps will take you from a completely blank template to a functional agent.
 
-1. Open the `agent-config.json` file.
+1. Copy the `agent-config.json.example` file to a new file named `agent-config.json`.
 
 2. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
 team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
@@ -32,6 +32,8 @@ value is an Object containing the names of events as keys. The value for each ev
     `argument_name` is the case-sensitive name of an argument, specified in the ABI, that is emitted as part of the event,
     `operator` is a standard operation such as: `>=, !==, <` (a full table on supported operators can be found in the
     [Expression Compatibility Table](#expression-compatibility-table)), and `value` is an address, string, or number.
+
+Note: If no expression is provided, the agent will create an alert whenever the specified event is emitted.
 
 For example, to monitor the Uniswap GovernorBravo contract for emitted `NewAdmin` events, we would need the contract
 address, the ABI saved locally as a JSON formatted file, the exact event name corresponding to what is listed in the
@@ -80,7 +82,7 @@ instead of from the underlying implementation contract, the entry in the `agent-
 following:
 
 ```json
-  "adminEvents": {
+  "contracts": {
     "TransparentUpgradableProxy": {
       "address": "0xEe6A57eC80ea46401049E92587E52f5Ec1c24785",
       "abiFile": "TransparentUpgradableProxy.json",
