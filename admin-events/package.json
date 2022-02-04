@@ -11,12 +11,14 @@
     "range": "forta-agent run --range",
     "file": "forta-agent run --file",
     "publish": "forta-agent publish",
+    "push": "forta-agent push",
     "disable": "forta-agent disable",
     "enable": "forta-agent enable",
     "keyfile": "forta-agent keyfile",
     "test": "jest"
   },
   "dependencies": {
+    "bignumber.js": "^9.0.2",
     "forta-agent": "^0.0.34"
   },
   "devDependencies": {
