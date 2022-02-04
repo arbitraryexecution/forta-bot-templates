@@ -33,3 +33,8 @@ addresses. Alert type and severity are specified per function per contract addre
 
 This agent monitors blockchain transactions that have failed and are associated with a specific
 contract address. Alert type and severity are both configurable.
+
+### Contract Variable Monitor
+
+This agent monitors contract variable values for specified contract addresses. Alert type and severity
+are specified per variable per contract address.
