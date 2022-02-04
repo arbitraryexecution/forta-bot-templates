@@ -8,7 +8,7 @@ and severity are specified per function per contract address.
 
 The following steps will take you from a completely blank template to a functional agent.
 
-1. Open the `agent-config.json` file.
+1. Copy the `agent-config.json.example` file to a new file named `agent-config.json`.
 
 2. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or
 your development team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its
@@ -38,6 +38,9 @@ names of functions as keys. The value for each function name is an Object contai
     operation such as: `>=, !==, <` (a full table on supported operators can be found in the
     [Expression Compatibility Table](#expression-compatibility-table)), and `value` is an address,
     string, or number.
+
+Note: If no expression is provided, the agent will create an alert whenever the specified function is
+called.
 
 For example, to monitor if `createPool` was called in the Uniswap V3 Factory contract to create a
 pool with the WETH token as `tokenA`, we would need the contract address, the ABI saved

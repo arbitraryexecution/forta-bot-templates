@@ -62,7 +62,7 @@ function provideInitialize(data) {
     const contractNames = Object.keys(data.contractInfo);
 
     data.contracts = contractNames.map((name) => {
-      const { address, abiFile, functions = {} } = data.contractInfo[name];
+      const { address, abiFile, functions } = data.contractInfo[name];
       const abi = getAbi(abiFile);
       const iface = new ethers.utils.Interface(abi);
       const functionNames = Object.keys(functions);

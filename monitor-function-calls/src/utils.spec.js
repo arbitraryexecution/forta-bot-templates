@@ -67,8 +67,8 @@ describe('check parsing', () => {
     it('returns true when the value passed-in is a numerical string with no leading values before decimals', () => {
       expect(isNumeric('.123')).toBe(true);
     });
-    it('returns false when the value passed-in is a hexidecimal address', () => {
-      expect(isNumeric('0x00')).toBe(false);
+    it('returns true when the value passed-in is a hexidecimal address', () => {
+      expect(isNumeric('0x00')).toBe(true);
     });
     it('returns false when the value passed-in is an object', () => {
       expect(isNumeric({})).toBe(false);

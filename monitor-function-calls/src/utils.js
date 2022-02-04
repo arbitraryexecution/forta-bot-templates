@@ -22,17 +22,8 @@ function isAddress(valueString) {
 }
 
 function isNumeric(valueString) {
-  if (typeof(valueString) !== 'string') {
-    return false;
-  }
-
-  // Check the substrings for a valid numeric expression
-  // (characters 0-9) (optional decimal) (optional characters 0-9)
-  const result = valueString.match(/^[0-9]*?[.]?[0-9]*$/);
-  if (result === null) {
-    return false;
-  }
-  return (result[0].length === result.input.length);
+  const result = new BigNumber(valueString);
+  return !(result.isNaN());
 }
 
 function addressComparison(variable, operator, operand) {
