@@ -152,6 +152,38 @@ function votingDelaySetFinding(address, devAbbr, protAbbr, protName, oldDelay, n
   });
 }
 
+function votingPeriodSetFinding(address, devAbbr, protAbbr, protName, oldPeriod, newPeriod) {
+  return Finding.fromObject({
+    name: `${protName} Governance Voting Period Set`,
+    description: `Voting period change from ${oldPeriod} to ${newPeriod}`,
+    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-VOTING-PERIOD-SET`,
+    type: 'Info',
+    severity: 'Info',
+    protocol: protName,
+    metadata: {
+      address,
+      oldVotingPeriod: oldPeriod,
+      newVotingPeriod: newPeriod,
+    },
+  });
+}
+
+function proposalThresholdSetFinding(address, devAbbr, protAbbr, protName, oldThresh, newThresh) {
+  return Finding.fromObject({
+    name: `${protName} Governance Proposal Threshold Set`,
+    description: `Proposal threshold change from ${oldThresh} to ${newThresh}`,
+    alertId: `${devAbbr}-${protAbbr}-GOVERNANCE-PROPOSAL-THRESHOLD-SET`,
+    type: 'Info',
+    severity: 'Info',
+    protocol: protName,
+    metadata: {
+      address,
+      oldThreshold: oldThresh,
+      newThreshold: newThresh,
+    },
+  });
+}
+
 function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
@@ -188,8 +220,6 @@ function provideHandleTransaction(data) {
     } = data;
 
     const findings = [];
-
-    console.log(eventSignatures);
 
     const logs = txEvent.filterLog(eventSignatures, address);
 
@@ -280,9 +310,23 @@ function provideHandleTransaction(data) {
             log.args.newVotingDelay.toString(),
           );
         case 'VotingPeriodSet':
-          return [];
+          return votingPeriodSetFinding(
+            contract.address,
+            developerAbbreviation,
+            protocolAbbreviation,
+            protocolName,
+            log.args.oldVotingDelay.toString(),
+            log.args.newVotingDelay.toString(),
+          );
         case 'ProposalThresholdSet':
-          return [];
+          return proposalThresholdSetFinding(
+            contract.address,
+            developerAbbreviation,
+            protocolAbbreviation,
+            protocolName,
+            log.args.oldProposalThreshold.toString(),
+            log.args.newProposalThreshold.toString(),
+          );
         default:
           return [];
       }

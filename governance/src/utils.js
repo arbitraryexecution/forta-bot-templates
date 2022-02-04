@@ -1,5 +1,3 @@
-const { ethers } = require('forta-agent');
-
 function getAbi(abiName) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
   const { abi } = require(`../abi/${abiName}`);
