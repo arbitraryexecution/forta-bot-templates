@@ -1,55 +1,71 @@
 # Function Calls Agent Template
 
 This agent monitors blockchain transactions for specific function calls from specific contract
-addresses. Alert type and severity are specified per function per contract address. An existing
-agent of this type may be modified to add/remove/update functions and contracts in the agent
-configuration file.
+addresses, with the option to check the value of an argument against a specified value. Alert type
+and severity are specified per function per contract address.
 
 ## Agent Setup Walkthrough
 
 The following steps will take you from a completely blank template to a functional agent.
 
-1. Open the `agent-config.json` file.
+1. Copy the `agent-config.json.example` file to a new file named `agent-config.json`.
 
-2. `everestId` (optional) - Navigate to `https://everest.link` to look up the Everest registry ID for a specific project.  For example,
-typing `Uniswap` into the search bar (revealed when you click the magnifying glass at the top of the page),
-returns a number of potential matches, one of which is the correct Uniswap entry.  The ID for that entry is
-`0xa2e07f422b5d7cbbfca764e53b251484ecf945fa`. Copy and paste the Everest registry ID into the `agent-config.json` file as the value for the key `everestId`.
+2. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or
+your development team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its
+`developerAbbreviation` value.
 
-3. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
-team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
+3. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap
+protocol you may type in `"Uniswap"` or `"Uniswap V3"`, for the Sushi Swap protocol you may type in
+`"Sushi"` or `"SushiSwap"`, etc.
 
-4. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap protocol you may
-type in `"Uniswap"` or `"Uniswap V3"`, for the Sushi Swap protocol you may type in `"Sushi"` or `"SushiSwap"`, etc.
+4. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in
+`protocolName`.  For example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be
+abbreviated `"SUSH"`, etc.
 
-5. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in `protocolName`.  For
-example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be abbreviated `"SUSH"`, etc.
+5. `contracts` (required) - The Object value for this key corresponds to contracts that we want to
+monitor function calls for. Each key in the Object is a contract name that we can specify, where
+that name is simply a string that we use as a label when referring to the contract (the string can
+be any valid string that we choose, it will not affect the monitoring by the agent). The Object
+corresponding to each contract name requires an address key/value pair, abi file key/value pair, and
+a `functions` key.  The corresponding value for the `functions` key is an Object containing the
+names of functions as keys. The value for each function name is an Object containing:
+    * type (required) - Forta Finding Type
+    * severity (required) - Forta Finding Severity
+    * expression (optional) - A string that can be evaluated as a condition check when a function is
+    called.  The format of the expression is `<argument_name> <operator> <value>` (delimited by
+    spaces) where `argument_name` is the case-sensitive name of an input argument, specified in the
+    ABI, that is provided as part trace data when the function is called, `operator` is a standard
+    operation such as: `>=, !==, <` (a full table on supported operators can be found in the
+    [Expression Compatibility Table](#expression-compatibility-table)), and `value` is an address,
+    string, or number.
 
-6. `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor function
-calls for. Each key in the Object is a contract name that we can specify, where that name is simply
-a string that we use as a label when referring to the contract (the string can be any valid string
-that we choose, it will not affect the monitoring by the agent). The Object corresponding to each
-contract name requires an address key/value pair, abi file key/value pair, and a `functions` Object
-containing the names of functions as keys and Objects containing Finding types and severities as values. For
-example, to monitor if `createPool` was called in a Uniswap V3 Factory contract, we would need the
-contract address, the ABI saved locally as a JSON formatted file, the exact function name corresponding
-to what is listed in the ABI file, and a type and severity for the alert:
+Note: If no expression is provided, the agent will create an alert whenever the specified function is
+called.
 
-```
+For example, to monitor if `createPool` was called in the Uniswap V3 Factory contract to create a
+pool with the WETH token as `tokenA`, we would need the contract address, the ABI saved
+locally as a JSON formatted file, the exact function name corresponding to what is listed in the ABI
+file, a type, a severity, and an expression that must be satisfied to create an alert:
+
+```json
   "contracts": {
     "UniswapV3Factory": {
       "address": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
       "abiFile": "factory.json",
       "functions": {
-        "createPool": { "type": "Suspicious", "severity": "Medium" }
+        "createPool": {
+          "type": "Suspicious",
+          "severity": "Medium",
+          "expression": "tokenA === 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
       }
     }
   }
 ```
 
-Note that any unused entries in the configuration file must be deleted for the agent to work.  The original version
-of the configuration file contains several placeholders to show the structure of the file, but these are not valid
-entries for running the agent.
+Note that any unused entries in the configuration file must be deleted for the agent to work.  The
+original version of the configuration file contains several placeholders to show the structure of
+the file, but these are not valid entries for running the agent.
 
 7. We can obtain the contract ABI from one of several locations.  The most accurate ABI will be the one corresponding
 to the original contract code that was compiled and deployed onto the blockchain.  This typically will come from the
@@ -150,13 +166,17 @@ repository.  Also update the name and description fields in the `package.json` f
 ```
   monitor-function-calls/
     README.md
+    SETUP.md
+    COPYING
+    LICENSE
     Dockerfile
     forta.config.json
     package.json
     agent-config.json
     src/
       agent.js
-      common.js
+      agent.spec.js
+      utils.js
     abi/
       ContractABIFile1.json
       ContractABIFile2.json
@@ -170,9 +190,19 @@ package.json.
 11. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
 referred to in the `agent-config.json` file, the agent is complete.  Please test the agent against transactions
 that contain function calls that should trigger the agent.  Please also test the agent against transactions that should
-not trigger the agent.  Although not provided here, please create tests that will verify the functionality of
-the agent code for positive cases, negative cases, and edge cases (e.g. when errors occur).
+not trigger the agent.
 
 12. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
 documentation:
   https://docs.forta.network/en/latest/deploying/
+
+## Appendix
+
+### Expression Compatibility Table
+
+|          | __Expression__ | ===  | !== | >= | <= | < | > |
+| -------- | -------------- | ---- | --- | -- | -- | - | - |
+| __Type__ |                |      |     |    |    |   |   |
+| String   |                |  ✅  | ✅   |    |    |   |   |
+| Boolean  |                |  ✅  | ✅   |    |    |   |   |
+| Number   |                |  ✅  | ✅   | ✅ | ✅ | ✅ | ✅ |
