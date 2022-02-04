@@ -3,7 +3,7 @@ const {
   Finding, FindingSeverity, FindingType, ethers, getEthersProvider,
 } = require('forta-agent');
 
-const { getAbi, getVariableInfo, checkThreshold } = require('./utils');
+const utils = require('./utils');
 
 // load any agent configuration parameters
 const config = require('../agent-config-test.json');
@@ -39,7 +39,7 @@ function createAlert(
       contractAddress,
       variableName,
       thresholdPosition,
-      thresholdPercentLimit,
+      thresholdPercentLimit: thresholdPercentLimit.toString(),
       actualPercentChange,
     },
   });
@@ -69,7 +69,7 @@ function provideInitialize(data) {
         throw new Error(`No ABI file found in configuration file for '${name}'`);
       }
 
-      const abi = getAbi(entry.abiFile);
+      const abi = utils.getAbi(entry.abiFile);
       const contract = new ethers.Contract(entry.address, abi, provider);
       return {
         name,
@@ -79,7 +79,7 @@ function provideInitialize(data) {
 
     contractList.forEach((contractEntry, i) => {
       const entry = configEntries[contractEntry.name];
-      const { info } = getVariableInfo(entry, contractList[i], configEntries, contractList);
+      const { info } = utils.getVariableInfo(entry, contractList[i], configEntries, contractList);
       data.variableInfoList.push(...info);
     });
 
@@ -113,10 +113,15 @@ function provideHandleBlock(data) {
       let newValue = await contract[variableName]();
       newValue = new BigNumber(newValue.toString());
 
+      // get the average value
+      const averageBN = pastValues.getAverage();
+
       // check the current number of elements in the pastValues array
       if (pastValues.getNumElements() >= minNumElements) {
-        if (upperThresholdPercent !== undefined) {
-          const percentOver = checkThreshold(upperThresholdPercent, newValue, pastValues);
+        // only check for an upperThresholdPercent change if upperThresholdPercent exists and the
+        // new value is greater than the current average
+        if (upperThresholdPercent !== undefined && newValue.gt(averageBN)) {
+          const percentOver = utils.checkThreshold(upperThresholdPercent, newValue, pastValues);
           if (percentOver !== undefined) {
             variableFindings.push(createAlert(
               variableName,
@@ -134,8 +139,10 @@ function provideHandleBlock(data) {
           }
         }
 
-        if (lowerThresholdPercent !== undefined) {
-          const percentOver = checkThreshold(lowerThresholdPercent, newValue, pastValues);
+        // only check for a lowerThresholdPercent change if lowerThresholdPercent exists and the
+        // new value is less than the current average
+        if (lowerThresholdPercent !== undefined && newValue.lt(averageBN)) {
+          const percentOver = utils.checkThreshold(lowerThresholdPercent, newValue, pastValues);
           if (percentOver !== undefined) {
             variableFindings.push(createAlert(
               variableName,
