@@ -1,5 +1,5 @@
 const {
-  Finding, FindingType, FindingSeverity, createTransactionEvent, ethers,
+  Finding, createTransactionEvent, ethers,
 } = require('forta-agent');
 
 const { provideHandleTransaction, provideInitialize } = require('./agent');
