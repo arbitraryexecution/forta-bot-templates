@@ -1,13 +1,14 @@
 # Contract Variable Monitor Agent Template
 
-This agent monitors contract variable values for specified contract addresses. Alert type and severity
-are specified per variable per contract address.
+This agent monitors contract variables that contain numeric values for specified contract addresses.
+Upper and lower percent change thresholds, number of data points to collect before checking for percent changes,
+and alert type and severity are specified per variable per contract address.
 
 ## Agent Setup Walkthrough
 
 The following steps will take you from a completely blank template to a functional agent.
 
-1. Open the `agent-config.json` file.
+1. Copy the `agent-config.json.example` file to a new file named `agent-config.json`.
 
 2. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
 team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
@@ -21,9 +22,10 @@ example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbrevi
 5.  `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor variable
 values for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
-monitoring by the agent). The Object corresponding to each contract name requires an address key/value pair, abi
-file key/value pair, and a `variables` key, `proxy` key, or both. For the case of a `variables` key, the corresponding
-value is an Object containing the names of contract variables as keys. The value for each variable name is an Object containing:
+monitoring by the agent). The Object corresponding to each contract name requires an `address` key/value pair,
+`abiFile` key/value pair, and a `variables` key. For the `variables` key, the corresponding value is an Object
+containing the names of contract variables as keys. Note that each respective variable key must return
+a numeric value from a contract. The value for each variable name is an Object containing:
     * type (required) - Forta Finding Type
     * severity (required) - Forta Finding Severity
     * upperThresholdPercent (optional) - Number as a change percentage that will trigger a finding if the monitored
@@ -58,45 +60,14 @@ would look like for this example:
   }
 ```
 
-Note that any unused entries in the configuration file must be deleted for the agent to work.  The original version
+Note: Any unused entries in the configuration file must be deleted for the agent to work.  The original version
 of the configuration file contains several placeholders to show the structure of the file, but these are not valid
 entries for running the agent.
 
-6. If a contract is a proxy for another contract, where the ABI for getter function for a variable will
-be located in the proxy contract's ABI JSON file, the entry in the `agent-config.json` file may look like
-the following:
+Note: If a contract is proxied by another contract, make sure that the value for the `address` key is the
+address of the proxy contract.
 
-```json
-  "contracts": {
-    "Unitroller": {
-      "address": "0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B",
-      "abiFile": "Unitroller.json",
-      "proxy": "NonfungibleTokenPositionDescriptor"
-    },
-    "Comptroller": {
-      "address": "0xBafE01ff935C7305907c33BF824352eE5979B526",
-      "abiFile": "Comptroller.json",
-      "variables": {
-        "liquidationIncentiveMantissa": {
-          "type": "Info",
-          "severity": "Low",
-          "lowerThresholdPercent": 5,
-          "numDataPoints": 1
-        }
-      }
-    }
-  }
-```
-
-In this example, all functions should be called against the proxy Unitroller, but the definitions for
-the functions that belong to the Comptroller contract will subsequently be a part of the Comproller
-ABI JSON file. What is critical here is that the string corresponding to the `proxy` key must be
-identical to one of the contract name keys in the `contracts` Object. It is possible for the proxy contract
-to have its own variables and subsequent getter functions. In those cases, there may be a `variables`
-key with corresponding Object values for the proxy contract as well. Both sets of variables will be
-used by the agent when monitoring contract variable values.
-
-7. We can obtain the contract ABI from one of several locations. The most accurate ABI will be the one
+6. We can obtain the contract ABI from one of several locations. The most accurate ABI will be the one
 corresponding to the original contract code that was compiled and deployed onto the blockchain. This typically will
 come from the Github repository of the protocol being monitored. For the Uniswap example provided thus far, the
 deployed contracts are all present in the Uniswap Github repository here:
@@ -159,11 +130,11 @@ The name of the JSON formatted file containing the ABI needs to have the same pa
 the `abiFile` key in the `agent-config.json` file.  This will allow the agent to load the ABI correctly
 and call the requested getter functions corresponding to the variables listed in the config.
 
-8. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
+7. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
 repository.  Also update the `name` and `description` entries in the `package.json` file to appropriately
 reflect who is creating the agent and what the agent monitors.
 
-9. Move files to have the following directory structure:
+8. Move files to have the following directory structure:
 
 ```
   contract-variable-monitor/
@@ -187,13 +158,13 @@ reflect who is creating the agent and what the agent monitors.
       ContractABIFileN.json
 ```
 
-10. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
+9. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
 package.json.
 
-11. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
+10. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
 referred to in the `agent-config.json` file, the agent is complete. Please run the unit tests designed
 to make sure all the required config values are defined and test the agent template logic with your
 specific config.
 
-12. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
+11. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
 documentation.

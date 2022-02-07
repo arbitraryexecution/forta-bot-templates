@@ -36,5 +36,6 @@ contract address. Alert type and severity are both configurable.
 
 ### Contract Variable Monitor
 
-This agent monitors contract variable values for specified contract addresses. Alert type and severity
-are specified per variable per contract address.
+This agent monitors contract variables that contain numeric values for specified contract addresses.
+Upper and lower percent change thresholds, number of data points to collect before checking for percent changes,
+and alert type and severity are specified per variable per contract address.

@@ -25,7 +25,7 @@ function createAlert(
   thresholdPercentLimit,
   actualPercentChange,
 ) {
-  const finding = Finding.fromObject({
+  return Finding.fromObject({
     name: `${protocolName} Contract Variable`,
     description: `The ${variableName} variable value in the ${contractName} contract had a change`
       + ` in value over the ${thresholdPosition} threshold limit of ${thresholdPercentLimit}`
@@ -43,8 +43,6 @@ function createAlert(
       actualPercentChange,
     },
   });
-
-  return Finding.fromObject(finding);
 }
 
 function provideInitialize(data) {
@@ -77,9 +75,9 @@ function provideInitialize(data) {
       };
     });
 
-    contractList.forEach((contractEntry, i) => {
+    contractList.forEach((contractEntry) => {
       const entry = configEntries[contractEntry.name];
-      const { info } = utils.getVariableInfo(entry, contractList[i], configEntries, contractList);
+      const { info } = utils.getVariableInfo(entry, contractEntry, configEntries);
       data.variableInfoList.push(...info);
     });
 

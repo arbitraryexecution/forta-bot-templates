@@ -1,5 +1,5 @@
 {
-  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-admin-events",
+  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-contract-variable-monitor",
   "version": "0.0.1",
   "description": "This agent template monitors contract variables in {protocolName} contracts.",
   "scripts": {

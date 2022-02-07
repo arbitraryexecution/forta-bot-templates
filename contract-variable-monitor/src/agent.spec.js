@@ -72,6 +72,12 @@ describe('check agent configuration file', () => {
       Object.keys(variables).forEach((variableName) => {
         expect(Object.keys(functionObjects).indexOf(variableName)).not.toBe(-1);
 
+        // assert that the output array length for the getter function is one
+        expect(functionObjects[variableName].outputs.length).toBe(1);
+
+        // assert that the type of the output for the getter function is a (u)int type
+        expect(functionObjects[variableName].outputs[0].type.match(/^u?int/)).not.toBe(null);
+
         // extract the keys from the configuration file for a specific function
         const {
           type,
@@ -88,18 +94,18 @@ describe('check agent configuration file', () => {
         expect(Object.prototype.hasOwnProperty.call(FindingSeverity, severity)).toBe(true);
 
         // make sure there is at least one threshold value present in the config, otherwise fail
-        if (upperThresholdPercent === null && lowerThresholdPercent === null) {
+        if (upperThresholdPercent === undefined && lowerThresholdPercent === undefined) {
           throw new Error('Either the upperThresholdPercent or lowerThresholdPercent for the'
             + ` variable ${variableName} must be defined`);
         }
 
         // if upperThresholdPercent is defined, make sure the value is a number
-        if (upperThresholdPercent !== null) {
+        if (upperThresholdPercent !== undefined) {
           expect(upperThresholdPercent).toEqual(expect.any(Number));
         }
 
         // if lowerThresholdPercent is defined, make sure the value is a number
-        if (lowerThresholdPercent !== null) {
+        if (lowerThresholdPercent !== undefined) {
           expect(lowerThresholdPercent).toEqual(expect.any(Number));
         }
 
@@ -174,9 +180,18 @@ describe('monitor contract variables', () => {
     });
 
     it('invokes the function specified by the variable name in the config and does not invoke any other functions in the contract ABI', async () => {
-      // add new mocked functions to the mockContract corresponding to the variable names for getter
-      // functions found in the config file, the value is not important for this test
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(10);
+      initializeData.variableInfoList.forEach((variableInfo) => {
+        // add new mocked functions to the mockContract corresponding to the variable names for
+        // getter functions found in the config file, the value is not important for this test
+        mockContract[variableInfo.name] = jest.fn().mockResolvedValue(10);
+
+        // make sure that minNumElements for each object in the initialized data's variableInfoList
+        // is greater than 0 so that we can properly run this test
+        if (variableInfo.minNumElements === 0) {
+          // eslint-disable-next-line no-param-reassign
+          variableInfo.minNumElements = 1;
+        }
+      });
 
       // now add a mocked function that we know was NOT in the config file, to make sure the test
       // only calls the functions specified in the config
@@ -193,18 +208,18 @@ describe('monitor contract variables', () => {
     });
 
     it('does not invoke the checkThreshold function when not enough data points have been seen yet', async () => {
-      // make sure that minNumElements for each object in the initialized data's variableInfoList is
-      // greater than 0 so that we can properly run this test
       initializeData.variableInfoList.forEach((variableInfo) => {
+        // add new mocked functions to the mockContract corresponding to the variable names for
+        // getter functions found in the config file, the value is not important for this test
+        mockContract[variableInfo.name] = jest.fn().mockResolvedValue(10);
+
+        // make sure that minNumElements for each object in the initialized data's variableInfoList
+        // is greater than 0 so that we can properly run this test
         if (variableInfo.minNumElements === 0) {
           // eslint-disable-next-line no-param-reassign
           variableInfo.minNumElements = 1;
         }
       });
-
-      // add new mocked functions to the mockContract corresponding to the variable names for getter
-      // functions found in the config file, the value is not important for this test
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(10);
 
       await handleBlock();
 
