@@ -358,7 +358,7 @@ describe('monitor contract variables', () => {
       expect(findings).toStrictEqual([]);
     });
 
-    it('returns a finding when the value decreases and the change is less than the lower threshold percent change', async () => {
+    it('returns a finding when the value decreases more than the lower threshold percent change', async () => {
       const newThresholdLimit = 10;
       const initialGetterValue = 10;
       /* eslint-disable no-param-reassign */
