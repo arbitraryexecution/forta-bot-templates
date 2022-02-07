@@ -66,6 +66,8 @@ function proposalCanceledFinding(proposalId, address, config) {
     protocol: config.protocolName,
     metadata: {
       address,
+      proposalId,
+      state: 'canceled',
     },
   });
 }
@@ -80,6 +82,8 @@ function proposalExecutedFinding(proposalId, address, config) {
     protocol: config.protocolName,
     metadata: {
       address,
+      proposalId,
+      state: 'executed',
     },
   });
 }
@@ -95,6 +99,8 @@ function proposalQueuedFinding(proposalId, address, config, eta) {
     metadata: {
       address,
       eta,
+      proposalId,
+      state: 'queued',
     },
   });
 }
