@@ -10,6 +10,9 @@ function createProposalFromLog(log) {
     proposalId,
     proposer: log.args.proposer,
     targets: log.args.targets.join(','),
+    // the 'values' key has to be parsed differently because `values` is a named method on Objects
+    // in JavaScript.  Also, this is why the key is prefixed with an underscore, to avoid
+    // overwriting the `values` method.
     _values: (log.args[3].map((v) => v.toString())).join(','),
     signatures: log.args.signatures.join(','),
     calldatas: log.args.calldatas.join(','),
@@ -20,36 +23,7 @@ function createProposalFromLog(log) {
   return proposal;
 }
 
-async function getProposalCreatedEvent(contract, proposalId, currentBlock) {
-  const votingPeriod = (await contract.votingPeriod()).toNumber();
-  const votingDelay = (await contract.votingDelay()).toNumber();
-
-  const topics = contract.interface.encodeFilterTopics('ProposalCreated', []);
-  const filter = {
-    address: contract.address.toLowerCase(),
-    topics,
-    fromBlock: currentBlock - votingPeriod - votingDelay,
-    toBlock: currentBlock - votingDelay,
-  };
-  const rawLogs = await contract.provider.getLogs(filter);
-
-  let result = rawLogs.map((rawLog) => {
-    const log = contract.interface.parseLog({ data: rawLog.data, topics: rawLog.topics });
-    if (proposalId === log.args.proposalId.toString()) {
-      return createProposalFromLog(log);
-    }
-    return undefined;
-  });
-
-  result = result.filter((entry) => entry !== undefined);
-  if (result.length !== 1) {
-    throw new Error('Unable to find single match for event when proposal was created');
-  }
-  return result[0];
-}
-
 module.exports = {
   getAbi,
-  createProposalFromLog,
   getProposalCreatedEvent,
 };
