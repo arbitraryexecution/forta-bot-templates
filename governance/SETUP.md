@@ -33,7 +33,7 @@ repository.  Also update the name and description fields in the `package.json` f
 
 7. Move files to have the following directory structure:
 ```
-  monitor-function-calls/
+  governance/
     README.md
     SETUP.md
     COPYING
