@@ -1,8 +1,3 @@
-// VoteCast Tx: 0x4f8f3d7827467229caffb8570a9b38aa78448ca358863d7ad17ea4a75673745d
-// ProposalCreated Tx: 0x46fb3ad1837ca8fbbd88e6654424752faa20430fab0517c2d965b26759292d4b
-// ProposalExecuted Tx: 0xd1924e6d2b04303262fe90d6a354f92d795a6ce4bd7908cd77869aae50e77f43
-// ProposalQueued Tx: 0x1a9692a039baebcedc28b13447e3528a6a469b8ae9e8241df14f50a5cbad25dd
-// ProposalCanceled Tx: 0xc09ea70ee0f2e05eff9ff63b09195a6714681c18a145c019de8e5fbc9e01e675
 const { Finding, ethers } = require('forta-agent');
 
 const agentConfig = require('../agent-config.json');
