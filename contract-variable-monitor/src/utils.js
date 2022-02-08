@@ -9,18 +9,11 @@ function getAbi(abiName) {
 
 // get a list of variable getter information objects for each variable name listed for a given
 // contract in the config
-function getVariableInfo(contractConfig, currentContract, variableList) {
-  const { variables, proxy: proxyName } = contractConfig;
+function getVariableInfo(contractConfig, currentContract) {
+  const { variables } = contractConfig;
   const info = [];
 
-  let variableNames = [];
-  if (variableList === undefined) {
-    if (proxyName === undefined) {
-      return {}; // no variables for this contract are specified in the config
-    }
-  } else {
-    variableNames = Object.keys(variables);
-  }
+  const variableNames = Object.keys(variables);
 
   variableNames.forEach((variableName) => {
     const variableInfo = variables[variableName];

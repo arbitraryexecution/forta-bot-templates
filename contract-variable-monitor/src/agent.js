@@ -77,7 +77,7 @@ function provideInitialize(data) {
 
     contractList.forEach((contractEntry) => {
       const entry = configEntries[contractEntry.name];
-      const { info } = utils.getVariableInfo(entry, contractEntry, configEntries);
+      const { info } = utils.getVariableInfo(entry, contractEntry);
       data.variableInfoList.push(...info);
     });
 
