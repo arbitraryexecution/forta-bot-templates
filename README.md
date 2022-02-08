@@ -8,9 +8,9 @@ simply by creating configuration files.
 ### Administrative/Governance Events
 
 This agent monitors blockchain transactions for specific events emitted from specific contract
-addresses.  Alert type and severity are specified per event per contract address.  An existing agent
-of this type may be modified to add/remove/update events and contracts in the agent configuration
-file.
+addresses.  Optionally, an expression can be provided for checking the value of an event argument
+against a predefined value.  If a matching event is emitted and the expression evaluates to `true`,
+an alert is created.  Alert type and severity are specified per event per contract address.
 
 ### Account Balance Monitor
 
@@ -27,7 +27,10 @@ either EOAs or contracts.  Alert type and severity are both configurable.
 ### Function Calls
 
 This agent monitors blockchain transactions for specific function calls for specific contract
-addresses. Alert type and severity are specified per function per contract address.
+addresses. Optionally, an expression may be provided for checking the value of a function argument
+against a predefined value.  If a matching function call occurs and the expression evaluates to
+`true`, an alert is created.  Alert type and severity are specified per function per contract
+address.
 
 ### Transaction Failure Count
 
