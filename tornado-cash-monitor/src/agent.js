@@ -145,8 +145,7 @@ function provideHandleTransaction(data) {
       });
     });
 
-    // iterate over the list of suspiciousAddresses and decrement each respective block timer
-    // (if applicable); if the timer <= 0, then remove the address from the list
+    // iterate over the list of suspiciousAddresses and check to see if any address can be removed
     const addressesToRemove = [];
     Object.keys(data.suspiciousAddresses).forEach((address) => {
       const currBlock = txEvent.blockNumber;
