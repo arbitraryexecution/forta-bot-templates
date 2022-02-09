@@ -38,7 +38,7 @@ describe('check agent configuration file', () => {
     const { observationIntervalInBlocks } = config;
     expect(typeof (observationIntervalInBlocks)).toBe('number');
     expect(observationIntervalInBlocks).not.toBe('');
-  })
+  });
 
   it('addressList key required', () => {
     const { addressList } = config;
