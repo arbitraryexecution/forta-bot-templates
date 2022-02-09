@@ -34,16 +34,16 @@ describe('check agent configuration file', () => {
     expect(developerAbbreviation).not.toBe('');
   });
 
-  it('contracts key required', () => {
-    const { contracts } = config;
-    expect(typeof (contracts)).toBe('object');
-    expect(contracts).not.toBe({});
+  it('addressList key required', () => {
+    const { addressList } = config;
+    expect(typeof (addressList)).toBe('object');
+    expect(addressList).not.toBe({});
   });
 
-  it('contracts key values must be valid', () => {
-    const { contracts } = config;
-    Object.keys(contracts).forEach((key) => {
-      const { address, type, severity } = contracts[key];
+  it('addressList key values must be valid', () => {
+    const { addressList } = config;
+    Object.keys(addressList).forEach((key) => {
+      const { address, type, severity } = addressList[key];
 
       // check that the address is a valid address
       expect(ethers.utils.isHexString(address, 20)).toBe(true);
@@ -61,8 +61,8 @@ describe('check agent configuration file', () => {
 describe('handleTransaction', () => {
   let initializeData;
   let handleTransaction;
-  let contractName;
-  let testContractInfo;
+  let addressName;
+  let testAddressInfo;
   let mockTrace;
   let mockTxEvent;
   let iface;
@@ -73,9 +73,9 @@ describe('handleTransaction', () => {
 
     // set up test configuration parameters that won't change with each test
     // grab the first entry from the 'contracts' key in the configuration file
-    const { contracts: configContracts } = config;
-    [contractName] = Object.keys(configContracts);
-    testContractInfo = configContracts[contractName];
+    const { addressList } = config;
+    [addressName] = Object.keys(addressList);
+    testAddressInfo = addressList[addressName];
 
     // initialize the handler
     await (provideInitialize(initializeData))();
@@ -195,16 +195,16 @@ describe('handleTransaction', () => {
 
     // update mock trace object to include a monitored address
     mockTrace[0].action.input = ethers.constants.HashZero;
-    mockTrace[0].action.to = testContractInfo.address;
+    mockTrace[0].action.to = testAddressInfo.address;
     mockTrace[0].action.from = mockSuspiciousAddress;
 
     // update mock transaction event with new mock trace
     mockTxEvent.traces = mockTrace;
-    mockTxEvent.transaction.to = testContractInfo.address;
+    mockTxEvent.transaction.to = testAddressInfo.address;
     mockTxEvent.transaction.from = mockSuspiciousAddress;
     mockTxEvent.addresses = {
       [mockSuspiciousAddress]: true,
-      [testContractInfo.address]: true,
+      [testAddressInfo.address]: true,
     };
 
     // update the blockNumber to be one greater than the observation interval specified in the
@@ -260,16 +260,16 @@ describe('handleTransaction', () => {
 
     // update mock trace object to include a monitored address
     mockTrace[0].action.input = ethers.constants.HashZero;
-    mockTrace[0].action.to = testContractInfo.address;
+    mockTrace[0].action.to = testAddressInfo.address;
     mockTrace[0].action.from = mockSuspiciousAddress;
 
     // update mock transaction event with new mock trace
     mockTxEvent.traces = mockTrace;
-    mockTxEvent.transaction.to = testContractInfo.address;
+    mockTxEvent.transaction.to = testAddressInfo.address;
     mockTxEvent.transaction.from = mockSuspiciousAddress;
     mockTxEvent.addresses = {
       [mockSuspiciousAddress]: true,
-      [testContractInfo.address]: true,
+      [testAddressInfo.address]: true,
     };
 
     // update the blockNumber
@@ -280,15 +280,15 @@ describe('handleTransaction', () => {
 
     const expectedFinding = [Finding.fromObject({
       name: `${config.protocolName} Tornado Cash Monitor`,
-      description: `The ${contractName} contract (${testContractInfo.address}) was involved in a`
+      description: `The ${addressName} address (${testAddressInfo.address}) was involved in a`
         + ` transaction with an address ${mockSuspiciousAddress} that has previously interacted`
         + ' with Tornado Cash',
       alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-TORNADO-CASH-MONITOR`,
-      type: FindingType[testContractInfo.type],
-      severity: FindingSeverity[testContractInfo.severity],
+      type: FindingType[testAddressInfo.type],
+      severity: FindingSeverity[testAddressInfo.severity],
       metadata: {
-        contractAddress: testContractInfo.address,
-        contractName,
+        monitoredAddress: testAddressInfo.address,
+        name: addressName,
         suspiciousAddress: mockSuspiciousAddress,
         tornadoCashContractAddresses: TORNADO_CASH_ADDRESSES,
       },

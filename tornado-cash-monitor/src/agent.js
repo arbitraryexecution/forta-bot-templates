@@ -16,8 +16,8 @@ const TORNADO_CASH_ADDRESSES = [
 const initializeData = {};
 
 function createAlert(
-  contractAddress,
-  contractName,
+  monitoredAddress,
+  name,
   suspiciousAddress,
   developerAbbrev,
   protocolName,
@@ -27,14 +27,14 @@ function createAlert(
 ) {
   return Finding.fromObject({
     name: `${protocolName} Tornado Cash Monitor`,
-    description: `The ${contractName} contract (${contractAddress}) was involved in a transaction`
+    description: `The ${name} address (${monitoredAddress}) was involved in a transaction`
       + ` with an address ${suspiciousAddress} that has previously interacted with Tornado Cash`,
     alertId: `${developerAbbrev}-${protocolAbbrev}-TORNADO-CASH-MONITOR`,
     type,
     severity,
     metadata: {
-      contractAddress,
-      contractName,
+      monitoredAddress,
+      name,
       suspiciousAddress,
       tornadoCashContractAddresses: TORNADO_CASH_ADDRESSES,
     },
@@ -50,7 +50,7 @@ function provideInitialize(data) {
       protocolName,
       protocolAbbreviation,
       observationIntervalInBlocks,
-      contracts,
+      addressList,
     } = config;
 
     data.developerAbbreviation = developerAbbreviation;
@@ -59,22 +59,22 @@ function provideInitialize(data) {
     data.observationIntervalInBlocks = observationIntervalInBlocks;
     data.iface = new ethers.utils.Interface(abi);
 
-    // get the contract names specified in the config
-    const contractNames = Object.keys(contracts);
-    if (contractNames.length === 0) {
-      throw new Error('Must supply at least one contract to watch');
+    // get the address names specified in the config
+    const addressNames = Object.keys(addressList);
+    if (addressNames.length === 0) {
+      throw new Error('Must supply at least one address to watch');
     }
 
-    data.contractsToMonitor = [];
-    contractNames.forEach((contractName) => {
+    data.addressesToMonitor = [];
+    addressNames.forEach((addressName) => {
       const info = {
-        name: contractName,
-        address: contracts[contractName].address,
-        type: contracts[contractName].type,
-        severity: contracts[contractName].severity,
+        name: addressName,
+        address: addressList[addressName].address,
+        type: addressList[addressName].type,
+        severity: addressList[addressName].severity,
       };
 
-      data.contractsToMonitor.push(info);
+      data.addressesToMonitor.push(info);
     });
 
     // create an object to hold addresses that have been identified as having interacted with a
@@ -93,7 +93,7 @@ function provideHandleTransaction(data) {
       protocolAbbreviation,
       observationIntervalInBlocks,
       iface,
-      contractsToMonitor,
+      addressesToMonitor,
     } = data;
 
     // check to see if the given transaction includes deposit/withdraw calls from a tornado cash
@@ -139,22 +139,22 @@ function provideHandleTransaction(data) {
     addressesToRemove.forEach((address) => delete data.suspiciousAddresses[address]);
 
     // now check to see if the higher level list of addresses in txEvent contains at least one
-    // address from suspiciousAddresses and one address from the contractsToMonitor
+    // address from suspiciousAddresses and one address from the addressesToMonitor
     Object.keys(data.suspiciousAddresses).forEach((address) => {
-      contractsToMonitor.forEach((contractInfo) => {
-        const { address: contractAddress } = contractInfo;
+      addressesToMonitor.forEach((addressInfo) => {
+        const { address: monitoredAddress } = addressInfo;
         if (txEvent.addresses[address] !== undefined
-            && txEvent.addresses[contractAddress] !== undefined) {
+            && txEvent.addresses[monitoredAddress] !== undefined) {
           // generate a finding
           findings.push(createAlert(
-            contractAddress,
-            contractInfo.name,
+            monitoredAddress,
+            addressInfo.name,
             address,
             developerAbbreviation,
             protocolName,
             protocolAbbreviation,
-            FindingType[contractInfo.type],
-            FindingSeverity[contractInfo.severity],
+            FindingType[addressInfo.type],
+            FindingSeverity[addressInfo.severity],
           ));
         }
       });
