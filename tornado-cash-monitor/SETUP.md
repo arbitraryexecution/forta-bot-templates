@@ -1,4 +1,4 @@
-# Address Watch Template
+# Tornado Cash Template
 
 This agent monitors blockchain transactions for those involving specified addresses and any address
 that has previously interacted with a known Tornado Cash Proxy. An observation period (in blocks) to
