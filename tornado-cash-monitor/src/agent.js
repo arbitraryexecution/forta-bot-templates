@@ -123,6 +123,21 @@ function provideHandleTransaction(data) {
       };
     });
 
+    // iterate over the list of suspiciousAddresses and check to see if any address can be removed
+    const addressesToRemove = [];
+    Object.keys(data.suspiciousAddresses).forEach((address) => {
+      const currBlock = txEvent.blockNumber;
+      const { blockAdded } = data.suspiciousAddresses[address];
+      if ((currBlock - blockAdded) >= observationIntervalInBlocks) {
+        // block is older than observationIntervalInBlocks and can be removed from
+        // suspicousAddresses
+        addressesToRemove.push(address);
+      }
+    });
+
+    // eslint-disable-next-line no-param-reassign
+    addressesToRemove.forEach((address) => delete data.suspiciousAddresses[address]);
+
     // now check to see if the higher level list of addresses in txEvent contains at least one
     // address from suspiciousAddresses and one address from the contractsToMonitor
     Object.keys(data.suspiciousAddresses).forEach((address) => {
@@ -145,25 +160,12 @@ function provideHandleTransaction(data) {
       });
     });
 
-    // iterate over the list of suspiciousAddresses and check to see if any address can be removed
-    const addressesToRemove = [];
-    Object.keys(data.suspiciousAddresses).forEach((address) => {
-      const currBlock = txEvent.blockNumber;
-      const { blockAdded } = data.suspiciousAddresses[address];
-      if ((currBlock - blockAdded) >= observationIntervalInBlocks) {
-        // block is older than observationIntervalInBlocks and can be removed from
-        // suspicousAddresses
-        addressesToRemove.push(address);
-      }
-    });
-
-    // eslint-disable-next-line no-param-reassign
-    addressesToRemove.forEach((address) => delete data.suspiciousAddresses[address]);
     return findings;
   };
 }
 
 module.exports = {
+  TORNADO_CASH_ADDRESSES,
   provideInitialize,
   initialize: provideInitialize(initializeData),
   provideHandleTransaction,
