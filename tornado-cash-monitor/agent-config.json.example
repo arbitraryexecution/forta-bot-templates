@@ -3,7 +3,7 @@
     "protocolName": "",
     "protocolAbbreviation": "",
     "observationIntervalInBlocks": 10,
-    "contracts": {
+    "addressList": {
         "contractName1": {
             "address": "contractAddress1",
             "type": "type",
