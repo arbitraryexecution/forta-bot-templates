@@ -1,5 +1,5 @@
 {
-  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-dao-multisig",
+  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-gnosis-safe-multisig",
   "version": "0.0.1",
   "description": "Forta Agent template for monitoring the {protocolName} Gnosis-Safe MultiSig wallet",
   "scripts": {
