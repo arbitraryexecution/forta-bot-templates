@@ -1,7 +1,7 @@
 # Gnosis-Safe MultiSig Wallet Agent Template
 
-This agent monitors a Gnosis-Safe multi-signature contract address for events emitted and any changes
-in Ether or token balances.  All alert types and severities are set to Info by default.
+This agent monitors a Gnosis-Safe multi-signature contract address for events emitted and any
+changes in Ether or token balances.  All alert types and severities are set to Info by default.
 
 ## Agent Setup Walkthrough
 
@@ -23,9 +23,9 @@ abbreviated `"SUSH"`, etc.
 
 5. `gnosisSafe` (required) - The Object value for this key corresponds to the contract that we want
 to monitor for emitted events and balance changes.  There is a key for the contract address and
-another that specifies the version of the Gnosis-Safe contract that is to be monitored.  The supported
-versions are `v1.0.0`, `v1.1.1`, `v1.2.0`, and `v1.3.0`, where JSON files containing the ABIs for
-those versions are located in the `./abi` directory and in their respective subdirectories.
+another that specifies the version of the Gnosis-Safe contract that is to be monitored.  The
+supported versions are `v1.0.0`, `v1.1.1`, `v1.2.0`, and `v1.3.0`, where JSON files containing the
+ABIs for those versions are located in the `./abi` directory and in their respective subdirectories.
 
 For example, to monitor the Synthetix protocolDAO multisig contract for emitted events and balance
 changes, the following content would be present in the `agent-config.json` file:
@@ -46,12 +46,12 @@ Note that any unused entries in the configuration file must be deleted for the a
 original version of the configuration file contains several placeholders to show the structure of
 the file, but these are not valid entries for running the agent.
 
-6. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
-repository.  Also update the name and description fields in the `package.json` file.
+6. Create a new README.md file to provide a description of your agent, using examples from the Forta
+Github repository.  Also update the name and description fields in the `package.json` file.
 
 7. Move files to have the following directory structure:
 ```
-  monitor-function-calls/
+  gnosis-safe-multisig/
     README.md
     SETUP.md
     COPYING
@@ -76,14 +76,14 @@ repository.  Also update the name and description fields in the `package.json` f
       ERC20.json
 ```
 
-8. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
-package.json.
+8. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file
+alongside package.json.
 
-9. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
-referred to in the `agent-config.json` file, the agent is complete.  Please test the agent against transactions
-that contain function calls that should trigger the agent.  Please also test the agent against transactions that should
-not trigger the agent.
+9. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct
+locations referred to in the `agent-config.json` file, the agent is complete.  Please test the agent
+against transactions that contain emitted events that should trigger the agent.  Please also test
+the agent against transactions that should not trigger the agent.
 
-10. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
-documentation:
+10. After sufficient testing, the agent may be published and deployed using the steps outlined in
+the Forta SDK documentation:
   https://docs.forta.network/en/latest/deploying/
