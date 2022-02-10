@@ -128,7 +128,7 @@ function provideHandleTransaction(data) {
     Object.keys(data.suspiciousAddresses).forEach((address) => {
       const currBlock = txEvent.blockNumber;
       const { blockAdded } = data.suspiciousAddresses[address];
-      if ((currBlock - blockAdded) >= observationIntervalInBlocks) {
+      if ((currBlock - blockAdded) > observationIntervalInBlocks) {
         // block is older than observationIntervalInBlocks and can be removed from
         // suspicousAddresses
         addressesToRemove.push(address);
