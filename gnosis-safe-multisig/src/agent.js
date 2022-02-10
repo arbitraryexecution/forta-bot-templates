@@ -12,6 +12,9 @@ const config = require('../agent-config.json');
 
 const versionUtils = require('./version-utils');
 
+const { abi: erc20Abi } = require('../abi/ERC20.json');
+const erc20Interface = new ethers.utils.Interface(erc20Abi);
+
 const initializeData = {};
 
 function provideInitialize(data) {
@@ -36,9 +39,6 @@ function provideInitialize(data) {
     const blockNumber = await data.provider.getBlockNumber();
 
     // look up all Transfer events to this address
-    // eslint-disable-next-line import/no-dynamic-require,global-require
-    const { abi: erc20Abi } = require('../abi/ERC20.json');
-    const erc20Interface = new ethers.utils.Interface(erc20Abi);
     const topics = erc20Interface.encodeFilterTopics('Transfer', [
       null,
       data.address,
