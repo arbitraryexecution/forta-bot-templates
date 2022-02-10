@@ -141,6 +141,7 @@ function provideHandleBlock(data) {
     } = alertFields;
 
     const ethBalance = await provider.getBalance(address);
+    const ethBalanceBN = new BigNumber(ethBalance.toString());
 
     const promises = tokenContracts.map(async (tokenContract) => {
       const result = {};
@@ -153,29 +154,38 @@ function provideHandleBlock(data) {
       return result;
     });
 
-    const tokenBalances = await Promise.all(promises);
+    // an array of objects
+    const tokenBalancesArray = await Promise.all(promises);
+    const tokenBalances = {};
+    tokenBalancesArray.forEach((entry) => {
+      Object.entries(entry).forEach(([key, value]) => {
+        tokenBalances[key] = value;
+      });
+    });
 
     // check the current balances aginst the previous balances
     if (previousBalances) {
       Object.entries(previousBalances).forEach(([key, value]) => {
-        if ((key === 'Ether') && (!value.neq(ethBalance))) {
-          // create finding
-          findings.push(Finding.fromObject({
-            name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
-            description: `Ether balance of ${address} changed by ${value.minus(ethBalance).toString()}`,
-            alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ETH-BALANCE-CHANGE`,
-            type: FindingType.Info,
-            severity: FindingSeverity.Info,
-            metadata: {
-              previousBalance: value.toString(),
-              newBalance: ethBalance.toString(),
-            },
-          }));
+        if (key === 'Ether') {
+          if (!value.eq(ethBalanceBN)) {
+            // create finding
+            findings.push(Finding.fromObject({
+              name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
+              description: `Ether balance of ${address} changed by ${value.minus(ethBalanceBN).toString()}`,
+              alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ETH-BALANCE-CHANGE`,
+              type: FindingType.Info,
+              severity: FindingSeverity.Info,
+              metadata: {
+                previousBalance: value.toString(),
+                newBalance: ethBalanceBN.toString(),
+              },
+            }));
+          }
         } else if (!value.eq(tokenBalances[key])) {
           // create finding
           findings.push(Finding.fromObject({
             name: `${protocolName} DAO Treasury MultiSig - Token Balance Changed`,
-            description: `Token balance of ${address} changed by ${value.minus(ethBalance).toString()}`,
+            description: `Token balance of ${address} changed by ${value.minus(tokenBalances[key]).toString()}`,
             alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-TOKEN-BALANCE-CHANGE`,
             type: FindingType.Info,
             severity: FindingSeverity.Info,
@@ -190,7 +200,7 @@ function provideHandleBlock(data) {
     }
 
     // update the stored balances
-    previousBalances.Ether = BigNumber(ethBalance.toString());
+    previousBalances.Ether = ethBalanceBN;
     Object.entries(tokenBalances).forEach(([key, value]) => {
       previousBalances[key] = value;
     });
