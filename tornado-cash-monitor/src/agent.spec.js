@@ -78,7 +78,7 @@ describe('handleTransaction', () => {
     initializeData = {};
 
     // set up test configuration parameters that won't change with each test
-    // grab the first entry from the 'contracts' key in the configuration file
+    // grab the first entry from the 'addressList' key in the configuration file
     const { addressList } = config;
     [addressName] = Object.keys(addressList);
     testAddressInfo = addressList[addressName];
@@ -296,7 +296,7 @@ describe('handleTransaction', () => {
         monitoredAddress: testAddressInfo.address,
         name: addressName,
         suspiciousAddress: mockSuspiciousAddress,
-        tornadoCashContractAddresses: TORNADO_CASH_ADDRESSES,
+        tornadoCashContractAddresses: TORNADO_CASH_ADDRESSES.join(','),
       },
     })];
 

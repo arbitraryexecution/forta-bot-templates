@@ -36,7 +36,7 @@ function createAlert(
       monitoredAddress,
       name,
       suspiciousAddress,
-      tornadoCashContractAddresses: TORNADO_CASH_ADDRESSES,
+      tornadoCashContractAddresses: TORNADO_CASH_ADDRESSES.join(','),
     },
   });
 }
@@ -100,7 +100,8 @@ function provideHandleTransaction(data) {
     // proxy
     let addressesOfInterest = TORNADO_CASH_ADDRESSES.map((address) => {
       const filterResult = txEvent.filterFunction(
-        iface.format(ethers.utils.FormatTypes.full, address),
+        iface.format(ethers.utils.FormatTypes.full),
+        address,
       );
 
       if (filterResult.length > 0) {
@@ -170,5 +171,4 @@ module.exports = {
   initialize: provideInitialize(initializeData),
   provideHandleTransaction,
   handleTransaction: provideHandleTransaction(initializeData),
-  createAlert,
 };
