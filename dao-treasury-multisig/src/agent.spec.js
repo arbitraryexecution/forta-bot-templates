@@ -97,7 +97,6 @@ describe('gnosis-safe multisig monitoring', () => {
       },
     ];
 
-
     beforeEach(async () => {
       // set an initial Ether balance for the contract
       mockProvider.getBalance = jest.fn().mockResolvedValue(ethers.BigNumber.from(0));
@@ -371,5 +370,85 @@ describe('gnosis-safe multisig monitoring', () => {
   });
 
   describe('handleTransaction', () => {
+    let initializeData;
+    let handleBlock;
+    let handleTransaction;
+
+    const { version } = config.gnosisSafe;
+    const { abi } = require(`../abi/${version}/gnosis_safe.json`);
+    const iface = new ethers.utils.Interface(abi);
+
+    const logsNoMatchEvent = [
+      {
+        address: '0xINVALIDADDRESS',
+        topics: [ethers.constants.HashZero],
+      },
+    ];
+
+    const logsAddressMatchNoEventMatch = [
+      {
+        address: config.gnosisSafe.address,
+        topics: [ethers.constants.HashZero],
+      },
+    ];
+
+    const topics = iface.encodeFilterTopics('AddedOwner', []);
+    const logsAddressAndEventMatch = [
+      {
+        address: config.gnosisSafe.address,
+        topics,
+        data: ethers.constants.HashZero,
+      },
+    ];
+
+    beforeEach(async () => {
+      // set an initial Ether balance for the contract
+      mockProvider.getBalance = jest.fn().mockResolvedValue(ethers.BigNumber.from(0));
+
+      initializeData = {};
+      await (provideInitialize(initializeData))();
+      handleBlock = provideHandleBlock(initializeData);
+      handleTransaction = provideHandleTransaction(initializeData);
+    });
+
+    it('returns empty findings if the address does not match', async () => {
+      // invoke the transaction handler with a non-matching log
+      const receipt = { logs: logsNoMatchEvent };
+      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const findings = await handleTransaction(mockTxEvent);
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns empty findings if the address matches but the event does not', async () => {
+      // invoke the transaction handler with a non-matching log
+      const receipt = { logs: logsAddressMatchNoEventMatch };
+      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const findings = await handleTransaction(mockTxEvent);
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns findings if the address and event match', async () => {
+      // invoke the transaction handler with a non-matching log
+      const receipt = { logs: logsAddressAndEventMatch };
+      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const findings = await handleTransaction(mockTxEvent);
+
+      // create expected findings
+      const { alertFields, address: protocolAddress } = initializeData;
+      const { protocolName, protocolAbbreviation, developerAbbreviation } = alertFields;
+      const expectedFindings = [Finding.fromObject({
+        name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,
+        description: `Owner added to Gnosis-Safe MultiSig wallet: ${ethers.constants.AddressZero}`,
+        alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ADDED-OWNER`,
+        protocol: 'ethereum',
+        severity: FindingSeverity.Info,
+        type: FindingType.Info,
+        metadata: {
+          address: protocolAddress,
+          owner: ethers.constants.AddressZero,
+        },
+      })];
+      expect(findings).toStrictEqual(expectedFindings);
+    });
   });
 });
