@@ -28,8 +28,6 @@ jest.mock('forta-agent', () => ({
   },
 }));
 
-const config = require('../agent-config.json');
-
 const {
   FindingType,
   FindingSeverity,
@@ -37,8 +35,10 @@ const {
   TransactionEvent,
   ethers,
 } = require('forta-agent');
+const config = require('../agent-config.json');
 
 const { abi: erc20Abi } = require('../abi/ERC20.json');
+
 const erc20Interface = new ethers.utils.Interface(erc20Abi);
 
 const { provideHandleBlock, provideHandleTransaction, provideInitialize } = require('./agent');
@@ -371,10 +371,10 @@ describe('gnosis-safe multisig monitoring', () => {
 
   describe('handleTransaction', () => {
     let initializeData;
-    let handleBlock;
     let handleTransaction;
 
     const { version } = config.gnosisSafe;
+    // eslint-disable-next-line import/no-dynamic-require,global-require
     const { abi } = require(`../abi/${version}/gnosis_safe.json`);
     const iface = new ethers.utils.Interface(abi);
 
@@ -407,7 +407,6 @@ describe('gnosis-safe multisig monitoring', () => {
 
       initializeData = {};
       await (provideInitialize(initializeData))();
-      handleBlock = provideHandleBlock(initializeData);
       handleTransaction = provideHandleTransaction(initializeData);
     });
 

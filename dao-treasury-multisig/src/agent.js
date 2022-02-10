@@ -125,7 +125,7 @@ function provideHandleTransaction(data) {
 }
 
 function provideHandleBlock(data) {
-  return async function handleBlock(blockEvent) {
+  return async function handleBlock() {
     const findings = [];
 
     const {
