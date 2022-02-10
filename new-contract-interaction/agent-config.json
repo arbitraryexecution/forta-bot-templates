@@ -1,0 +1,13 @@
+{
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",    
+  "contracts": {
+    "contractName1": {
+      "thresholdAgeDays": 7,      
+      "address": "contractAddress1",
+      "findingType": "Type",
+      "findingSeverity": "Severity"
+    }
+  }
+}
