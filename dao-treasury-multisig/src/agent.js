@@ -25,7 +25,7 @@ function provideInitialize(data) {
     };
 
     // gnosis_safe specific configuration values
-    data.address = config.gnosisSafe.address;
+    data.address = config.gnosisSafe.address.toLowerCase();
     data.version = config.gnosisSafe.version;
 
     data.provider = getEthersProvider();
@@ -56,7 +56,7 @@ function provideInitialize(data) {
     data.transferSignature = erc20Interface.getEvent('Transfer').format(ftype);
 
     // extract the token addresses from the Transfer events
-    data.tokenAddresses = rawLogs.map((rawLog) => rawLog.address);
+    data.tokenAddresses = rawLogs.map((rawLog) => rawLog.address.toLowerCase());
 
     // get rid of any duplicates
     data.tokenAddresses = [...new Set(data.tokenAddresses)];
@@ -97,8 +97,10 @@ function provideHandleTransaction(data) {
     // contract object for interactions in the handleBlock function
     const transferLogs = txEvent.filterLog(transferSignature);
     transferLogs.forEach((log) => {
-      if ((log.from === address) || (log.to === address)) {
-        if ((tokenAddresses.indexOf(log.address) === -1) && (tokenAddresses.push(log.address))) {
+      if ((log.args.from.toLowerCase() === address.toLowerCase())
+        || (log.args.to.toLowerCase() === address.toLowerCase())) {
+        if ((tokenAddresses.indexOf(log.address.toLowerCase()) === -1)
+          && (tokenAddresses.push(log.address.toLowerCase()))) {
           const tokenContract = new ethers.Contract(log.address, erc20Abi, provider);
           tokenContracts.push(tokenContract);
         }
@@ -147,9 +149,9 @@ function provideHandleBlock(data) {
       const result = {};
       try {
         const tokenBalance = await tokenContract.balanceOf(address);
-        result[tokenContract.address] = new BigNumber(tokenBalance.toString());
+        result[tokenContract.address.toLowerCase()] = new BigNumber(tokenBalance.toString());
       } catch {
-        result[tokenContract.address] = new BigNumber(0);
+        result[tokenContract.address.toLowerCase()] = new BigNumber(0);
       }
       return result;
     });
@@ -171,7 +173,7 @@ function provideHandleBlock(data) {
             // create finding
             findings.push(Finding.fromObject({
               name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
-              description: `Ether balance of ${address} changed by ${value.minus(ethBalanceBN).toString()}`,
+              description: `Ether balance of ${address} changed by ${ethBalanceBN.minus(value).toString()}`,
               alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ETH-BALANCE-CHANGE`,
               type: FindingType.Info,
               severity: FindingSeverity.Info,
@@ -185,7 +187,7 @@ function provideHandleBlock(data) {
           // create finding
           findings.push(Finding.fromObject({
             name: `${protocolName} DAO Treasury MultiSig - Token Balance Changed`,
-            description: `Token balance of ${address} changed by ${value.minus(tokenBalances[key]).toString()}`,
+            description: `Token balance of ${address} changed by ${tokenBalances[key].minus(value).toString()}`,
             alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-TOKEN-BALANCE-CHANGE`,
             type: FindingType.Info,
             severity: FindingSeverity.Info,
