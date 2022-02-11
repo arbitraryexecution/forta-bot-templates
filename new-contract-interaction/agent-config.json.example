@@ -4,7 +4,7 @@
   "protocolAbbreviation": "",    
   "contracts": {
     "contractName1": {
-      "thresholdAgeDays": 7,
+      "thresholdBlockCount": 7,
       "thresholdTransactionCount": 7,
       "address": "contractAddress1",
       "filteredAddresses": [

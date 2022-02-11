@@ -1,13 +1,8 @@
-const axios = require('axios');
-
 const {
     Finding, FindingType, FindingSeverity, createTransactionEvent, ethers,
 } = require('forta-agent');
   
 const agent = require('./agent');
-  
-// read the .env file and populate process.env with keys/values
-require('dotenv').config();
 
 // mock response from Etherscan API
 // the 'timeStamp' field is the only one we need; all other fields have been removed
@@ -25,12 +20,9 @@ const mockEtherscanResponse = {
   },
 };
 
-// mock the axios module for etherscan API calls
-jest.mock('axios');
-axios.get.mockResolvedValue(mockEtherscanResponse);
-
 // mock response from ethers BaseProvider.getCode()
 const mockGetCodeResponseEOA = '0x';
+const mockGetCodeResponseNewContract = '0x';
 const mockGetCodeResponseContract = '0xabcd';
 
 const mockEthersProvider = {
@@ -46,7 +38,7 @@ config = {
     "protocolAbbreviation": "TEST",
     "contracts": {
         "testContract": {
-            "thresholdAgeDays": 7,
+            "thresholdBlockCount": 7,
             "thresholdTransactionCount": 7,
             "address": `0x2${'0'.repeat(39)}`,
             "filteredAddresses": [
@@ -87,12 +79,12 @@ describe('check agent configuration file', () => {
     describe('contracts key values must be valid', () => {
         const { contracts } = config;
         Object.keys(contracts).forEach((key) => {
-            const { thresholdAgeDays, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = contracts[key];
+            const { thresholdBlockCount, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = contracts[key];
 
-            // make sure value for thresholdAgeDays in config is a number
-            expect(thresholdAgeDays).toEqual(expect.any(Number));
+            // make sure value for thresholdBlockCount in config is a number
+            expect(thresholdBlockCount).toEqual(expect.any(Number));
 
-            // make sure value for threshold in config is a number
+            // make sure value for thresholdTransactionCount in config is a number
             expect(thresholdTransactionCount).toEqual(expect.any(Number));
 
             // check that the address is a valid address
@@ -111,19 +103,6 @@ describe('check agent configuration file', () => {
 });
 
 describe('mocked APIs should work properly', () => {
-    describe('mock axios GET request', () => {
-        it('should call axios.get and return a response', async () => {
-        mockEtherscanResponse.data.result[0].timeStamp = 42;
-        const response = await axios.get('https://...');
-        expect(axios.get).toHaveBeenCalledTimes(1);
-        expect(response.data.result[0].timeStamp).toEqual(42);
-    
-        // reset call count for next test
-        axios.get.mockClear();
-        expect(axios.get).toHaveBeenCalledTimes(0);
-        });
-    });
-    
     describe('mock ethers getCode request', () => {
         it('should call getCode and return a response', async () => {
         mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
@@ -156,13 +135,13 @@ describe('new contract interaction monitoring', () => {
 
         const contractNames = Object.keys(config.contracts);
         initializeData.contracts = contractNames.map((name) => {
-            const { thresholdAgeDays, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = config.contracts[name];
+            const { thresholdBlockCount, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = config.contracts[name];
               
             const contract = {
               name,
               address,
               filteredAddresses,
-              thresholdAgeDays,
+              thresholdBlockCount,
               thresholdTransactionCount,
               findingType,
               findingSeverity
@@ -178,18 +157,12 @@ describe('new contract interaction monitoring', () => {
   
     // reset function call count after each test
     afterEach(() => {
-      axios.get.mockClear();
       mockEthersProvider.getCode.mockClear();
       mockEthersProvider.getTransactionCount.mockClear();
-      axios.get.mockResolvedValue(mockEtherscanResponse);
     });
   
     describe('handleTransaction', () => {
-      it('should have an Etherscan API key', () => {
-        expect(process.env.ETHERSCAN_API_KEY).not.toBe(undefined);
-      });
-  
-      it('returns empty findings if the no contracts are invoked', async () => {
+      it('returns empty findings if no contracts are invoked', async () => {
         const txEvent = createTransactionEvent({
           transaction: {
             to: '0x1',
@@ -198,19 +171,19 @@ describe('new contract interaction monitoring', () => {
             '0x1': true,
             '0x2': true,
           },
-          block: { timestamp: Date.now() / 1000 },
+          block: { number: 10 },
         });
   
         // run forta agent
         const findings = await handleTransaction(txEvent);
   
         // check assertions
-        expect(axios.get).toHaveBeenCalledTimes(0);
         expect(findings).toStrictEqual([]);
       });
     
       it('returns empty findings if the getCode function throws an error', async () => {
-        const transaction_address = '0x1';          
+        const transaction_address = '0x1';
+
         const txEvent = createTransactionEvent({
           transaction: {
             to: config.contracts.testContract.address,
@@ -219,7 +192,7 @@ describe('new contract interaction monitoring', () => {
             [config.contracts.testContract.address]: true,
             [transaction_address]: true,
           },
-          block: { timestamp: Date.now() / 1000 },
+          block: { number: 10 },
         });
   
         // intentionally setup the getCode function to throw an error
@@ -229,44 +202,12 @@ describe('new contract interaction monitoring', () => {
         const findings = await handleTransaction(txEvent);
   
         // check assertions
-        expect(axios.get).toHaveBeenCalledTimes(0);
         expect(findings).toStrictEqual([]);
       });
-  
-      it('returns empty findings if the etherscan api call throws an error', async () => {
-        const transaction_address = '0x1';
-        const now = Date.now() / 1000;
-  
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { timestamp: now },
-        });
-  
-        mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseContract);
-  
-        mockTimestamp = now - 86400 * 1; // 1 day = 86400 seconds
-        mockEtherscanResponse.data.result[0].timeStamp = mockTimestamp;
-  
-        // intentionally setup the axios 'GET' request to throw an error
-        axios.get.mockImplementation(async () => { throw new Error('FAILED'); });
-  
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        // check assertions
-        expect(axios.get).toHaveBeenCalledTimes(1); // expect 1 call for the test address
-        expect(findings).toStrictEqual([]);
-      });
-  
+    
       it('returns empty findings if the invocation is from an old contract', async () => {
-        const transaction_address = '0x1';          
-        const now = Date.now() / 1000;
+        const transaction_address = '0x1';       
+
         const txEvent = createTransactionEvent({
           transaction: {
             to: config.contracts.testContract.address,
@@ -275,26 +216,21 @@ describe('new contract interaction monitoring', () => {
             [config.contracts.testContract.address]: true,
             [transaction_address]: true,
           },
-          block: { timestamp: now },
+          block: { number: 1 },
         });
   
-        mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseContract);
-        mockTimestamp = now - 86400 * 7; // 1 day = 86400 seconds
-        mockEtherscanResponse.data.result[0].timeStamp = mockTimestamp;
-  
+        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+        
         // run forta agent
         const findings = await handleTransaction(txEvent);
-        const contractAge = agent.getContractAge(now, mockTimestamp);
-  
-        // check assertions
-        expect(axios.get).toHaveBeenCalledTimes(1); // expect 1 call for the test address
-        expect(contractAge).toEqual(7);
+
         expect(findings).toStrictEqual([]);
       });
 
       it('returns empty findings if the invocation is from a filtered address', async () => {
         const transaction_address = filteredAddress;          
-        const now = Date.now() / 1000;
+
         const txEvent = createTransactionEvent({
           transaction: {
             to: config.contracts.testContract.address,
@@ -303,7 +239,7 @@ describe('new contract interaction monitoring', () => {
             [config.contracts.testContract.address]: true,
             [transaction_address]: true,
           },
-          block: { timestamp: now },
+          block: { number: 10 },
         });
   
         // run forta agent
@@ -315,7 +251,7 @@ describe('new contract interaction monitoring', () => {
 
       it('returns a finding if a new contract was involved in the transaction', async () => {
         const transaction_address = '0x1';
-        const now = Date.now() / 1000;
+        const blockNumber = 10;
   
         const txEvent = createTransactionEvent({
           transaction: {
@@ -325,22 +261,15 @@ describe('new contract interaction monitoring', () => {
             [config.contracts.testContract.address]: true,
             [transaction_address]: true,
           },
-          block: { timestamp: now },
+          block: { number: blockNumber },
         });
   
-        mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseContract);
-  
-        mockTimestamp = now - 86400 * 1; // 1 day = 86400 seconds
-        mockEtherscanResponse.data.result[0].timeStamp = mockTimestamp;
-  
+        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseNewContract);
+    
         // run forta agent
         const findings = await handleTransaction(txEvent);
-        const contractAge = agent.getContractAge(now, mockTimestamp);
   
-        // check assertions
-        expect(axios.get).toHaveBeenCalledTimes(1); // expect 1 call for the test address
-        expect(contractAge).toEqual(1);
-
         let expectedFindings = [];
         initializeData.contracts.forEach((contract) => {
             const {
@@ -354,7 +283,7 @@ describe('new contract interaction monitoring', () => {
                 name,
                 address,
                 transaction_address, 
-                contractAge,
+                blockNumber,
                 findingType,
                 findingSeverity,
                 initializeData.protocolName,
@@ -368,7 +297,7 @@ describe('new contract interaction monitoring', () => {
 
       it('returns empty findings if the invocation is from an old EOA', async () => {
         const transaction_address = '0x1';          
-        const now = Date.now() / 1000;
+
         const txEvent = createTransactionEvent({
           transaction: {
             to: config.contracts.testContract.address,
@@ -377,7 +306,7 @@ describe('new contract interaction monitoring', () => {
             [config.contracts.testContract.address]: true,
             [transaction_address]: true,
           },
-          block: { timestamp: now },
+          block: { number: 10 },
         });
   
         mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
@@ -391,7 +320,8 @@ describe('new contract interaction monitoring', () => {
       });
 
       it('returns a finding if a new EOA was involved in the transaction', async () => {
-        const transaction_address = '0x1';                    
+        const transaction_address = '0x1';
+
         const txEvent = createTransactionEvent({
           transaction: {
             to: config.contracts.testContract.address,
@@ -400,7 +330,7 @@ describe('new contract interaction monitoring', () => {
             [config.contracts.testContract.address]: true,
             [transaction_address]: true,
           },
-          block: { timestamp: Date.now() / 1000 },
+          block: { number: 10 },
         });
   
         const transactionCount = 1;
