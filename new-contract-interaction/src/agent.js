@@ -20,9 +20,9 @@ function createContractInteractionAlert(
   developerAbbreviation,
 ) {
   const finding = {
-    name: `${protocolName} Contract Interaction`,
+    name: `${protocolName} New Contract Interaction`,
     description: `The ${contractName} contract interacted with a new contract ${interactionAddress}`,
-    alertId: `${developerAbbreviation}-${protocolAbbreviation}-CONTRACT-INTERACTION`,
+    alertId: `${developerAbbreviation}-${protocolAbbreviation}-NEW-CONTRACT-INTERACTION`,
     type: FindingType[findingType],
     severity: FindingSeverity[findingSeverity],
     protocol: protocolName,
@@ -50,9 +50,9 @@ function createEOAInteractionAlert(
   developerAbbreviation,
 ) {
   const finding = {
-    name: `${protocolName} EOA Interaction`,
+    name: `${protocolName} New EOA Interaction`,
     description: `The ${contractName} contract interacted with a new EOA ${interactionAddress}`,
-    alertId: `${developerAbbreviation}-${protocolAbbreviation}-EOA-INTERACTION`,
+    alertId: `${developerAbbreviation}-${protocolAbbreviation}-NEW-EOA-INTERACTION`,
     type: FindingType[findingType],
     severity: FindingSeverity[findingSeverity],
     protocol: protocolName,
