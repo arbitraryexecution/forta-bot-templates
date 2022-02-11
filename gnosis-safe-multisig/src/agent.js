@@ -115,6 +115,7 @@ function provideHandleTransaction(data) {
       if (findingObject) {
         findingObject.type = FindingType.Info;
         findingObject.severity = FindingSeverity.Info;
+        findingObject.protocol = alertFields.protocolName;
         const finding = Finding.fromObject(findingObject);
         findings.push(finding);
       }
@@ -177,6 +178,7 @@ function provideHandleBlock(data) {
               alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ETH-BALANCE-CHANGE`,
               type: FindingType.Info,
               severity: FindingSeverity.Info,
+              protocol: protocolName,
               metadata: {
                 previousBalance: value.toString(),
                 newBalance: ethBalanceBN.toString(),
@@ -191,6 +193,7 @@ function provideHandleBlock(data) {
             alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-TOKEN-BALANCE-CHANGE`,
             type: FindingType.Info,
             severity: FindingSeverity.Info,
+            protocol: protocolName,
             metadata: {
               previousBalance: value.toString(),
               newBalance: tokenBalances[key].toString(),

@@ -160,7 +160,7 @@ describe('gnosis-safe multisig monitoring', () => {
         name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
         description: `Ether balance of ${protocolAddress} changed by 1`,
         alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ETH-BALANCE-CHANGE`,
-        protocol: 'ethereum',
+        protocol: protocolName,
         severity: FindingSeverity.Info,
         type: FindingType.Info,
         metadata: {
@@ -224,7 +224,7 @@ describe('gnosis-safe multisig monitoring', () => {
         name: `${protocolName} DAO Treasury MultiSig - Token Balance Changed`,
         description: `Token balance of ${protocolAddress} changed by 1`,
         alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-TOKEN-BALANCE-CHANGE`,
-        protocol: 'ethereum',
+        protocol: protocolName,
         severity: FindingSeverity.Info,
         type: FindingType.Info,
         metadata: {
@@ -354,7 +354,7 @@ describe('gnosis-safe multisig monitoring', () => {
         name: `${protocolName} DAO Treasury MultiSig - Token Balance Changed`,
         description: `Token balance of ${protocolAddress} changed by 1`,
         alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-TOKEN-BALANCE-CHANGE`,
-        protocol: 'ethereum',
+        protocol: protocolName,
         severity: FindingSeverity.Info,
         type: FindingType.Info,
         metadata: {
@@ -439,7 +439,7 @@ describe('gnosis-safe multisig monitoring', () => {
         name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,
         description: `Owner added to Gnosis-Safe MultiSig wallet: ${ethers.constants.AddressZero}`,
         alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-ADDED-OWNER`,
-        protocol: 'ethereum',
+        protocol: protocolName,
         severity: FindingSeverity.Info,
         type: FindingType.Info,
         metadata: {
