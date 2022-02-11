@@ -33,3 +33,8 @@ addresses. Alert type and severity are specified per function per contract addre
 
 This agent monitors blockchain transactions that have failed and are associated with a specific
 contract address. Alert type and severity are both configurable.
+
+### New Contract/EOA Interaction
+
+This agent monitors blockchain transactions for new contracts and EOAs with few transactions
+interacting with specific contract addresses. Alert type and severity are specified per contract.

@@ -1,7 +1,7 @@
 # New Contract Interaction Agent Template
 
-This agent monitors blockchain transactions for new contracts interacting with specific contract
-addresses. Alert type and severity are specified per contract.
+This agent monitors blockchain transactions for new contracts and EOAs with few transactions
+interacting with specific contract addresses. Alert type and severity are specified per contract.
 
 ## Agent Setup Walkthrough
 
@@ -62,6 +62,8 @@ repository.  Also update the name and description fields in the `package.json` f
     SETUP.md
     COPYING
     LICENSE
+    .eslintrc.js
+    .gitignore
     Dockerfile
     forta.config.json
     package.json
