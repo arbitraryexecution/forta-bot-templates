@@ -42,3 +42,10 @@ contract address. Alert type and severity are both configurable.
 This agent monitors contract variables that contain numeric values for specified contract addresses.
 Upper and lower percent change thresholds, number of data points to collect before checking for percent changes,
 and alert type and severity are specified per variable per contract address.
+
+### Tornado Cash Monitor
+
+This agent monitors blockchain transactions for those involving specified addresses and any address
+that have previously interacted with a known Tornado Cash Proxy. An observation period (in blocks) to
+watch addresses that have interacted with known Tornado Cash Proxies is configurable. Alert type and
+severity is also configurable per contract.
