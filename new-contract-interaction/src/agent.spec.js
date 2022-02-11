@@ -18,6 +18,9 @@ const filteredAddress = `0x3${'0'.repeat(39)}`;
 
 const config = require('../agent-config.json');
 
+const [testContract] = Object.keys(config.contracts);
+const { address: testContractAddress } = config.contracts[testContract];
+
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
   describe('procotolName key required', () => {
@@ -67,6 +70,11 @@ describe('check agent configuration file', () => {
 
       // check that filteredAddresses is an array
       expect(Array.isArray(filteredAddresses)).toBe(true);
+
+      // check that all entries in filteredAddresses are valid addresses
+      filteredAddresses.forEach((entry) => {
+        expect(ethers.utils.isHexString(entry, 20)).toBe(true);
+      });
 
       // check type, this will fail if 'type' is not valid
       expect(Object.prototype.hasOwnProperty.call(FindingType, findingType)).toBe(true);
@@ -167,10 +175,10 @@ describe('new contract interaction monitoring', () => {
 
       const txEvent = createTransactionEvent({
         transaction: {
-          to: config.contracts.testContract.address,
+          to: testContractAddress,
         },
         addresses: {
-          [config.contracts.testContract.address]: true,
+          [testContractAddress]: true,
           [transactionAddress]: true,
         },
         block: { number: 10 },
@@ -191,10 +199,10 @@ describe('new contract interaction monitoring', () => {
 
       const txEvent = createTransactionEvent({
         transaction: {
-          to: config.contracts.testContract.address,
+          to: testContractAddress,
         },
         addresses: {
-          [config.contracts.testContract.address]: true,
+          [testContractAddress]: true,
           [transactionAddress]: true,
         },
         block: { number: 1 },
@@ -214,10 +222,10 @@ describe('new contract interaction monitoring', () => {
 
       const txEvent = createTransactionEvent({
         transaction: {
-          to: config.contracts.testContract.address,
+          to: testContractAddress,
         },
         addresses: {
-          [config.contracts.testContract.address]: true,
+          [testContractAddress]: true,
           [transactionAddress]: true,
         },
         block: { number: 10 },
@@ -236,10 +244,10 @@ describe('new contract interaction monitoring', () => {
 
       const txEvent = createTransactionEvent({
         transaction: {
-          to: config.contracts.testContract.address,
+          to: testContractAddress,
         },
         addresses: {
-          [config.contracts.testContract.address]: true,
+          [testContractAddress]: true,
           [transactionAddress]: true,
         },
         block: { number: blockNumber },
@@ -281,10 +289,10 @@ describe('new contract interaction monitoring', () => {
 
       const txEvent = createTransactionEvent({
         transaction: {
-          to: config.contracts.testContract.address,
+          to: testContractAddress,
         },
         addresses: {
-          [config.contracts.testContract.address]: true,
+          [testContractAddress]: true,
           [transactionAddress]: true,
         },
         block: { number: 10 },
@@ -305,10 +313,10 @@ describe('new contract interaction monitoring', () => {
 
       const txEvent = createTransactionEvent({
         transaction: {
-          to: config.contracts.testContract.address,
+          to: testContractAddress,
         },
         addresses: {
-          [config.contracts.testContract.address]: true,
+          [testContractAddress]: true,
           [transactionAddress]: true,
         },
         block: { number: 10 },
