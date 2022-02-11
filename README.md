@@ -22,7 +22,7 @@ the agent from emitting many alerts for the same condition.
 This agent monitors blockchain transactions for those involving specific addresses, which may be
 either EOAs or contracts.  Alert type and severity are both configurable.
 
-### Function Call Monirot
+### Function Call Monitor
 
 This agent monitors blockchain transactions for specific function calls for specific contract
 addresses. Optionally, the value of an argument per function call can be checked against a user-
