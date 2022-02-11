@@ -12,7 +12,6 @@ function createContractInteractionAlert(
   contractName,
   contractAddress,
   interactionAddress,
-  blockNumber,
   findingType,
   findingSeverity,
   protocolName,
@@ -30,7 +29,6 @@ function createContractInteractionAlert(
       contractName,
       contractAddress,
       interactionAddress,
-      blockNumber,
     },
   };
 
@@ -191,7 +189,6 @@ function provideHandleTransaction(data) {
                 name,
                 address,
                 result.value.transactionAddress,
-                txEvent.blockNumber,
                 findingType,
                 findingSeverity,
                 protocolName,

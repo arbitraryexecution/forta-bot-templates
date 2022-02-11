@@ -272,7 +272,6 @@ describe('new contract interaction monitoring', () => {
           name,
           address,
           transactionAddress,
-          blockNumber,
           findingType,
           findingSeverity,
           initializeData.protocolName,
