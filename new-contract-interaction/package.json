@@ -1,7 +1,7 @@
 {
-    "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-contract-interaction",
+    "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-new-contract-eoa-interaction",
     "version": "0.0.1",
-    "description": "Forta Agent template for monitoring new contracts interacting with {protocolName} contracts",
+    "description": "Forta Agent template for monitoring new contracts and EOAs interacting with {protocolName} contracts",
     "scripts": {
       "start": "npm run start:dev",
       "start:dev": "nodemon --watch src --watch forta.config.json --watch agent-config.json -e js,json --exec 'forta-agent run'",
@@ -18,10 +18,7 @@
       "test": "jest"
     },
     "dependencies": {
-      "axios": "^0.21.4",    
-      "bignumber.js": "^9.0.2",
-      "forta-agent": "^0.0.33",
-      "dotenv": "^10.0.0"      
+      "forta-agent": "^0.0.36"
     },
     "devDependencies": {
       "eslint": "^7.32.0",
