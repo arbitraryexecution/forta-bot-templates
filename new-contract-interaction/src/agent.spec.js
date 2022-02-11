@@ -1,24 +1,8 @@
 const {
-    Finding, FindingType, FindingSeverity, createTransactionEvent, ethers,
+  FindingType, FindingSeverity, createTransactionEvent, ethers,
 } = require('forta-agent');
-  
-const agent = require('./agent');
 
-// mock response from Etherscan API
-// the 'timeStamp' field is the only one we need; all other fields have been removed
-// only needs one tx record (result[0])
-let mockTimestamp = 0;
-const mockEtherscanResponse = {
-  data: {
-    status: 1,
-    message: 'OK',
-    result: [
-      {
-        timeStamp: mockTimestamp, // seconds
-      },
-    ],
-  },
-};
+const agent = require('./agent');
 
 // mock response from ethers BaseProvider.getCode()
 const mockGetCodeResponseEOA = '0x';
@@ -32,339 +16,336 @@ const mockEthersProvider = {
 
 const filteredAddress = `0x3${'0'.repeat(39)}`;
 
-config = {
-    "developerAbbreviation": "AE",
-    "protocolName": "TEST-PROTOCOL",
-    "protocolAbbreviation": "TEST",
-    "contracts": {
-        "testContract": {
-            "thresholdBlockCount": 7,
-            "thresholdTransactionCount": 7,
-            "address": `0x2${'0'.repeat(39)}`,
-            "filteredAddresses": [
-                filteredAddress,
-            ],
-            "findingType": "Suspicious",
-            "findingSeverity": "Medium"
-        }
-    },
-};
-  
+const config = require('../agent-config.json');
+
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-    describe('procotolName key required', () => {
-        const { protocolName } = config;
-        expect(typeof (protocolName)).toBe('string');
-        expect(protocolName).not.toBe('');
+  describe('procotolName key required', () => {
+    const { protocolName } = config;
+    expect(typeof (protocolName)).toBe('string');
+    expect(protocolName).not.toBe('');
+  });
+
+  describe('protocolAbbreviation key required', () => {
+    const { protocolAbbreviation } = config;
+    expect(typeof (protocolAbbreviation)).toBe('string');
+    expect(protocolAbbreviation).not.toBe('');
+  });
+
+  describe('developerAbbreviation key required', () => {
+    const { developerAbbreviation } = config;
+    expect(typeof (developerAbbreviation)).toBe('string');
+    expect(developerAbbreviation).not.toBe('');
+  });
+
+  describe('contracts key required', () => {
+    const { contracts } = config;
+    expect(typeof (contracts)).toBe('object');
+    expect(contracts).not.toBe({});
+  });
+
+  describe('contracts key values must be valid', () => {
+    const { contracts } = config;
+    Object.keys(contracts).forEach((key) => {
+      const {
+        thresholdBlockCount,
+        thresholdTransactionCount,
+        address,
+        filteredAddresses,
+        findingType,
+        findingSeverity,
+      } = contracts[key];
+
+      // make sure value for thresholdBlockCount in config is a number
+      expect(thresholdBlockCount).toEqual(expect.any(Number));
+
+      // make sure value for thresholdTransactionCount in config is a number
+      expect(thresholdTransactionCount).toEqual(expect.any(Number));
+
+      // check that the address is a valid address
+      expect(ethers.utils.isHexString(address, 20)).toBe(true);
+
+      // check that filteredAddresses is an array
+      expect(Array.isArray(filteredAddresses)).toBe(true);
+
+      // check type, this will fail if 'type' is not valid
+      expect(Object.prototype.hasOwnProperty.call(FindingType, findingType)).toBe(true);
+
+      // check severity, this will fail if 'severity' is not valid
+      expect(Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity)).toBe(true);
     });
-
-    describe('protocolAbbreviation key required', () => {
-        const { protocolAbbreviation } = config;
-        expect(typeof (protocolAbbreviation)).toBe('string');
-        expect(protocolAbbreviation).not.toBe('');
-    });
-
-    describe('developerAbbreviation key required', () => {
-        const { developerAbbreviation } = config;
-        expect(typeof (developerAbbreviation)).toBe('string');
-        expect(developerAbbreviation).not.toBe('');
-    });
-
-    describe('contracts key required', () => {
-        const { contracts } = config;
-        expect(typeof (contracts)).toBe('object');
-        expect(contracts).not.toBe({});
-    });
-
-    describe('contracts key values must be valid', () => {
-        const { contracts } = config;
-        Object.keys(contracts).forEach((key) => {
-            const { thresholdBlockCount, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = contracts[key];
-
-            // make sure value for thresholdBlockCount in config is a number
-            expect(thresholdBlockCount).toEqual(expect.any(Number));
-
-            // make sure value for thresholdTransactionCount in config is a number
-            expect(thresholdTransactionCount).toEqual(expect.any(Number));
-
-            // check that the address is a valid address
-            expect(ethers.utils.isHexString(address, 20)).toBe(true);
-
-            // check that filteredAddresses is an array
-            expect(Array.isArray(filteredAddresses)).toBe(true);
-
-            // check type, this will fail if 'type' is not valid
-            expect(Object.prototype.hasOwnProperty.call(FindingType, findingType)).toBe(true);
-
-            // check severity, this will fail if 'severity' is not valid
-            expect(Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity)).toBe(true);
-        });
-    });
+  });
 });
 
 describe('mocked APIs should work properly', () => {
-    describe('mock ethers getCode request', () => {
-        it('should call getCode and return a response', async () => {
-        mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
-        const code = await mockEthersProvider.getCode();
-        expect(code).toEqual('0x');
-        });
-    });
-
-    describe('mock ethers getTransactionCount request', () => {
-        it('should call getTransactionCount and return a response', async () => {
-        mockEthersProvider.getTransactionCount.mockResolvedValue(10);
-        const count = await mockEthersProvider.getTransactionCount();
-        expect(count).toEqual(10);
-        });
-    });    
-});    
-
-
-describe('new contract interaction monitoring', () => {
-    let initializeData = {};
-    let handleTransaction = null;
-  
-    // pass in mockEthers as the provider for handleTransaction() to use
-    beforeAll(() => {
-        initializeData.provider = mockEthersProvider;
-
-        initializeData.developerAbbreviation = config.developerAbbreviation;
-        initializeData.protocolName = config.protocolName;
-        initializeData.protocolAbbreviation = config.protocolAbbreviation;
-
-        const contractNames = Object.keys(config.contracts);
-        initializeData.contracts = contractNames.map((name) => {
-            const { thresholdBlockCount, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = config.contracts[name];
-              
-            const contract = {
-              name,
-              address,
-              filteredAddresses,
-              thresholdBlockCount,
-              thresholdTransactionCount,
-              findingType,
-              findingSeverity
-            };
-      
-            return contract;
-        });
-
-        handleTransaction = agent.provideHandleTransaction(
-            initializeData
-      );
-    });
-  
-    // reset function call count after each test
-    afterEach(() => {
-      mockEthersProvider.getCode.mockClear();
-      mockEthersProvider.getTransactionCount.mockClear();
-    });
-  
-    describe('handleTransaction', () => {
-      it('returns empty findings if no contracts are invoked', async () => {
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: '0x1',
-          },
-          addresses: {
-            '0x1': true,
-            '0x2': true,
-          },
-          block: { number: 10 },
-        });
-  
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        // check assertions
-        expect(findings).toStrictEqual([]);
-      });
-    
-      it('returns empty findings if the getCode function throws an error', async () => {
-        const transaction_address = '0x1';
-
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { number: 10 },
-        });
-  
-        // intentionally setup the getCode function to throw an error
-        mockEthersProvider.getCode.mockImplementation(async () => { throw new Error('FAILED'); });
-  
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        // check assertions
-        expect(findings).toStrictEqual([]);
-      });
-    
-      it('returns empty findings if the invocation is from an old contract', async () => {
-        const transaction_address = '0x1';       
-
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { number: 1 },
-        });
-  
-        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-        
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-
-        expect(findings).toStrictEqual([]);
-      });
-
-      it('returns empty findings if the invocation is from a filtered address', async () => {
-        const transaction_address = filteredAddress;          
-
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { number: 10 },
-        });
-  
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        // check assertions
-        expect(findings).toStrictEqual([]);
-      });      
-
-      it('returns a finding if a new contract was involved in the transaction', async () => {
-        const transaction_address = '0x1';
-        const blockNumber = 10;
-  
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { number: blockNumber },
-        });
-  
-        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-        mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseNewContract);
-    
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        let expectedFindings = [];
-        initializeData.contracts.forEach((contract) => {
-            const {
-                name,
-                address,
-                findingType,
-                findingSeverity
-            } = contract;
-
-            expectedFindings.push(agent.createContractInteractionAlert(
-                name,
-                address,
-                transaction_address, 
-                blockNumber,
-                findingType,
-                findingSeverity,
-                initializeData.protocolName,
-                initializeData.protocolAbbreviation,
-                initializeData.developerAbbreviation                
-            ));
-        });
-
-        expect(findings).toStrictEqual(expectedFindings);
-      });
-
-      it('returns empty findings if the invocation is from an old EOA', async () => {
-        const transaction_address = '0x1';          
-
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { number: 10 },
-        });
-  
-        mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
-        mockEthersProvider.getTransactionCount.mockResolvedValue(10);
-  
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        // check assertions
-        expect(findings).toStrictEqual([]);
-      });
-
-      it('returns a finding if a new EOA was involved in the transaction', async () => {
-        const transaction_address = '0x1';
-
-        const txEvent = createTransactionEvent({
-          transaction: {
-            to: config.contracts.testContract.address,
-          },
-          addresses: {
-            [config.contracts.testContract.address]: true,
-            [transaction_address]: true,
-          },
-          block: { number: 10 },
-        });
-  
-        const transactionCount = 1;
-    
-        mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
-        mockEthersProvider.getTransactionCount.mockResolvedValue(transactionCount);
-  
-        // run forta agent
-        const findings = await handleTransaction(txEvent);
-  
-        // check assertions
-        let expectedFindings = [];
-        initializeData.contracts.forEach((contract) => {
-            const {
-                name,
-                address,
-                findingType,
-                findingSeverity
-            } = contract;
-
-            expectedFindings.push(agent.createEOAInteractionAlert(
-                name,
-                address,
-                transaction_address, 
-                transactionCount,
-                findingType,
-                findingSeverity,
-                initializeData.protocolName,
-                initializeData.protocolAbbreviation,
-                initializeData.developerAbbreviation                
-            ));
-        });
-
-        expect(findings).toStrictEqual(expectedFindings);
-      });      
+  describe('mock ethers getCode request', () => {
+    it('should call getCode and return a response', async () => {
+      mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
+      const code = await mockEthersProvider.getCode();
+      expect(code).toEqual('0x');
     });
   });
+
+  describe('mock ethers getTransactionCount request', () => {
+    it('should call getTransactionCount and return a response', async () => {
+      mockEthersProvider.getTransactionCount.mockResolvedValue(10);
+      const count = await mockEthersProvider.getTransactionCount();
+      expect(count).toEqual(10);
+    });
+  });
+});
+
+describe('new contract interaction monitoring', () => {
+  const initializeData = {};
+  let handleTransaction = null;
+
+  // pass in mockEthers as the provider for handleTransaction() to use
+  beforeAll(() => {
+    initializeData.provider = mockEthersProvider;
+
+    initializeData.developerAbbreviation = config.developerAbbreviation;
+    initializeData.protocolName = config.protocolName;
+    initializeData.protocolAbbreviation = config.protocolAbbreviation;
+
+    const contractNames = Object.keys(config.contracts);
+    initializeData.contracts = contractNames.map((name) => {
+      const {
+        thresholdBlockCount,
+        thresholdTransactionCount,
+        address,
+        filteredAddresses,
+        findingType,
+        findingSeverity,
+      } = config.contracts[name];
+
+      const contract = {
+        name,
+        address,
+        filteredAddresses,
+        thresholdBlockCount,
+        thresholdTransactionCount,
+        findingType,
+        findingSeverity,
+      };
+
+      return contract;
+    });
+
+    handleTransaction = agent.provideHandleTransaction(
+      initializeData,
+    );
+  });
+
+  // reset function call count after each test
+  afterEach(() => {
+    mockEthersProvider.getCode.mockClear();
+    mockEthersProvider.getTransactionCount.mockClear();
+  });
+
+  describe('handleTransaction', () => {
+    it('returns empty findings if no contracts are invoked', async () => {
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: '0x1',
+        },
+        addresses: {
+          '0x1': true,
+          '0x2': true,
+        },
+        block: { number: 10 },
+      });
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      // check assertions
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns empty findings if the getCode function throws an error', async () => {
+      const transactionAddress = '0x1';
+
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: config.contracts.testContract.address,
+        },
+        addresses: {
+          [config.contracts.testContract.address]: true,
+          [transactionAddress]: true,
+        },
+        block: { number: 10 },
+      });
+
+      // intentionally setup the getCode function to throw an error
+      mockEthersProvider.getCode.mockImplementation(async () => { throw new Error('FAILED'); });
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      // check assertions
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns empty findings if the invocation is from an old contract', async () => {
+      const transactionAddress = '0x1';
+
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: config.contracts.testContract.address,
+        },
+        addresses: {
+          [config.contracts.testContract.address]: true,
+          [transactionAddress]: true,
+        },
+        block: { number: 1 },
+      });
+
+      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns empty findings if the invocation is from a filtered address', async () => {
+      const transactionAddress = filteredAddress;
+
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: config.contracts.testContract.address,
+        },
+        addresses: {
+          [config.contracts.testContract.address]: true,
+          [transactionAddress]: true,
+        },
+        block: { number: 10 },
+      });
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      // check assertions
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns a finding if a new contract was involved in the transaction', async () => {
+      const transactionAddress = '0x1';
+      const blockNumber = 10;
+
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: config.contracts.testContract.address,
+        },
+        addresses: {
+          [config.contracts.testContract.address]: true,
+          [transactionAddress]: true,
+        },
+        block: { number: blockNumber },
+      });
+
+      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseNewContract);
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      const expectedFindings = [];
+      initializeData.contracts.forEach((contract) => {
+        const {
+          name,
+          address,
+          findingType,
+          findingSeverity,
+        } = contract;
+
+        expectedFindings.push(agent.createContractInteractionAlert(
+          name,
+          address,
+          transactionAddress,
+          blockNumber,
+          findingType,
+          findingSeverity,
+          initializeData.protocolName,
+          initializeData.protocolAbbreviation,
+          initializeData.developerAbbreviation,
+        ));
+      });
+
+      expect(findings).toStrictEqual(expectedFindings);
+    });
+
+    it('returns empty findings if the invocation is from an old EOA', async () => {
+      const transactionAddress = '0x1';
+
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: config.contracts.testContract.address,
+        },
+        addresses: {
+          [config.contracts.testContract.address]: true,
+          [transactionAddress]: true,
+        },
+        block: { number: 10 },
+      });
+
+      mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
+      mockEthersProvider.getTransactionCount.mockResolvedValue(10);
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      // check assertions
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns a finding if a new EOA was involved in the transaction', async () => {
+      const transactionAddress = '0x1';
+
+      const txEvent = createTransactionEvent({
+        transaction: {
+          to: config.contracts.testContract.address,
+        },
+        addresses: {
+          [config.contracts.testContract.address]: true,
+          [transactionAddress]: true,
+        },
+        block: { number: 10 },
+      });
+
+      const transactionCount = 1;
+
+      mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
+      mockEthersProvider.getTransactionCount.mockResolvedValue(transactionCount);
+
+      // run forta agent
+      const findings = await handleTransaction(txEvent);
+
+      // check assertions
+      const expectedFindings = [];
+      initializeData.contracts.forEach((contract) => {
+        const {
+          name,
+          address,
+          findingType,
+          findingSeverity,
+        } = contract;
+
+        expectedFindings.push(agent.createEOAInteractionAlert(
+          name,
+          address,
+          transactionAddress,
+          transactionCount,
+          findingType,
+          findingSeverity,
+          initializeData.protocolName,
+          initializeData.protocolAbbreviation,
+          initializeData.developerAbbreviation,
+        ));
+      });
+
+      expect(findings).toStrictEqual(expectedFindings);
+    });
+  });
+});

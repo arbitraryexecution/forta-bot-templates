@@ -1,7 +1,7 @@
 const {
-    Finding, FindingSeverity, FindingType, ethers, getEthersProvider
+  Finding, FindingSeverity, FindingType, getEthersProvider,
 } = require('forta-agent');
-  
+
 const config = require('../agent-config.json');
 
 // set up a variable to hold initialization data used in the handler
@@ -11,17 +11,17 @@ const initializeData = {};
 function createContractInteractionAlert(
   contractName,
   contractAddress,
-  interaction_address,
+  interactionAddress,
   blockNumber,
   findingType,
   findingSeverity,
   protocolName,
   protocolAbbreviation,
-  developerAbbreviation
+  developerAbbreviation,
 ) {
   const finding = {
     name: `${protocolName} Contract Interaction`,
-    description: `The ${contractName} contract interacted with a new contract ${interaction_address}`,
+    description: `The ${contractName} contract interacted with a new contract ${interactionAddress}`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-CONTRACT-INTERACTION`,
     type: FindingType[findingType],
     severity: FindingSeverity[findingSeverity],
@@ -29,8 +29,8 @@ function createContractInteractionAlert(
     metadata: {
       contractName,
       contractAddress,
-      interaction_address,
-      blockNumber
+      interactionAddress,
+      blockNumber,
     },
   };
 
@@ -41,17 +41,17 @@ function createContractInteractionAlert(
 function createEOAInteractionAlert(
   contractName,
   contractAddress,
-  interaction_address,
-  transaction_count,
+  interactionAddress,
+  transactionCount,
   findingType,
   findingSeverity,
   protocolName,
   protocolAbbreviation,
-  developerAbbreviation
+  developerAbbreviation,
 ) {
   const finding = {
     name: `${protocolName} EOA Interaction`,
-    description: `The ${contractName} contract interacted with a new EOA ${interaction_address}`,
+    description: `The ${contractName} contract interacted with a new EOA ${interactionAddress}`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-EOA-INTERACTION`,
     type: FindingType[findingType],
     severity: FindingSeverity[findingSeverity],
@@ -59,8 +59,8 @@ function createEOAInteractionAlert(
     metadata: {
       contractName,
       contractAddress,
-      interaction_address,
-      transaction_count
+      interactionAddress,
+      transactionCount,
     },
   };
 
@@ -70,18 +70,25 @@ function createEOAInteractionAlert(
 function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
-    data.provider = getEthersProvider();    
+    data.provider = getEthersProvider();
 
     data.contractInfo = config.contracts;
     data.developerAbbreviation = config.developerAbbreviation;
     data.protocolName = config.protocolName;
     data.protocolAbbreviation = config.protocolAbbreviation;
-    
+
     const contractNames = Object.keys(data.contractInfo);
 
     data.contracts = contractNames.map((name) => {
-      const { thresholdBlockCount, thresholdTransactionCount, address, filteredAddresses, findingType, findingSeverity } = data.contractInfo[name];
-        
+      const {
+        thresholdBlockCount,
+        thresholdTransactionCount,
+        address,
+        filteredAddresses,
+        findingType,
+        findingSeverity,
+      } = data.contractInfo[name];
+
       const contract = {
         name,
         address,
@@ -89,7 +96,7 @@ function provideInitialize(data) {
         thresholdBlockCount,
         thresholdTransactionCount,
         findingType,
-        findingSeverity
+        findingSeverity,
       };
 
       return contract;
@@ -105,12 +112,12 @@ function provideHandleTransaction(data) {
     } = data;
 
     const findings = [];
-    
+
     // get all addresses involved with this transaction
-    let transactionAddresses = Object.keys(txEvent.addresses);
+    const transactionAddresses = Object.keys(txEvent.addresses);
 
     // iterate over all of the contracts from the configuration file
-    await Promise.all(contracts.map(async(contract) => {
+    await Promise.all(contracts.map(async (contract) => {
       const {
         name,
         address,
@@ -118,7 +125,7 @@ function provideHandleTransaction(data) {
         thresholdBlockCount,
         thresholdTransactionCount,
         findingType,
-        findingSeverity
+        findingSeverity,
       } = contract;
 
       let exclusions = [
@@ -126,65 +133,70 @@ function provideHandleTransaction(data) {
       ];
       exclusions = exclusions.concat(filteredAddresses);
       // filter transaction addresses to remove specified addresses
-      let filteredTransactionAddresses = transactionAddresses.filter((item) => !exclusions.includes(item));
+      const filteredTransactionAddresses = transactionAddresses
+        .filter((item) => !exclusions.includes(item));
 
       // watch for recently created contracts interacting with configured contract address
       if (txEvent.transaction.to === address) {
-        let contractResults = {};
-        let eoaAddresses = [];
+        const contractResults = {};
+        const eoaAddresses = [];
 
-        const results = await Promise.allSettled(filteredTransactionAddresses.map(async(transactionAddress) => {
-          const contractCode = await data.provider.getCode(transactionAddress);
-          return {transactionAddress: transactionAddress, code: contractCode};
-        }));
+        const results = await Promise.allSettled(
+          filteredTransactionAddresses.map(async (transactionAddress) => {
+            const contractCode = await data.provider.getCode(transactionAddress);
+            return { transactionAddress, code: contractCode };
+          }),
+        );
 
         results.forEach((result) => {
-          if(result.status === 'fulfilled') {
-            if(result.value.code !== '0x') {
+          if (result.status === 'fulfilled') {
+            if (result.value.code !== '0x') {
               contractResults[result.value.transactionAddress] = result.value.code;
             } else {
               eoaAddresses.push(result.value.transactionAddress);
             }
           }
         });
-        
-        await Promise.all(eoaAddresses.map(async(eoaAddress) => {
+
+        await Promise.all(eoaAddresses.map(async (eoaAddress) => {
           const eoaTransactionCount = await data.provider.getTransactionCount(eoaAddress);
 
           if (eoaTransactionCount < thresholdTransactionCount) {
             findings.push(createEOAInteractionAlert(
               name,
               address,
-              eoaAddress, 
+              eoaAddress,
               eoaTransactionCount,
               findingType,
               findingSeverity,
               protocolName,
               protocolAbbreviation,
-              developerAbbreviation
-            ));            
+              developerAbbreviation,
+            ));
           }
         }));
 
-        let blockOverride = txEvent.blockNumber - thresholdBlockCount;
-        const blockResults = await Promise.allSettled(Object.keys(contractResults).map(async(contractResult) => {
-          const contractCode = await data.provider.getCode(contractResult, blockOverride);
-          return {transactionAddress: contractResult, code: contractCode};
-        }));
+        const blockOverride = txEvent.blockNumber - thresholdBlockCount;
+        const blockResults = await Promise.allSettled(
+          Object.keys(contractResults).map(async (contractResult) => {
+            const contractCode = await data.provider.getCode(contractResult, blockOverride);
+            return { transactionAddress: contractResult, code: contractCode };
+          }),
+        );
 
         blockResults.forEach((result) => {
-          if(result.status === 'fulfilled') {
-            if(result.value.code != contractResults[result.value.transactionAddress]) {
+          if (result.status === 'fulfilled') {
+            if (result.value.code !== contractResults[result.value.transactionAddress]) {
               findings.push(createContractInteractionAlert(
                 name,
                 address,
-                result.value.transactionAddress, 
+                result.value.transactionAddress,
                 txEvent.blockNumber,
                 findingType,
                 findingSeverity,
                 protocolName,
                 protocolAbbreviation,
-                developerAbbreviation
+                developerAbbreviation,
               ));
             }
           }
@@ -202,6 +214,5 @@ module.exports = {
   provideHandleTransaction,
   handleTransaction: provideHandleTransaction(initializeData),
   createContractInteractionAlert,
-  createEOAInteractionAlert
+  createEOAInteractionAlert,
 };
-  
