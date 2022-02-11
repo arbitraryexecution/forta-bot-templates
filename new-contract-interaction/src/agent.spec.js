@@ -1,18 +1,31 @@
+const mockEthersProvider = {
+  getCode: jest.fn(),
+  getTransactionCount: jest.fn(),
+};
+
+jest.mock('forta-agent', () => ({
+  ...jest.requireActual('forta-agent'),
+  getEthersProvider: jest.fn().mockReturnValue(mockEthersProvider),
+}));
+
 const {
-  FindingType, FindingSeverity, createTransactionEvent, ethers,
+  FindingType,
+  FindingSeverity,
+  TransactionEvent,
+  ethers,
 } = require('forta-agent');
 
-const agent = require('./agent');
+const {
+  provideInitialize,
+  provideHandleTransaction,
+  createEOAInteractionAlert,
+  createContractInteractionAlert,
+} = require('./agent');
 
 // mock response from ethers BaseProvider.getCode()
 const mockGetCodeResponseEOA = '0x';
 const mockGetCodeResponseNewContract = '0x';
 const mockGetCodeResponseContract = '0xabcd';
-
-const mockEthersProvider = {
-  getCode: jest.fn(),
-  getTransactionCount: jest.fn(),
-};
 
 const filteredAddress = `0x3${'0'.repeat(39)}`;
 
@@ -20,6 +33,22 @@ const config = require('../agent-config.json');
 
 const [testContract] = Object.keys(config.contracts);
 const { address: testContractAddress } = config.contracts[testContract];
+
+// utility function specific for this test module
+// we are intentionally not using the Forta SDK function due to issues with
+// jest mocking the module and interfering with default function values
+function createTransactionEvent(txObject) {
+  const txEvent = new TransactionEvent(
+    null,
+    null,
+    txObject.transaction,
+    null,
+    [],
+    txObject.addresses,
+    txObject.block,
+  );
+  return txEvent;
+}
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
@@ -104,44 +133,14 @@ describe('mocked APIs should work properly', () => {
 });
 
 describe('new contract interaction monitoring', () => {
-  const initializeData = {};
-  let handleTransaction = null;
+  let initializeData;
+  let handleTransaction;
 
   // pass in mockEthers as the provider for handleTransaction() to use
-  beforeAll(() => {
-    initializeData.provider = mockEthersProvider;
-
-    initializeData.developerAbbreviation = config.developerAbbreviation;
-    initializeData.protocolName = config.protocolName;
-    initializeData.protocolAbbreviation = config.protocolAbbreviation;
-
-    const contractNames = Object.keys(config.contracts);
-    initializeData.contracts = contractNames.map((name) => {
-      const {
-        thresholdBlockCount,
-        thresholdTransactionCount,
-        address,
-        filteredAddresses,
-        findingType,
-        findingSeverity,
-      } = config.contracts[name];
-
-      const contract = {
-        name,
-        address,
-        filteredAddresses,
-        thresholdBlockCount,
-        thresholdTransactionCount,
-        findingType,
-        findingSeverity,
-      };
-
-      return contract;
-    });
-
-    handleTransaction = agent.provideHandleTransaction(
-      initializeData,
-    );
+  beforeAll(async () => {
+    initializeData = {};
+    await (provideInitialize(initializeData))();
+    handleTransaction = provideHandleTransaction(initializeData);
   });
 
   // reset function call count after each test
@@ -268,7 +267,7 @@ describe('new contract interaction monitoring', () => {
           findingSeverity,
         } = contract;
 
-        expectedFindings.push(agent.createContractInteractionAlert(
+        expectedFindings.push(createContractInteractionAlert(
           name,
           address,
           transactionAddress,
@@ -339,7 +338,7 @@ describe('new contract interaction monitoring', () => {
           findingSeverity,
         } = contract;
 
-        expectedFindings.push(agent.createEOAInteractionAlert(
+        expectedFindings.push(createEOAInteractionAlert(
           name,
           address,
           transactionAddress,
