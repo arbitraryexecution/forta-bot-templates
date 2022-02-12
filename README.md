@@ -8,8 +8,9 @@ simply by creating configuration files.
 ### Event Monitor
 
 This agent monitors blockchain transactions for specific events emitted from specific contract
-addresses.  Optionally, the value of an argument per event can be checked against a user-defined
-threshold.  Alert type and severity are specified per event per contract address.
+addresses.  Optionally, an expression can be provided for checking the value of an event argument
+against a predefined value.  If a matching event is emitted and the expression evaluates to `true`,
+an alert is created.  Alert type and severity are specified per event per contract address.
 
 ### Account Balance Monitor
 
@@ -25,8 +26,10 @@ either EOAs or contracts.  Alert type and severity are both configurable.
 ### Function Call Monitor
 
 This agent monitors blockchain transactions for specific function calls for specific contract
-addresses. Optionally, the value of an argument per function call can be checked against a user-
-defined threshold.  Alert type and severity are specified per function per contract address.
+addresses. Optionally, an expression may be provided for checking the value of a function argument
+against a predefined value.  If a matching function call occurs and the expression evaluates to
+`true`, an alert is created.  Alert type and severity are specified per function per contract
+address.
 
 ### Transaction Failure Count
 
@@ -46,3 +49,16 @@ This agent monitors a Gnosis-Safe MultiSig contract for emitted events and for a
 Ether or ERC20 tokens.  Gnosis-Safe MultiSig contract versions v1.0.0, v1.1.1, v1.2.0, and v1.3.0 are
 supported and the appropriate ABI files are all present in the repository.  All alert types and
 severities are set to Info.
+
+### Contract Variable Monitor
+
+This agent monitors contract variables that contain numeric values for specified contract addresses.
+Upper and lower percent change thresholds, number of data points to collect before checking for percent changes,
+and alert type and severity are specified per variable per contract address.
+
+### Tornado Cash Monitor
+
+This agent monitors blockchain transactions for those involving specified addresses and any address
+that have previously interacted with a known Tornado Cash Proxy. An observation period (in blocks) to
+watch addresses that have interacted with known Tornado Cash Proxies is configurable. Alert type and
+severity is also configurable per contract.

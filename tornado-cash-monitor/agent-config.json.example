@@ -1,0 +1,13 @@
+{
+    "developerAbbreviation": "",
+    "protocolName": "",
+    "protocolAbbreviation": "",
+    "observationIntervalInBlocks": 10,
+    "addressList": {
+        "contractName1": {
+            "address": "contractAddress1",
+            "type": "type",
+            "severity": "severity"
+        }
+    }
+}
