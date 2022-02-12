@@ -1,0 +1,9 @@
+{
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
+  "gnosisSafe": {
+    "address": "contractAddress",
+    "version": "gnosisSafeContractVersion"
+  }
+}
