@@ -287,11 +287,11 @@ function provideHandleTransaction(data) {
             log.args.newProposalThreshold.toString(),
           );
         default:
-          return [];
+          return undefined;
       }
     });
 
-    results = results.filter((result) => result !== []);
+    results = results.filter((result) => result !== undefined);
 
     findings.push(...(results.flat()));
 
