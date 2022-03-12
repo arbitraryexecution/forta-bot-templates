@@ -25,5 +25,5 @@ function createProposalFromLog(log) {
 
 module.exports = {
   getAbi,
-  getProposalCreatedEvent,
+  createProposalFromLog,
 };
