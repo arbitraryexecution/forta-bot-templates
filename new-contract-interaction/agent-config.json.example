@@ -1,0 +1,18 @@
+{
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",    
+  "contracts": {
+    "contractName1": {
+      "thresholdBlockCount": 7,
+      "thresholdTransactionCount": 7,
+      "address": "contractAddress1",
+      "filteredAddresses": [
+        "filteredAddress1",
+        "filteredAddress2"
+      ],
+      "findingType": "Type",
+      "findingSeverity": "Severity"
+    }
+  }
+}
