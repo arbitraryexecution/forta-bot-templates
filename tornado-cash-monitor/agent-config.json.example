@@ -1,13 +1,15 @@
 {
-    "developerAbbreviation": "",
-    "protocolName": "",
-    "protocolAbbreviation": "",
+    "developerAbbreviation": "DEV",
+    "protocolName": "FullName",
+    "protocolAbbreviation": "ABREV",
     "observationIntervalInBlocks": 10,
-    "addressList": {
+    "contracts": {
         "contractName1": {
-            "address": "contractAddress1",
-            "type": "type",
-            "severity": "severity"
+            "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+            "tornado": {
+                "type": "Info",
+                "severity": "Info"
+            }
         }
     }
 }
