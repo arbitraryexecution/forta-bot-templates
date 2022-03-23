@@ -1,0 +1,24 @@
+{
+    "developerAbbreviation": "DEV",
+    "protocolName": "FullName",
+    "protocolAbbrev": "ABREV",
+    "contracts": {
+        "contractName1": {
+            "name": "accountName1",
+            "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+            "watch" : {
+                "type": "Info",
+                "severity": "Info"
+            }
+        },
+        "contractName2": {
+            "name": "accountName2",
+            "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            "watch" : {
+                "type": "Info",
+                "severity": "Info"
+            }
+        }
+        
+    }
+}

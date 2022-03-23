@@ -1,5 +1,5 @@
 {
-  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-address-watch",
+  "name": "forta-address-watch",
   "version": "0.0.1",
   "description": "This agent template monitors activity originating from addresses associated with the {protocolName} protocol.",
   "scripts": {
