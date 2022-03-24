@@ -1,9 +1,19 @@
 {
-  "developerAbbreviation": "",
-  "protocolName": "",
-  "protocolAbbreviation": "",
-  "governance": {
-    "address": "",
-    "abiFile": ""
+  "developerAbbreviation": "DEV",
+  "protocolName": "FullName",
+  "protocolAbbreviation": "ABREV",
+  "contracts": {
+    "contractName1": {
+      "governance": {
+        "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+        "abiFile": "Governor"
+      }
+    },
+    "contractName2": {
+      "governance": {
+        "address": "0x4F26FfBe5F04ED43630fdC30A87638d53D0b0876",
+        "abiFile": "GovernorSettings"
+      }
+    }
   }
 }

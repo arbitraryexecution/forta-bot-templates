@@ -193,16 +193,30 @@ function provideInitialize(data) {
       protocolName: agentConfig.protocolName,
       protocolAbbreviation: agentConfig.protocolAbbreviation,
     };
-    data.address = agentConfig.governance.address;
+    data.goverance = agentConfig.contracts;
+    data.contracts = Object.entries(data.goverance).map(([name, entry]) => {
+      const { abiFile, address } = entry.governance;
 
-    const { abiFile } = agentConfig.governance;
-    data.abi = getAbi(abiFile);
+      if (address === undefined) {
+        throw new Error(`No address found in configuration file for '${name}'`);
+      }
 
-    data.iface = new ethers.utils.Interface(data.abi);
+      if (abiFile === undefined) {
+        throw new Error(`No ABI file found in configuration file for '${name}'`);
+      }
 
-    const names = Object.keys(data.iface.events);
-    const ftype = ethers.utils.FormatTypes.full;
-    data.eventSignatures = names.map((name) => data.iface.getEvent(name).format(ftype));
+      const abi = getAbi(abiFile);
+      const iface = new ethers.utils.Interface(abi);
+      const names = Object.keys(iface.events);
+      const ftype = ethers.utils.FormatTypes.full;
+      const eventSignatures = names.map((eventName) => iface.getEvent(eventName).format(ftype));
+
+      const contract = {
+        address,
+        eventSignatures,
+      };
+      return contract;
+    });
     /* eslint-enable no-param-reassign */
   };
 }
@@ -211,90 +225,95 @@ function provideHandleTransaction(data) {
   return async function handleTransaction(txEvent) {
     const {
       config,
-      address,
-      eventSignatures,
+      contracts,
     } = data;
 
     const findings = [];
 
-    const logs = txEvent.filterLog(eventSignatures, address);
+    contracts.forEach((contract) => {
+      const { address, eventSignatures } = contract;
+      const logs = txEvent.filterLog(eventSignatures, address);
+      // iterate over all logs to determine what governance actions were taken
+      let results = logs.map((log) => {
+        let proposal;
+        let voteInfo;
+        switch (log.name) {
+          case 'ProposalCreated':
+            // create a finding for a new proposal
+            proposal = createProposalFromLog(log);
+            return proposalCreatedFinding(
+              proposal,
+              address,
+              config,
+            );
+          case 'VoteCast':
+            // add the vote to the corresponding proposal object
+            voteInfo = {
+              voter: log.args.voter,
+              proposalId: log.args.proposalId.toString(),
+              support: log.args.support,
+              weight: log.args.weight,
+              reason: log.args.reason,
+            };
+            // create a finding indicating that the vote was cast
+            return voteCastFinding(voteInfo, address, config);
+          case 'ProposalCanceled':
+            // create a finding indicating that the proposal has been canceled,
+            return proposalCanceledFinding(log.args.proposalId.toString(), address, config);
+          case 'ProposalExecuted':
+            // create a finding indicating that the proposal has been executed,
+            return proposalExecutedFinding(log.args.proposalId.toString(), address, config);
+          case 'QuorumNumeratorUpdated':
+            return quorumNumeratorUpdatedFinding(
+              address,
+              config,
+              log.args.oldQuorumNumerator.toString(),
+              log.args.newQuorumNumerator.toString(),
+            );
+          case 'ProposalQueued':
+            return proposalQueuedFinding(
+              log.args.proposalId.toString(),
+              address,
+              config,
+              log.args.eta.toString(),
+            );
+          case 'TimelockChange':
+            return timelockChangeFinding(
+              address,
+              config,
+              log.args.oldTimelock,
+              log.args.newTimelock,
+            );
+          case 'VotingDelaySet':
+            return votingDelaySetFinding(
+              address,
+              config,
+              log.args.oldVotingDelay.toString(),
+              log.args.newVotingDelay.toString(),
+            );
+          case 'VotingPeriodSet':
+            return votingPeriodSetFinding(
+              address,
+              config,
+              log.args.oldVotingDelay.toString(),
+              log.args.newVotingDelay.toString(),
+            );
+          case 'ProposalThresholdSet':
+            return proposalThresholdSetFinding(
+              address,
+              config,
+              log.args.oldProposalThreshold.toString(),
+              log.args.newProposalThreshold.toString(),
+            );
+          default:
+            return undefined;
+        }
+      });
 
-    // iterate over all logs to determine what governance actions were taken
-    let results = logs.map((log) => {
-      let proposal;
-      let voteInfo;
-      switch (log.name) {
-        case 'ProposalCreated':
-          // create a finding for a new proposal
-          proposal = createProposalFromLog(log);
-          return proposalCreatedFinding(
-            proposal,
-            address,
-            config,
-          );
-        case 'VoteCast':
-          // add the vote to the corresponding proposal object
-          voteInfo = {
-            voter: log.args.voter,
-            proposalId: log.args.proposalId.toString(),
-            support: log.args.support,
-            weight: log.args.weight,
-            reason: log.args.reason,
-          };
-          // create a finding indicating that the vote was cast
-          return voteCastFinding(voteInfo, address, config);
-        case 'ProposalCanceled':
-          // create a finding indicating that the proposal has been canceled,
-          return proposalCanceledFinding(log.args.proposalId.toString(), address, config);
-        case 'ProposalExecuted':
-          // create a finding indicating that the proposal has been executed,
-          return proposalExecutedFinding(log.args.proposalId.toString(), address, config);
-        case 'QuorumNumeratorUpdated':
-          return quorumNumeratorUpdatedFinding(
-            address,
-            config,
-            log.args.oldQuorumNumerator.toString(),
-            log.args.newQuorumNumerator.toString(),
-          );
-        case 'ProposalQueued':
-          return proposalQueuedFinding(
-            log.args.proposalId.toString(),
-            address,
-            config,
-            log.args.eta.toString(),
-          );
-        case 'TimelockChange':
-          return timelockChangeFinding(address, config, log.args.oldTimelock, log.args.newTimelock);
-        case 'VotingDelaySet':
-          return votingDelaySetFinding(
-            address,
-            config,
-            log.args.oldVotingDelay.toString(),
-            log.args.newVotingDelay.toString(),
-          );
-        case 'VotingPeriodSet':
-          return votingPeriodSetFinding(
-            address,
-            config,
-            log.args.oldVotingDelay.toString(),
-            log.args.newVotingDelay.toString(),
-          );
-        case 'ProposalThresholdSet':
-          return proposalThresholdSetFinding(
-            address,
-            config,
-            log.args.oldProposalThreshold.toString(),
-            log.args.newProposalThreshold.toString(),
-          );
-        default:
-          return undefined;
-      }
+      results = results.filter((result) => result !== undefined);
+
+      findings.push(...(results.flat()));
     });
-
-    results = results.filter((result) => result !== undefined);
-
-    findings.push(...(results.flat()));
-
     return findings;
   };
 }
