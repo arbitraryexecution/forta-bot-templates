@@ -32,7 +32,6 @@ function provideInitialize(data) {
     // save the erc20 ABI and Transfer signature for later use
     data.erc20Abi = erc20Abi;
     const ftype = ethers.utils.FormatTypes.full;
-
     data.transferSignature = erc20Interface.getEvent('Transfer').format(ftype);
 
     data.previousBalances = {};
@@ -75,7 +74,7 @@ function provideInitialize(data) {
       // eslint-disable-next-line import/no-dynamic-require,global-require
       const { abi } = require(`../abi/${version}/gnosis_safe.json`);
       const iface = new ethers.utils.Interface(abi);
-      const names = Object.keys(iface.events);
+      const names = Object.keys(iface.events); // filter out only the events from the abi
       const eventSignatures = names.map((iName) => iface.getEvent(iName).format(ftype));
 
       const contract = {
@@ -109,7 +108,7 @@ function provideHandleTransaction(data) {
     contracts.forEach((contract) => {
       const { address, tokenContracts, eventSignatures, version, tokenAddresses } = contract;
       transferLogs.forEach((log) => {
-        if ((log.args.from.toLowerCase() === address.toLowerCase())
+        if ((log.args.from.toLowerCase() === address.toLowerCase()) // if any transfer to or from
           || (log.args.to.toLowerCase() === address.toLowerCase())) {
           if ((tokenAddresses.indexOf(log.address.toLowerCase()) === -1)
             && (tokenAddresses.push(log.address.toLowerCase()))) {
@@ -155,13 +154,19 @@ function provideHandleBlock(data) {
 
     contracts.forEach(async (contract) => {
       const { address, tokenContracts } = contract;
-      const ethBalance = await provider.getBalance(address);
+      // console.log("token contracts here", tokenContracts)
+      const ethBalance = await provider.getBalance(address); // get eth balance of given contract
       const ethBalanceBN = new BigNumber(ethBalance.toString());
+      // console.log("token contracts here", tokenContracts)
 
+      // for every token transfer that's ever happened to this safe address, we created a new token contract for it
       const promises = tokenContracts.map(async (tokenContract) => {
+        console.log("specific token contract here", tokenContract.balanceOf(address))
         const result = {};
         try {
+          // get the balance of each token for this specific safe
           const tokenBalance = await tokenContract.balanceOf(address);
+          // console.log("token balance here", tokenBalance)
           result[tokenContract.address.toLowerCase()] = new BigNumber(tokenBalance.toString());
         } catch {
           result[tokenContract.address.toLowerCase()] = new BigNumber(0);
@@ -181,8 +186,6 @@ function provideHandleBlock(data) {
       // check the current balances aginst the previous balances
       if (previousBalances) {
         Object.entries(previousBalances).forEach(([key, value]) => {
-          // console.log("value here", value.toString())
-          // console.log("eth balnce here", ethBalanceBN.toString())
           if (key === 'Ether') {
             if (!value.eq(ethBalanceBN)) {
               // create finding
