@@ -138,6 +138,8 @@ function provideHandleTransaction(data) {
 
 function provideHandleBlock(data) {
   return async function handleBlock() {
+    const findings = [];
+
     const {
       provider,
       alertFields,
@@ -150,8 +152,6 @@ function provideHandleBlock(data) {
       protocolAbbreviation,
       protocolName,
     } = alertFields;
-
-    const findings = [];
 
     contracts.forEach(async (contract) => {
       const { address, tokenContracts } = contract;
@@ -181,6 +181,8 @@ function provideHandleBlock(data) {
       // check the current balances aginst the previous balances
       if (previousBalances) {
         Object.entries(previousBalances).forEach(([key, value]) => {
+          // console.log("value here", value.toString())
+          // console.log("eth balnce here", ethBalanceBN.toString())
           if (key === 'Ether') {
             if (!value.eq(ethBalanceBN)) {
               // create finding
@@ -222,6 +224,7 @@ function provideHandleBlock(data) {
         previousBalances[key] = value;
       });
     });
+
     return findings;
   };
 }

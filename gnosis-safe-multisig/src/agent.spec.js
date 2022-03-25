@@ -147,7 +147,6 @@ describe('gnosis-safe multisig monitoring', () => {
       let findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
-      console.log("first findings", findings)
 
       // invoke the transaction handler
       const receipt = { logs: logsNoMatchEvent };
@@ -157,7 +156,6 @@ describe('gnosis-safe multisig monitoring', () => {
 
       // invoke the block handler a second time
       findings = await handleBlock();
-      console.log("second findings", findings)
 
       const { alertFields } = initializeData;
       const { address } = config.contracts.contractName1.gnosisSafe; // use first address
