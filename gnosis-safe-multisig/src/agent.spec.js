@@ -254,9 +254,9 @@ describe('gnosis-safe multisig monitoring', () => {
       // invoke the block handler
       let findings = await handleBlock();
       expect(findings).toStrictEqual([]);
-      expect(mockContract.balanceOf).toHaveBeenCalledTimes(1); // the problem is that the first time handleBlock() is ran, .blanceOf() isn't getting called. Figrue out why
+      expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
-      // get the address of the wallet.
+      // get the address of the safe
       const { contracts } = initializeData;
       const { address } = contracts[0]; // use first address to test
 
@@ -281,7 +281,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      // this should result in a call to the balanceOf method of the new token
       findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
@@ -294,7 +293,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a third time
-      // this should result in a second call ot the balanceOf method of the new token
       findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(5);
@@ -313,7 +311,7 @@ describe('gnosis-safe multisig monitoring', () => {
       // invoke the block handler
       let findings = await handleBlock();
       expect(findings).toStrictEqual([]);
-      // expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
+      expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // get the address of the wallet
       const { contracts } = initializeData;
@@ -339,7 +337,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      // this should result in a call to the balanceOf method of the new token
       findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
@@ -352,7 +349,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a third time
-      // this should result in a second call ot the balanceOf method of the new token
       findings = await handleBlock();
 
       // create expected findings
