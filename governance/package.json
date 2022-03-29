@@ -1,5 +1,5 @@
 {
-  "name": "forta-governance-events",
+  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-governance-events",
   "version": "0.0.1",
   "description": "Forta Agent template for monitoring emitted events from the {protocolName} Governance contract",
   "scripts": {
