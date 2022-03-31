@@ -1,5 +1,5 @@
 {
-  "name": "forta-new-contract-eoa-interaction",
+  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-new-contract-eoa-interaction",
   "version": "0.0.1",
   "description": "Forta Agent template for monitoring new contracts and EOAs interacting with {protocolName} contracts",
   "scripts": {

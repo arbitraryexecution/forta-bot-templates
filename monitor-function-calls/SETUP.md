@@ -170,6 +170,8 @@ repository.  Also update the name and description fields in the `package.json` f
     COPYING
     LICENSE
     Dockerfile
+    .eslintrc.js
+    .gitignore
     forta.config.json
     package.json
     agent-config.json

@@ -35,12 +35,17 @@ changes, the following content would be present in the `agent-config.json` file:
   "developerAbbreviation": "AE",
   "protocolName": "Synthetix",
   "protocolAbbreviation": "SYN",
-  "gnosisSafe": {
-    "address": "0xEb3107117FEAd7de89Cd14D463D340A2E6917769",
-    "version": "v1.3.0"
+  "contracts": {
+    "contractName1": {
+      "gnosisSafe": {
+        "address": "0xEb3107117FEAd7de89Cd14D463D340A2E6917769",
+        "version": "v1.3.0"
+      }
+    }
   }
 }
 ```
+
 
 Note that any unused entries in the configuration file must be deleted for the agent to work.  The
 original version of the configuration file contains several placeholders to show the structure of
@@ -57,6 +62,8 @@ Github repository.  Also update the name and description fields in the `package.
     COPYING
     LICENSE
     Dockerfile
+    .eslintrc.js
+    .gitignore
     forta.config.json
     package.json
     agent-config.json

@@ -1,5 +1,5 @@
 {
-  "name": "forta-tornado-cash-monitor",
+  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-tornado-cash-monitor",
   "version": "0.0.1",
   "description": "This agent template monitors activity involving addresses that have interacted with Tornado cash and addresses associated with the {protocolName} protocol.",
   "scripts": {
