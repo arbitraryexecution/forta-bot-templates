@@ -37,9 +37,9 @@ changes, the following content would be present in the `agent-config.json` file:
   "protocolAbbreviation": "SYN",
   "contracts": {
     "contractName1": {
+      "address": "0xEb3107117FEAd7de89Cd14D463D340A2E6917769",
       "gnosisSafe": {
-        "address": "0xEb3107117FEAd7de89Cd14D463D340A2E6917769",
-        "version": "v1.3.0"
+        "version": "v1.0.0"
       }
     }
   }
