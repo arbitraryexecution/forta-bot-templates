@@ -59,7 +59,7 @@ describe('check agent configuration file', () => {
     MINIMUM_EVENT_LIST.forEach((eventName) => {
       if (Object.keys(events).indexOf(eventName) === -1) {
         throw new Error(
-          `ABI does not contain minimum supported event: ${eventName}`
+          `ABI does not contain minimum supported event: ${eventName}`,
         );
       }
     });
@@ -135,7 +135,7 @@ describe('monitor governance contracts for emitted events', () => {
       // valid event name with valid name, signature, topic, and args
       const { mockArgs, mockTopics, data } = createMockEventLogs(
         validEvent,
-        iface
+        iface,
       );
 
       // update mock transaction event
@@ -159,7 +159,7 @@ describe('monitor governance contracts for emitted events', () => {
       // encode event data - valid event with valid arguments
       const { mockArgs, mockTopics, data } = createMockEventLogs(
         invalidEvent,
-        iface
+        iface,
       );
 
       // update mock transaction event
@@ -183,7 +183,7 @@ describe('monitor governance contracts for emitted events', () => {
       // encode event data - valid event with valid arguments
       const { mockArgs, mockTopics, data } = createMockEventLogs(
         validEvent,
-        iface
+        iface,
       );
 
       // update mock transaction event
