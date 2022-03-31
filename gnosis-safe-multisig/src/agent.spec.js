@@ -73,7 +73,8 @@ describe('check agent configuration file', () => {
   it('gnosisSafe key values must be valid', () => {
     const gnosisSafe = Object.values(config.contracts);
     gnosisSafe.forEach((safe) => {
-      const { address, version } = safe.gnosisSafe;
+      const { version } = safe.gnosisSafe;
+      const { address } = safe;
       // check that the address is a valid address
       expect(ethers.utils.isHexString(address, 20)).toBe(true);
 
@@ -378,7 +379,8 @@ describe('gnosis-safe multisig monitoring', () => {
     let handleTransaction;
 
     // grab first safe to test
-    const { version } = config.contracts.contractName1.gnosisSafe;
+    const firstContractName = Object.keys(config.contracts)[0];
+    const { version } = config.contracts[firstContractName].gnosisSafe;
     // eslint-disable-next-line import/no-dynamic-require,global-require
     const { abi } = require(`../abi/${version}/gnosis_safe.json`);
     const iface = new ethers.utils.Interface(abi);
@@ -392,7 +394,7 @@ describe('gnosis-safe multisig monitoring', () => {
 
     const logsAddressMatchNoEventMatch = [
       {
-        address: config.contracts.contractName1.gnosisSafe.address, // use first address to test
+        address: config.contracts[firstContractName].address, // use first address to test
         topics: [ethers.constants.HashZero],
       },
     ];
@@ -400,7 +402,7 @@ describe('gnosis-safe multisig monitoring', () => {
     const topics = iface.encodeFilterTopics('AddedOwner', []);
     const logsAddressAndEventMatch = [
       {
-        address: config.contracts.contractName1.gnosisSafe.address,
+        address: config.contracts[firstContractName].address, // use first address to test
         topics,
         data: ethers.constants.HashZero,
       },

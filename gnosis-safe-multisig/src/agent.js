@@ -39,9 +39,9 @@ function provideInitialize(data) {
     // gnosis_safe specific configuration values
     data.gnosisSafe = config.contracts;
 
-    data.contracts = Object.entries(data.gnosisSafe);
-    data.contracts = await Promise.all(data.contracts.map(async ([, entry]) => {
-      let { address } = entry.gnosisSafe;
+    const safeEntries = Object.entries(data.gnosisSafe);
+    data.contracts = await Promise.all(safeEntries.map(async ([, entry]) => {
+      let { address } = entry;
       const { version } = entry.gnosisSafe;
       address = address.toLowerCase();
 

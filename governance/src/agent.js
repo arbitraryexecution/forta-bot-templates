@@ -1,6 +1,6 @@
 const { Finding, ethers } = require('forta-agent');
 
-const agentConfig = require('../agent-config.json');
+const config = require('../agent-config.json');
 
 const { getAbi, createProposalFromLog } = require('./utils');
 
@@ -8,6 +8,7 @@ const { getAbi, createProposalFromLog } = require('./utils');
 const initializeData = {};
 
 // alert for when a new governance proposal is created
+/* eslint-disable no-shadow */
 function proposalCreatedFinding(proposal, address, config) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Created`,
@@ -189,13 +190,14 @@ function provideInitialize(data) {
   return async function initialize() {
     /* eslint-disable no-param-reassign */
     data.config = {
-      developerAbbreviation: agentConfig.developerAbbreviation,
-      protocolName: agentConfig.protocolName,
-      protocolAbbreviation: agentConfig.protocolAbbreviation,
+      developerAbbreviation: config.developerAbbreviation,
+      protocolName: config.protocolName,
+      protocolAbbreviation: config.protocolAbbreviation,
     };
-    data.goverance = agentConfig.contracts;
+    data.goverance = config.contracts;
     data.contracts = Object.entries(data.goverance).map(([name, entry]) => {
-      const { abiFile, address } = entry.governance;
+      const { abiFile } = entry.governance;
+      const { address } = entry;
 
       if (address === undefined) {
         throw new Error(`No address found in configuration file for '${name}'`);

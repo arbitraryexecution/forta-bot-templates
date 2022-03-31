@@ -48,7 +48,8 @@ describe('check agent configuration file', () => {
   describe('governance key values must be valid', () => {
     const goveranance = Object.values(config.contracts);
     goveranance.forEach((gov) => {
-      const { abiFile, address } = gov.governance;
+      const { abiFile } = gov.governance;
+      const { address } = gov;
       // check that the address is a valid address
       expect(ethers.utils.isHexString(address, 20)).toBe(true);
 
@@ -70,7 +71,8 @@ describe('check agent configuration file', () => {
 });
 
 // grab the first entry from the 'contracts' key in the config file to test
-const abi = utils.getAbi(config.contracts.contractName1.governance.abiFile);
+const firstContractName = Object.keys(config.contracts)[0];
+const abi = utils.getAbi(config.contracts[firstContractName].governance.abiFile);
 
 const invalidEvent = {
   anonymous: false,
@@ -108,7 +110,7 @@ describe('monitor governance contracts for emitted events', () => {
       handleTransaction = provideHandleTransaction(initializeData);
 
       // grab the first entry from the 'contracts' key in the config file
-      validContractAddress = config.contracts.contractName1.governance.address;
+      validContractAddress = config.contracts[firstContractName].address;
 
       const eventsInAbi = getObjectsFromAbi(abi, 'event');
       validEvent = eventsInAbi[validEventName];

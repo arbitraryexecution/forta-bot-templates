@@ -12,8 +12,8 @@ const {
 } = config;
 
 // get list of addresses to watch
-const addresses = Object.values(contracts);
-if (addresses.length === 0) {
+const contractList = Object.values(contracts);
+if (contractList.length === 0) {
   throw new Error('Must supply at least one address to watch');
 }
 
@@ -32,11 +32,11 @@ async function handleTransaction(txEvent) {
   const txAddrs = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
 
   // check if an address in the watchlist was the initiator of the transaction
-  addresses.forEach((address, index) => {
-    if (txAddrs.includes(address.address.toLowerCase())) {
+  contractList.forEach((contract, index) => {
+    if (txAddrs.includes(contract.address.toLowerCase())) {
       const params = Object.values(contracts)[index];
       // eslint-disable-next-line max-len
-      findings.push(createAlert(protocolName, address.address, params.name, protocolAbbrev, params.watch.type, params.watch.severity));
+      findings.push(createAlert(protocolName, contract.address, params.name, protocolAbbrev, params.watch.type, params.watch.severity));
     }
   });
 
