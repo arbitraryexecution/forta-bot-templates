@@ -52,31 +52,31 @@ function createTransactionEvent(txObject) {
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-  describe('procotolName key required', () => {
+  it('procotolName key required', () => {
     const { protocolName } = config;
-    expect(typeof (protocolName)).toBe('string');
+    expect(typeof protocolName).toBe('string');
     expect(protocolName).not.toBe('');
   });
 
-  describe('protocolAbbreviation key required', () => {
+  it('protocolAbbreviation key required', () => {
     const { protocolAbbreviation } = config;
-    expect(typeof (protocolAbbreviation)).toBe('string');
+    expect(typeof protocolAbbreviation).toBe('string');
     expect(protocolAbbreviation).not.toBe('');
   });
 
-  describe('developerAbbreviation key required', () => {
+  it('developerAbbreviation key required', () => {
     const { developerAbbreviation } = config;
-    expect(typeof (developerAbbreviation)).toBe('string');
+    expect(typeof developerAbbreviation).toBe('string');
     expect(developerAbbreviation).not.toBe('');
   });
 
-  describe('contracts key required', () => {
+  it('contracts key required', () => {
     const { contracts } = config;
-    expect(typeof (contracts)).toBe('object');
+    expect(typeof contracts).toBe('object');
     expect(contracts).not.toBe({});
   });
 
-  describe('contracts key values must be valid', () => {
+  it('contracts key values must be valid', () => {
     const { contracts } = config;
     Object.keys(contracts).forEach((key) => {
       const {
@@ -106,10 +106,14 @@ describe('check agent configuration file', () => {
       });
 
       // check type, this will fail if 'type' is not valid
-      expect(Object.prototype.hasOwnProperty.call(FindingType, findingType)).toBe(true);
+      expect(
+        Object.prototype.hasOwnProperty.call(FindingType, findingType),
+      ).toBe(true);
 
       // check severity, this will fail if 'severity' is not valid
-      expect(Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity)).toBe(true);
+      expect(
+        Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity),
+      ).toBe(true);
     });
   });
 });
@@ -139,7 +143,7 @@ describe('new contract interaction monitoring', () => {
   // pass in mockEthers as the provider for handleTransaction() to use
   beforeAll(async () => {
     initializeData = {};
-    await (provideInitialize(initializeData))();
+    await provideInitialize(initializeData)();
     handleTransaction = provideHandleTransaction(initializeData);
   });
 
@@ -184,7 +188,9 @@ describe('new contract interaction monitoring', () => {
       });
 
       // intentionally setup the getCode function to throw an error
-      mockEthersProvider.getCode.mockImplementation(async () => { throw new Error('FAILED'); });
+      mockEthersProvider.getCode.mockImplementation(async () => {
+        throw new Error('FAILED');
+      });
 
       // run forta agent
       const findings = await handleTransaction(txEvent);
@@ -207,8 +213,12 @@ describe('new contract interaction monitoring', () => {
         block: { number: 1 },
       });
 
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseContract,
+      );
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseContract,
+      );
 
       // run forta agent
       const findings = await handleTransaction(txEvent);
@@ -252,31 +262,32 @@ describe('new contract interaction monitoring', () => {
         block: { number: blockNumber },
       });
 
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseNewContract);
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseContract,
+      );
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseNewContract,
+      );
 
       // run forta agent
       const findings = await handleTransaction(txEvent);
 
       const expectedFindings = [];
       initializeData.contracts.forEach((contract) => {
-        const {
-          name,
-          address,
-          findingType,
-          findingSeverity,
-        } = contract;
+        const { name, address, findingType, findingSeverity } = contract;
 
-        expectedFindings.push(createContractInteractionAlert(
-          name,
-          address,
-          transactionAddress,
-          findingType,
-          findingSeverity,
-          initializeData.protocolName,
-          initializeData.protocolAbbreviation,
-          initializeData.developerAbbreviation,
-        ));
+        expectedFindings.push(
+          createContractInteractionAlert(
+            name,
+            address,
+            transactionAddress,
+            findingType,
+            findingSeverity,
+            initializeData.protocolName,
+            initializeData.protocolAbbreviation,
+            initializeData.developerAbbreviation,
+          ),
+        );
       });
 
       expect(findings).toStrictEqual(expectedFindings);
@@ -323,7 +334,9 @@ describe('new contract interaction monitoring', () => {
       const transactionCount = 1;
 
       mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
-      mockEthersProvider.getTransactionCount.mockResolvedValue(transactionCount);
+      mockEthersProvider.getTransactionCount.mockResolvedValue(
+        transactionCount,
+      );
 
       // run forta agent
       const findings = await handleTransaction(txEvent);
@@ -331,24 +344,21 @@ describe('new contract interaction monitoring', () => {
       // check assertions
       const expectedFindings = [];
       initializeData.contracts.forEach((contract) => {
-        const {
-          name,
-          address,
-          findingType,
-          findingSeverity,
-        } = contract;
+        const { name, address, findingType, findingSeverity } = contract;
 
-        expectedFindings.push(createEOAInteractionAlert(
-          name,
-          address,
-          transactionAddress,
-          transactionCount,
-          findingType,
-          findingSeverity,
-          initializeData.protocolName,
-          initializeData.protocolAbbreviation,
-          initializeData.developerAbbreviation,
-        ));
+        expectedFindings.push(
+          createEOAInteractionAlert(
+            name,
+            address,
+            transactionAddress,
+            transactionCount,
+            findingType,
+            findingSeverity,
+            initializeData.protocolName,
+            initializeData.protocolAbbreviation,
+            initializeData.developerAbbreviation,
+          ),
+        );
       });
 
       expect(findings).toStrictEqual(expectedFindings);
