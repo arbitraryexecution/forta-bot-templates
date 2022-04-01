@@ -14,12 +14,17 @@ jest.mock('forta-agent', () => ({
 }));
 
 const {
-  Finding, FindingType, FindingSeverity, ethers,
+  Finding,
+  FindingType,
+  FindingSeverity,
+  ethers,
 } = require('forta-agent');
 
 const { provideHandleBlock, provideInitialize } = require('./agent');
 const {
-  getObjectsFromAbi, getFunctionFromConfig, getRandomCharacterString,
+  getObjectsFromAbi,
+  getFunctionFromConfig,
+  getRandomCharacterString,
 } = require('./test-utils');
 const utils = require('./utils');
 const config = require('../agent-config.json');
@@ -28,27 +33,27 @@ const checkThresholdSpy = jest.spyOn(utils, 'checkThreshold');
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-  it('procotolName key required', () => {
+  it('protocolName key required', () => {
     const { protocolName } = config;
-    expect(typeof (protocolName)).toBe('string');
+    expect(typeof protocolName).toBe('string');
     expect(protocolName).not.toBe('');
   });
 
   it('protocolAbbreviation key required', () => {
     const { protocolAbbreviation } = config;
-    expect(typeof (protocolAbbreviation)).toBe('string');
+    expect(typeof protocolAbbreviation).toBe('string');
     expect(protocolAbbreviation).not.toBe('');
   });
 
   it('developerAbbreviation key required', () => {
     const { developerAbbreviation } = config;
-    expect(typeof (developerAbbreviation)).toBe('string');
+    expect(typeof developerAbbreviation).toBe('string');
     expect(developerAbbreviation).not.toBe('');
   });
 
   it('contracts key required', () => {
     const { contracts } = config;
-    expect(typeof (contracts)).toBe('object');
+    expect(typeof contracts).toBe('object');
     expect(contracts).not.toBe({});
   });
 
@@ -76,7 +81,9 @@ describe('check agent configuration file', () => {
         expect(functionObjects[variableName].outputs.length).toBe(1);
 
         // assert that the type of the output for the getter function is a (u)int type
-        expect(functionObjects[variableName].outputs[0].type.match(/^u?int/)).not.toBe(null);
+        expect(
+          functionObjects[variableName].outputs[0].type.match(/^u?int/),
+        ).not.toBe(null);
 
         // extract the keys from the configuration file for a specific function
         const {
@@ -88,15 +95,24 @@ describe('check agent configuration file', () => {
         } = variables[variableName];
 
         // check type, this will fail if 'type' is not valid
-        expect(Object.prototype.hasOwnProperty.call(FindingType, type)).toBe(true);
+        expect(Object.prototype.hasOwnProperty.call(FindingType, type)).toBe(
+          true,
+        );
 
         // check severity, this will fail if 'severity' is not valid
-        expect(Object.prototype.hasOwnProperty.call(FindingSeverity, severity)).toBe(true);
+        expect(
+          Object.prototype.hasOwnProperty.call(FindingSeverity, severity),
+        ).toBe(true);
 
         // make sure there is at least one threshold value present in the config, otherwise fail
-        if (upperThresholdPercent === undefined && lowerThresholdPercent === undefined) {
-          throw new Error('Either the upperThresholdPercent or lowerThresholdPercent for the'
-            + ` variable ${variableName} must be defined`);
+        if (
+          upperThresholdPercent === undefined &&
+          lowerThresholdPercent === undefined
+        ) {
+          throw new Error(
+            'Either the upperThresholdPercent or lowerThresholdPercent for the' +
+              ` variable ${variableName} must be defined`,
+          );
         }
 
         // if upperThresholdPercent is defined, make sure the value is a number
@@ -175,7 +191,7 @@ describe('monitor contract variables', () => {
       ({ functionInConfig, functionNotInConfig } = testConfig);
 
       // initialize the handler
-      await (provideInitialize(initializeData))();
+      await provideInitialize(initializeData)();
       handleBlock = provideHandleBlock(initializeData);
     });
 
@@ -291,36 +307,45 @@ describe('monitor contract variables', () => {
 
       // add new mocked functions to the mockContract corresponding to the variable names for getter
       // functions found in the config file
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(initialGetterValue);
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(initialGetterValue);
 
       // run the agent once
       await handleBlock();
 
       // update the value returned by the target getter function to be greater than the
       // upperThresholdPercent change
-      const newValue = ((newThresholdLimit / 100) * initialGetterValue) + initialGetterValue + 1;
-      const percentChange = ((newValue - initialGetterValue) / initialGetterValue) * 100;
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(newValue);
+      const newValue =
+        (newThresholdLimit / 100) * initialGetterValue + initialGetterValue + 1;
+      const percentChange =
+        ((newValue - initialGetterValue) / initialGetterValue) * 100;
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(newValue);
 
       // run the agent again now that we have seen the minimum number of data points
       const findings = await handleBlock();
-      const expectedFinding = [Finding.fromObject({
-        name: `${config.protocolName} Contract Variable`,
-        description: `The ${functionInConfig.name} variable value in the ${contractName} contract`
-          + ` had a change in value over the upper threshold limit of ${newThresholdLimit} percent`,
-        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-CONTRACT-VARIABLE`,
-        type: FindingType[testConfig.findingType],
-        severity: FindingSeverity[testConfig.findingSeverity],
-        protocol: config.protocolName,
-        metadata: {
-          contractName,
-          contractAddress: validContractAddress,
-          variableName: functionInConfig.name,
-          thresholdPosition: 'upper',
-          thresholdPercentLimit: `${newThresholdLimit}`,
-          actualPercentChange: `${percentChange}`,
-        },
-      })];
+      const expectedFinding = [
+        Finding.fromObject({
+          name: `${config.protocolName} Contract Variable`,
+          description:
+            `The ${functionInConfig.name} variable value in the ${contractName} contract` +
+            ` had a change in value over the upper threshold limit of ${newThresholdLimit} percent`,
+          alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-CONTRACT-VARIABLE`,
+          type: FindingType[testConfig.findingType],
+          severity: FindingSeverity[testConfig.findingSeverity],
+          protocol: config.protocolName,
+          metadata: {
+            contractName,
+            contractAddress: validContractAddress,
+            variableName: functionInConfig.name,
+            thresholdPosition: 'upper',
+            thresholdPercentLimit: `${newThresholdLimit}`,
+            actualPercentChange: `${percentChange}`,
+          },
+        }),
+      ];
 
       expect(findings).toStrictEqual(expectedFinding);
     });
@@ -343,7 +368,9 @@ describe('monitor contract variables', () => {
 
       // add new mocked functions to the mockContract corresponding to the variable names for getter
       // functions found in the config file
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(initialGetterValue);
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(initialGetterValue);
 
       // run the agent once
       await handleBlock();
@@ -351,7 +378,9 @@ describe('monitor contract variables', () => {
       // update the value returned by the target getter function to be greater than the
       // upperThresholdPercent change
       const newValue = initialGetterValue + 1;
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(newValue);
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(newValue);
 
       // run the agent again now that we have seen the minimum number of data points
       const findings = await handleBlock();
@@ -376,36 +405,45 @@ describe('monitor contract variables', () => {
 
       // add new mocked functions to the mockContract corresponding to the variable names for getter
       // functions found in the config file
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(initialGetterValue);
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(initialGetterValue);
 
       // run the agent once
       await handleBlock();
 
       // update the value returned by the target getter function to be greater than the
       // lowerThresholdPercent change
-      const newValue = (initialGetterValue - ((newThresholdLimit / 100) * initialGetterValue)) - 1;
-      const percentChange = ((initialGetterValue - newValue) / initialGetterValue) * 100;
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(newValue);
+      const newValue =
+        initialGetterValue - (newThresholdLimit / 100) * initialGetterValue - 1;
+      const percentChange =
+        ((initialGetterValue - newValue) / initialGetterValue) * 100;
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(newValue);
 
       // run the agent again now that we have seen the minimum number of data points
       const findings = await handleBlock();
-      const expectedFinding = [Finding.fromObject({
-        name: `${config.protocolName} Contract Variable`,
-        description: `The ${functionInConfig.name} variable value in the ${contractName} contract`
-          + ` had a change in value over the lower threshold limit of ${newThresholdLimit} percent`,
-        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-CONTRACT-VARIABLE`,
-        type: FindingType[testConfig.findingType],
-        severity: FindingSeverity[testConfig.findingSeverity],
-        protocol: config.protocolName,
-        metadata: {
-          contractName,
-          contractAddress: validContractAddress,
-          variableName: functionInConfig.name,
-          thresholdPosition: 'lower',
-          thresholdPercentLimit: `${newThresholdLimit}`,
-          actualPercentChange: `${percentChange}`,
-        },
-      })];
+      const expectedFinding = [
+        Finding.fromObject({
+          name: `${config.protocolName} Contract Variable`,
+          description:
+            `The ${functionInConfig.name} variable value in the ${contractName} contract` +
+            ` had a change in value over the lower threshold limit of ${newThresholdLimit} percent`,
+          alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-CONTRACT-VARIABLE`,
+          type: FindingType[testConfig.findingType],
+          severity: FindingSeverity[testConfig.findingSeverity],
+          protocol: config.protocolName,
+          metadata: {
+            contractName,
+            contractAddress: validContractAddress,
+            variableName: functionInConfig.name,
+            thresholdPosition: 'lower',
+            thresholdPercentLimit: `${newThresholdLimit}`,
+            actualPercentChange: `${percentChange}`,
+          },
+        }),
+      ];
 
       expect(findings).toStrictEqual(expectedFinding);
     });
@@ -428,7 +466,9 @@ describe('monitor contract variables', () => {
 
       // add new mocked functions to the mockContract corresponding to the variable names for getter
       // functions found in the config file
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(initialGetterValue);
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(initialGetterValue);
 
       // run the agent once
       await handleBlock();
@@ -436,7 +476,9 @@ describe('monitor contract variables', () => {
       // update the value returned by the target getter function to be greater than the
       // lowerThresholdPercent change
       const newValue = initialGetterValue - 1;
-      mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(newValue);
+      mockContract[functionInConfig.name] = jest
+        .fn()
+        .mockResolvedValue(newValue);
 
       // run the agent again now that we have seen the minimum number of data points
       const findings = await handleBlock();
