@@ -1,5 +1,9 @@
 const {
-  Finding, FindingType, FindingSeverity, createTransactionEvent, ethers,
+  Finding,
+  FindingType,
+  FindingSeverity,
+  createTransactionEvent,
+  ethers,
 } = require('forta-agent');
 
 const { provideHandleTransaction, provideInitialize } = require('./agent');
@@ -17,31 +21,31 @@ const config = require('../agent-config.json');
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-  describe('procotolName key required', () => {
+  it('procotolName key required', () => {
     const { protocolName } = config;
-    expect(typeof (protocolName)).toBe('string');
+    expect(typeof protocolName).toBe('string');
     expect(protocolName).not.toBe('');
   });
 
-  describe('protocolAbbreviation key required', () => {
+  it('protocolAbbreviation key required', () => {
     const { protocolAbbreviation } = config;
-    expect(typeof (protocolAbbreviation)).toBe('string');
+    expect(typeof protocolAbbreviation).toBe('string');
     expect(protocolAbbreviation).not.toBe('');
   });
 
-  describe('developerAbbreviation key required', () => {
+  it('developerAbbreviation key required', () => {
     const { developerAbbreviation } = config;
-    expect(typeof (developerAbbreviation)).toBe('string');
+    expect(typeof developerAbbreviation).toBe('string');
     expect(developerAbbreviation).not.toBe('');
   });
 
-  describe('contracts key required', () => {
+  it('contracts key required', () => {
     const { contracts } = config;
-    expect(typeof (contracts)).toBe('object');
+    expect(typeof contracts).toBe('object');
     expect(contracts).not.toBe({});
   });
 
-  describe('contracts key values must be valid', () => {
+  it('contracts key values must be valid', () => {
     const { contracts } = config;
     Object.keys(contracts).forEach((key) => {
       const { address, abiFile, functions } = contracts[key];
@@ -73,14 +77,20 @@ describe('check agent configuration file', () => {
           const argumentNames = inputs.map((inputEntry) => inputEntry.name);
 
           // verify that the argument name is present in the function Object
-          expect(argumentNames.indexOf(expressionObject.variableName)).not.toBe(-1);
+          expect(argumentNames.indexOf(expressionObject.variableName)).not.toBe(
+            -1,
+          );
         }
 
         // check type, this will fail if 'type' is not valid
-        expect(Object.prototype.hasOwnProperty.call(FindingType, type)).toBe(true);
+        expect(Object.prototype.hasOwnProperty.call(FindingType, type)).toBe(
+          true,
+        );
 
         // check severity, this will fail if 'severity' is not valid
-        expect(Object.prototype.hasOwnProperty.call(FindingSeverity, severity)).toBe(true);
+        expect(
+          Object.prototype.hasOwnProperty.call(FindingSeverity, severity),
+        ).toBe(true);
       });
     });
   });
@@ -148,7 +158,7 @@ describe('monitor functions that do not emit events', () => {
       ({ functionInConfig, functionNotInConfig } = testConfig);
 
       // initialize the handler
-      await (provideInitialize(initializeData))();
+      await provideInitialize(initializeData)();
       handleTransaction = provideHandleTransaction(initializeData);
 
       // initialize mock trace object with default values
@@ -183,7 +193,10 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address does not match', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { data: mockFunctionData } = createMockFunctionArgs(functionInConfig, iface);
+      const { data: mockFunctionData } = createMockFunctionArgs(
+        functionInConfig,
+        iface,
+      );
 
       // update mock trace object with encoded function data
       mockTrace[0].action.input = mockFunctionData;
@@ -199,7 +212,10 @@ describe('monitor functions that do not emit events', () => {
     it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { data: mockFunctionData } = createMockFunctionArgs(functionNotInConfig, iface);
+      const { data: mockFunctionData } = createMockFunctionArgs(
+        functionNotInConfig,
+        iface,
+      );
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -218,7 +234,10 @@ describe('monitor functions that do not emit events', () => {
     it('returns a finding if a target contract invokes a monitored function with no expression', async () => {
       // encode function data
       // valid function name with valid arguments
-      const { mockArgs, data: mockFunctionData } = createMockFunctionArgs(functionInConfig, iface);
+      const { mockArgs, data: mockFunctionData } = createMockFunctionArgs(
+        functionInConfig,
+        iface,
+      );
 
       // update mock trace object with encoded function data and correct contract address
       mockTrace[0].action.input = mockFunctionData;
@@ -253,20 +272,22 @@ describe('monitor functions that do not emit events', () => {
       argumentData = utils.extractFunctionArgs(argumentData);
 
       // create the expected finding
-      const testFindings = [Finding.fromObject({
-        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-FUNCTION-CALL`,
-        description: `The ${functionInConfig.name} function was invoked in the ${contractName} contract`,
-        name: `${config.protocolName} Function Call`,
-        protocol: config.protocolName,
-        severity: FindingSeverity[testConfig.findingSeverity],
-        type: FindingType[testConfig.findingType],
-        metadata: {
-          contractAddress: validContractAddress,
-          contractName,
-          functionName: functionInConfig.name,
-          ...argumentData,
-        },
-      })];
+      const testFindings = [
+        Finding.fromObject({
+          alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-FUNCTION-CALL`,
+          description: `The ${functionInConfig.name} function was invoked in the ${contractName} contract`,
+          name: `${config.protocolName} Function Call`,
+          protocol: config.protocolName,
+          severity: FindingSeverity[testConfig.findingSeverity],
+          type: FindingType[testConfig.findingType],
+          metadata: {
+            contractAddress: validContractAddress,
+            contractName,
+            functionName: functionInConfig.name,
+            ...argumentData,
+          },
+        }),
+      ];
 
       expect(findings).toStrictEqual(testFindings);
     });
@@ -316,20 +337,22 @@ describe('monitor functions that do not emit events', () => {
 
       const description = `The ${functionInConfig.name} function was invoked in the ${contractName} contract, condition met: ${expression}`;
 
-      const testFindings = [Finding.fromObject({
-        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-FUNCTION-CALL`,
-        description,
-        name: `${config.protocolName} Function Call`,
-        protocol: config.protocolName,
-        severity: FindingSeverity[testConfig.findingSeverity],
-        type: FindingType[testConfig.findingType],
-        metadata: {
-          contractAddress: validContractAddress,
-          contractName,
-          functionName: functionInConfig.name,
-          ...argumentData,
-        },
-      })];
+      const testFindings = [
+        Finding.fromObject({
+          alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-FUNCTION-CALL`,
+          description,
+          name: `${config.protocolName} Function Call`,
+          protocol: config.protocolName,
+          severity: FindingSeverity[testConfig.findingSeverity],
+          type: FindingType[testConfig.findingType],
+          metadata: {
+            contractAddress: validContractAddress,
+            contractName,
+            functionName: functionInConfig.name,
+            ...argumentData,
+          },
+        }),
+      ];
 
       expect(findings).toStrictEqual(testFindings);
     });
