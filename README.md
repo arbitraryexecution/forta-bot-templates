@@ -5,7 +5,7 @@ simply by creating configuration files. These Agent templates were designed by [
 
 ## Agent Templates
 
-### Event Monitor
+### [Event Monitor](admin-events/SETUP.md)
 
 This agent monitors blockchain transactions for specific events emitted from specific contract
 addresses. Optionally, an expression can be provided for checking the value of an event argument
@@ -23,7 +23,7 @@ the agent from emitting many alerts for the same condition.
 This agent monitors blockchain transactions for those involving specific addresses, which may be
 either EOAs or contracts. Alert type and severity are both configurable.
 
-### [Function Call Monitor](monitor-function-call/SETUP.md)
+### [Function Call Monitor](monitor-function-calls/SETUP.md)
 
 This agent monitors blockchain transactions for specific function calls for specific contract
 addresses. Optionally, an expression may be provided for checking the value of a function argument
