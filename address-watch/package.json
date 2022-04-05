@@ -17,7 +17,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "forta-agent": "^0.0.41"
+    "forta-agent": "^0.1.1"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
