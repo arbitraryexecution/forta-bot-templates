@@ -1,18 +1,20 @@
 {
-  "developerAbbreviation": "",
-  "protocolName": "",
-  "protocolAbbreviation": "",    
+  "developerAbbreviation": "DEV",
+  "protocolName": "FullName",
+  "protocolAbbreviation": "ABREV",    
   "contracts": {
     "contractName1": {
-      "thresholdBlockCount": 7,
-      "thresholdTransactionCount": 7,
-      "address": "contractAddress1",
-      "filteredAddresses": [
-        "filteredAddress1",
-        "filteredAddress2"
-      ],
-      "findingType": "Type",
-      "findingSeverity": "Severity"
+      "newContractEOA": {
+        "thresholdBlockCount": 7,
+        "thresholdTransactionCount": 7,
+        "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+        "filteredAddresses": [
+          "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13E",
+          "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13F"
+        ],
+        "findingType": "Info",
+        "findingSeverity": "Info"
+      }
     }
   }
 }

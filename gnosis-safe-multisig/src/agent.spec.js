@@ -63,24 +63,28 @@ describe('check agent configuration file', () => {
   });
 
   it('gnosisSafe key required', () => {
-    const { gnosisSafe } = config;
-    expect(typeof (gnosisSafe)).toBe('object');
-    expect(gnosisSafe).not.toBe({});
+    const gnosisSafe = Object.values(config.contracts);
+    gnosisSafe.forEach((safe) => {
+      expect(typeof (safe)).toBe('object');
+      expect(safe).not.toBe({});
+    });
   });
 
   it('gnosisSafe key values must be valid', () => {
-    const { gnosisSafe } = config;
-    const { address, version } = gnosisSafe;
+    const gnosisSafe = Object.values(config.contracts);
+    gnosisSafe.forEach((safe) => {
+      const { version } = safe.gnosisSafe;
+      const { address } = safe;
+      // check that the address is a valid address
+      expect(ethers.utils.isHexString(address, 20)).toBe(true);
 
-    // check that the address is a valid address
-    expect(ethers.utils.isHexString(address, 20)).toBe(true);
+      // check that there is a corresponding file for the version indicated
+      // eslint-disable-next-line import/no-dynamic-require,global-require
+      const { abi } = require(`../abi/${version}/gnosis_safe.json`);
 
-    // check that there is a corresponding file for the version indicated
-    // eslint-disable-next-line import/no-dynamic-require,global-require
-    const { abi } = require(`../abi/${version}/gnosis_safe.json`);
-
-    expect(typeof (abi)).toBe('object');
-    expect(abi).not.toBe({});
+      expect(typeof (abi)).toBe('object');
+      expect(abi).not.toBe({});
+    });
   });
 });
 
@@ -154,7 +158,8 @@ describe('gnosis-safe multisig monitoring', () => {
       // invoke the block handler a second time
       findings = await handleBlock();
 
-      const { alertFields, address: protocolAddress } = initializeData;
+      const { alertFields, contracts } = initializeData;
+      const protocolAddress = contracts[0].address; // use first contract to test
       const { protocolName, protocolAbbreviation, developerAbbreviation } = alertFields;
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
@@ -217,7 +222,8 @@ describe('gnosis-safe multisig monitoring', () => {
       findings = await handleBlock();
 
       // create expected findings
-      const { alertFields, address: protocolAddress } = initializeData;
+      const { alertFields, contracts } = initializeData;
+      const protocolAddress = contracts[0].address; // use first contract to test
       const { protocolName, protocolAbbreviation, developerAbbreviation } = alertFields;
 
       const expectedFindings = [Finding.fromObject({
@@ -251,14 +257,16 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
-      // get the address of the wallet
-      const { address } = initializeData;
+      // get the address of the safe
+      const { contracts } = initializeData;
+      const { address } = contracts[0]; // use first address to test
 
-      // create the log with the Transfer event inside
+      // create the log with the Transfer event inside. From zero address to the safe
       const topics = erc20Interface.encodeFilterTopics('Transfer', [
         ethers.constants.AddressZero,
         address,
       ]);
+      // new token emits transfer event
       const logsNewTransferToEvent = [
         {
           address: mockNewTokenAddress,
@@ -274,7 +282,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      // this should result in a call to the balanceOf method of the new token
       findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
@@ -287,7 +294,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a third time
-      // this should result in a second call ot the balanceOf method of the new token
       findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(5);
@@ -309,7 +315,8 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // get the address of the wallet
-      const { address } = initializeData;
+      const { contracts } = initializeData;
+      const { address } = contracts[0]; // use first address to test
 
       // create the log with the Transfer event inside
       const topics = erc20Interface.encodeFilterTopics('Transfer', [
@@ -331,7 +338,6 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      // this should result in a call to the balanceOf method of the new token
       findings = await handleBlock();
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
@@ -344,15 +350,14 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a third time
-      // this should result in a second call ot the balanceOf method of the new token
       findings = await handleBlock();
 
       // create expected findings
-      const { alertFields, address: protocolAddress } = initializeData;
+      const { alertFields } = initializeData;
       const { protocolName, protocolAbbreviation, developerAbbreviation } = alertFields;
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - Token Balance Changed`,
-        description: `Token balance of ${protocolAddress} changed by 1`,
+        description: `Token balance of ${address} changed by 1`,
         alertId: `${developerAbbreviation}-${protocolAbbreviation}-DAO-MULTISIG-TOKEN-BALANCE-CHANGE`,
         protocol: protocolName,
         severity: FindingSeverity.Info,
@@ -373,7 +378,9 @@ describe('gnosis-safe multisig monitoring', () => {
     let initializeData;
     let handleTransaction;
 
-    const { version } = config.gnosisSafe;
+    // grab first safe to test
+    const firstContractName = Object.keys(config.contracts)[0];
+    const { version } = config.contracts[firstContractName].gnosisSafe;
     // eslint-disable-next-line import/no-dynamic-require,global-require
     const { abi } = require(`../abi/${version}/gnosis_safe.json`);
     const iface = new ethers.utils.Interface(abi);
@@ -387,7 +394,7 @@ describe('gnosis-safe multisig monitoring', () => {
 
     const logsAddressMatchNoEventMatch = [
       {
-        address: config.gnosisSafe.address,
+        address: config.contracts[firstContractName].address, // use first address to test
         topics: [ethers.constants.HashZero],
       },
     ];
@@ -395,7 +402,7 @@ describe('gnosis-safe multisig monitoring', () => {
     const topics = iface.encodeFilterTopics('AddedOwner', []);
     const logsAddressAndEventMatch = [
       {
-        address: config.gnosisSafe.address,
+        address: config.contracts[firstContractName].address, // use first address to test
         topics,
         data: ethers.constants.HashZero,
       },
@@ -433,7 +440,8 @@ describe('gnosis-safe multisig monitoring', () => {
       const findings = await handleTransaction(mockTxEvent);
 
       // create expected findings
-      const { alertFields, address: protocolAddress } = initializeData;
+      const { alertFields, contracts } = initializeData;
+      const protocolAddress = contracts[0].address; // use first contract to test
       const { protocolName, protocolAbbreviation, developerAbbreviation } = alertFields;
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,

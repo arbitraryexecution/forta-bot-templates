@@ -17,11 +17,11 @@ const {
   developerAbbreviation: developerAbbrev,
   protocolName,
   protocolAbbrev,
-  addressList
+  contracts,
 } = config;
 
 // make sure addresses is populated
-const addresses = Object.keys(addressList);
+const addresses = Object.values(contracts);
 if (addresses.length === 0) {
   throw new Error('Must supply at least one address to watch');
 }
@@ -43,8 +43,8 @@ describe('handleTransaction', () => {
   });
 
   it('returns a finding if a transaction participant is on the watch list', async () => {
-    const testAddr = Object.keys(addressList)[0];
-    const params = addressList[testAddr];
+    const testAddr = Object.values(contracts)[0].address;
+    const params = Object.values(contracts)[0];
 
     // build txEvent
     const txEvent = createTransactionEvent({
@@ -61,8 +61,8 @@ describe('handleTransaction', () => {
         name: `${protocolName} Address Watch`,
         description: `Address ${testAddr} (${params.name}) was involved in a transaction`,
         alertId: `${developerAbbrev}-${protocolAbbrev}-ADDRESS-WATCH`,
-        type: FindingType[params.type],
-        severity: FindingSeverity[params.severity],
+        type: FindingType[params.watch.type],
+        severity: FindingSeverity[params.watch.severity],
       }),
     ]);
   });

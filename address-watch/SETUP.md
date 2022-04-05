@@ -7,9 +7,9 @@ addresses in the agent configuration file.
 ## Agent Setup Walkthrough
 
 The following steps will take you from a completely blank template to a functional agent.  The only file that
-needs to be modified for this agent to operate correctly is the configuration file `agent-config.json`.
+needs to be modified for this agent to operate correctly is the configuration file `agent-config.json`
 
-1. Open the `agent-config.json` file.
+1. Copy the `agent-config.json.example` file to a new file named `agent-config.json`.
 
 2. For the `developerAbbreviation` key, type in your desired abbreviation to specify your name or your development
 team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
@@ -20,7 +20,7 @@ type in `"Uniswap"` or `"Uniswap V3"`, for the Sushi Swap protocol you may type 
 4. For the `protocolAbbreviation` key, type in an appropriate abbreviation for the value in `protocolName`.  For
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be abbreviated `"SUSH"`, etc.
 
-5.  The Object value for the `addressList` key corresponds to addresses that we want to monitor.  Each
+5.  The Object value for the `contractName1` key corresponds to addresses that we want to monitor.  Each
 key in the Object is an address (either EOA or contract), and each value is another object with three fields:
   -`name`: the name of the contract or EOA that will be watched
   -`type`: the type of finding that will be generated when transactions involving this address are detected (see
@@ -37,6 +37,8 @@ repository.  Additionally, update the `name` entry in `package.json` to match th
   address-watch/
     Dockerfile
     README.md
+    .eslintrc.js
+    .gitignore
     forta.config.json
     package.json
     agent-config.json

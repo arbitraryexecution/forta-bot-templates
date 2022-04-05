@@ -38,35 +38,41 @@ describe('check agent configuration file', () => {
   });
 
   describe('governance key required', () => {
-    const { governance } = config;
-    expect(typeof (governance)).toBe('object');
-    expect(governance).not.toBe({});
+    const governance = Object.values(config.contracts);
+    governance.forEach((gov) => {
+      expect(typeof (gov)).toBe('object');
+      expect(gov).not.toBe({});
+    });
   });
 
   describe('governance key values must be valid', () => {
-    const { governance } = config;
-    const { abiFile, address } = governance;
+    const goveranance = Object.values(config.contracts);
+    goveranance.forEach((gov) => {
+      const { abiFile } = gov.governance;
+      const { address } = gov;
+      // check that the address is a valid address
+      expect(ethers.utils.isHexString(address, 20)).toBe(true);
 
-    // check that the address is a valid address
-    expect(ethers.utils.isHexString(address, 20)).toBe(true);
+      // load the ABI from the specified file
+      // the call to getAbi will fail if the file does not exist
+      const abi = utils.getAbi(abiFile);
 
-    // load the ABI from the specified file
-    // the call to getAbi will fail if the file does not exist
-    const abi = utils.getAbi(abiFile);
+      // extract all of the event names from the ABI
+      const events = getObjectsFromAbi(abi, 'event');
 
-    // extract all of the event names from the ABI
-    const events = getObjectsFromAbi(abi, 'event');
-
-    // verify that at least the minimum list of supported events are present
-    MINIMUM_EVENT_LIST.forEach((eventName) => {
-      if (Object.keys(events).indexOf(eventName) === -1) {
-        throw new Error(`ABI does not contain minimum supported event: ${eventName}`);
-      }
+      // verify that at least the minimum list of supported events are present
+      MINIMUM_EVENT_LIST.forEach((eventName) => {
+        if (Object.keys(events).indexOf(eventName) === -1) {
+          throw new Error(`ABI does not contain minimum supported event: ${eventName}`);
+        }
+      });
     });
   });
 });
 
-const abi = utils.getAbi(config.governance.abiFile);
+// grab the first entry from the 'contracts' key in the config file to test
+const firstContractName = Object.keys(config.contracts)[0];
+const abi = utils.getAbi(config.contracts[firstContractName].governance.abiFile);
 
 const invalidEvent = {
   anonymous: false,
@@ -103,7 +109,8 @@ describe('monitor governance contracts for emitted events', () => {
       await (provideInitialize(initializeData))();
       handleTransaction = provideHandleTransaction(initializeData);
 
-      validContractAddress = config.governance.address;
+      // grab the first entry from the 'contracts' key in the config file
+      validContractAddress = config.contracts[firstContractName].address;
 
       const eventsInAbi = getObjectsFromAbi(abi, 'event');
       validEvent = eventsInAbi[validEventName];
