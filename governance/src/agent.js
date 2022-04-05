@@ -196,8 +196,7 @@ function provideInitialize(data) {
     };
     data.goverance = config.contracts;
     data.contracts = Object.entries(data.goverance).map(([name, entry]) => {
-      const { abiFile } = entry.governance;
-      const { address } = entry;
+      const { governance: { abiFile }, address } = entry;
 
       if (address === undefined) {
         throw new Error(`No address found in configuration file for '${name}'`);
