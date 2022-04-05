@@ -1,5 +1,5 @@
 const {
-  Finding, FindingSeverity, FindingType,
+  Finding, FindingSeverity, FindingType, getTransactionReceipt,
 } = require('forta-agent');
 
 const config = require('../agent-config.json');
@@ -70,13 +70,8 @@ function provideHandleTransaction(data) {
 
     const findings = [];
 
-    // we are only interested in failed transactions
-    if (txEvent.receipt.status) {
-      return findings;
-    }
-
     // check to see if any of the contracts was involved in the failed transaction
-    contracts.forEach((contract) => {
+    const promises = contracts.map(async (contract) => {
       const {
         contractName: name,
         contractAddress: address,
@@ -86,6 +81,10 @@ function provideHandleTransaction(data) {
       } = contract;
 
       if (txEvent.to !== address) return;
+
+      // grab the receipt for the transaction event
+      const receipt = await getTransactionReceipt(txEvent.hash);
+      if (receipt.status) return;
 
       /* eslint-disable no-param-reassign */
       // add new occurrence
@@ -121,6 +120,9 @@ function provideHandleTransaction(data) {
       }
       /* eslint-enable no-param-reassign */
     });
+
+    // wait for the promises to settle
+    await Promise.all(promises);
 
     return findings;
   };
