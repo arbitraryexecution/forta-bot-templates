@@ -1,6 +1,6 @@
 {
   "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-new-contract-eoa-interaction",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Forta Agent template for monitoring new contracts and EOAs interacting with {protocolName} contracts",
   "scripts": {
     "start": "npm run start:dev",
@@ -18,7 +18,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "forta-agent": "^0.0.36"
+    "forta-agent": "^0.1.1"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
