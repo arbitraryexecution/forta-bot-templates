@@ -1,6 +1,6 @@
 {
   "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-function-calls",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Forta Agent template for monitoring function calls from {protocolName} contracts",
   "scripts": {
     "start": "npm run start:dev",
@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "bignumber.js": "^9.0.2",
-    "forta-agent": "^0.0.33"
+    "forta-agent": "^0.0.41"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
