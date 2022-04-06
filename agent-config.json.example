@@ -1,0 +1,129 @@
+{
+	"developerAbbreviation": "",
+	"protocolName": "",
+	"protocolAbbreviation": "",
+	"agents": [
+		{
+			"agent-type": "account-balance",
+			"accountBalance": {
+				"contractName1": {
+					"address": "",
+					"thresholdEth": 0,
+					"alert": { "type": "Type", "severity": "Severity" }
+				}
+			},
+			"alertMinimumIntervalSeconds": 86400
+		},
+		{
+			"agent-type": "address-watch",
+			"everestId": "0x55d07cab60a86966a01680e2242c4af4080a5566",
+			"addressList": {
+				"0xFe1A6056EE03235f30f7a48407A5673BBf25eD48": {
+					"name": "AaveDeployer",
+					"type": "Info",
+					"severity": "Info"
+				}
+			}
+		},
+		{
+			"agent-type": "admin-events",
+			"contracts": {
+				"contractName1": {
+					"address": "contractAddress1",
+					"abiFile": "filename1.json",
+					"events": {
+						"address": "contractAddress1",
+						"type": "Type",
+						"severity": "Severity"
+					}
+				}
+			}
+		},
+		{
+			"agent-type": "contract-variable-monitor",
+			"contracts": {
+				"contractName1": {
+					"address": "contractAddress1",
+					"abiFile": "filename1.json",
+					"variables": {
+						"variableName1": {
+							"type": "Type",
+							"severity": "Severity",
+							"upperThresholdPercent": 0,
+							"lowerThresholdPercent": 0,
+							"numDataPoints": 10
+						}
+					}
+				}
+			}
+		},
+		{
+			"agent-type": "gnosis-safe-multisig",
+			"gnosisSafe": {
+				"address": "contractAddress",
+				"version": "gnosisSafeContractVersion"
+			}
+		},
+		{
+			"agent-type": "governance",
+			"governance": {
+				"address": "",
+				"abiFile": ""
+			}
+		},
+		{
+			"agent-type": "monitor-function-calls",
+			"contracts": {
+				"contractName1": {
+					"address": "contractAddress1",
+					"abiFile": "contractAbiFileName1.json",
+					"functions": {
+						"FunctionName1": {
+							"expression": "amount > 6000",
+							"type": "Type",
+							"severity": "Severity"
+						}
+					}
+				}
+			}
+		},
+		{
+			"agent-type": "new-contract-interaction",
+			"contracts": {
+				"contractName1": {
+					"thresholdBlockCount": 7,
+					"thresholdTransactionCount": 7,
+					"address": "contractAddress1",
+					"filteredAddresses": [
+						"filteredAddress1",
+						"filteredAddress2"
+					],
+					"findingType": "Type",
+					"findingSeverity": "Severity"
+				}
+			}
+		},
+		{
+			"agent-type": "tornado-cash-monitor",
+			"addressList": {
+				"contractName1": {
+					"address": "contractAddress1",
+					"type": "type",
+					"severity": "severity"
+				}
+			}
+		},
+		{
+			"agent-type": "transaction-failure-count",
+			"blockWindow": 25,
+			"failedTransactions": {
+				"contractName1": {
+					"address": "contractAddress2",
+					"transactionFailuresLimit": 10,
+					"type": "Type",
+					"severity": "Severity"
+				}
+			}
+		},
+	]
+}
