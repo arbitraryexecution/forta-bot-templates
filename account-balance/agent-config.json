@@ -1,7 +1,7 @@
 {
-  "developerAbbreviation": "",
-  "protocolName": "",
-  "protocolAbbreviation": "",
+  "developerAbbreviation": "AE",
+  "protocolName": "Balance Monitor",
+  "protocolAbbreviation": "BAL",
   "accountBalance": {
     "contractName1": {
       "address": "",
