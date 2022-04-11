@@ -9,12 +9,6 @@ const {
   checkLogAgainstExpression,
 } = require('./utils');
 
-// load any agent configuration parameters
-const config = require('../agent-config.json');
-
-// set up a variable to hold initialization data used in the handler
-const initializeData = {};
-
 // get the Array of events for a given contract
 function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
   const proxyName = contractEventConfig.proxy;
@@ -117,109 +111,80 @@ function createAlert(
   return Finding.fromObject(finding);
 }
 
-function provideInitialize(data) {
-  return async function initialize() {
-    /* eslint-disable no-param-reassign */
-    // assign configurable fields
-    data.adminEvents = config.contracts;
-    data.protocolName = config.protocolName;
-    data.protocolAbbreviation = config.protocolAbbreviation;
-    data.developerAbbreviation = config.developerAbbreviation;
+const initialize = async (config) => {
+	let agentState = {};
 
-    // load the contract addresses, abis, and ethers interfaces
-    data.contracts = Object.entries(data.adminEvents).map(([name, entry]) => {
-      if (entry.address === undefined) {
-        throw new Error(`No address found in configuration file for '${name}'`);
-      }
+	/* eslint-disable no-param-reassign */
+	// assign configurable fields
+	agentState.adminEvents = config.contracts;
+	agentState.protocolName = config.protocolName;
+	agentState.protocolAbbreviation = config.protocolAbbreviation;
+	agentState.developerAbbreviation = config.developerAbbreviation;
 
-      if (entry.abiFile === undefined) {
-        throw new Error(`No ABI file found in configuration file for '${name}'`);
-      }
+	// load the contract addresses, abis, and ethers interfaces
+	agentState.contracts = Object.entries(agentState.adminEvents).map(([name, entry]) => {
+		if (entry.address === undefined) {
+			throw new Error(`No address found in configuration file for '${name}'`);
+		}
+		if (entry.abiFile === undefined) {
+			throw new Error(`No ABI file found in configuration file for '${name}'`);
+		}
 
-      const abi = getAbi(entry.abiFile);
-      const iface = new ethers.utils.Interface(abi);
+		const abi = getAbi(entry.abiFile);
+		const iface = new ethers.utils.Interface(abi);
 
-      const contract = {
-        name,
-        address: entry.address,
-        iface,
-      };
+		const contract = { name, address: entry.address, iface, };
+		return contract;
+	});
 
-      return contract;
-    });
+	agentState.contracts.forEach((contract) => {
+		const entry = agentState.adminEvents[contract.name];
+		const { eventInfo } = getEvents(entry, contract, agentState.adminEvents, agentState.contracts);
+		contract.eventInfo = eventInfo;
+	});
 
-    data.contracts.forEach((contract) => {
-      const entry = data.adminEvents[contract.name];
-      const { eventInfo } = getEvents(entry, contract, data.adminEvents, data.contracts);
-      contract.eventInfo = eventInfo;
-    });
+	return agentState;
+};
 
-    /* eslint-enable no-param-reassign */
-  };
-}
+const handleTransaction = async (agentState, txEvent) => {
+	if (!agentState.contracts) throw new Error('handleTransaction called before initialization');
 
-function provideHandleTransaction(data) {
-  return async function handleTransaction(txEvent) {
-    const {
-      contracts, protocolName, protocolAbbreviation, developerAbbreviation,
-    } = data;
-    if (!contracts) throw new Error('handleTransaction called before initialization');
+	const findings = [];
+	agentState.contracts.forEach((contract) => {
+		contract.eventInfo.forEach((ev) => {
+			const parsedLogs = txEvent.filterLog(ev.signature, contract.address);
 
-    const findings = [];
+			// iterate over each item in parsedLogs and evaluate expressions (if any) given in the
+			// configuration file for each Event log, respectively
+			parsedLogs.forEach((parsedLog) => {
+				// if there is an expression to check, verify the condition before creating an alert
+				if (ev.expression !== undefined) {
+					if (!checkLogAgainstExpression(ev.expressionObject, parsedLog)) {
+						return;
+					}
+				}
 
-    // iterate over each contract name to get the address and events
-    contracts.forEach((contract) => {
-      // for each contract look up the events of interest
-      const { eventInfo } = contract;
+				findings.push(createAlert(
+					ev.name,
+					contract.name,
+					contract.address,
+					ev.type,
+					ev.severity,
+					parsedLog.args,
+					agentState.protocolName,
+					agentState.protocolAbbreviation,
+					agentState.developerAbbreviation,
+					ev.expression,
+				));
+			});
+		});
+	});
 
-      // iterate over all events in a give contract's eventInfo field
-      eventInfo.forEach((event) => {
-        const {
-          name,
-          signature,
-          expression,
-          expressionObject,
-          type,
-          severity,
-        } = event;
-
-        // filter down to only the events we want to alert on
-        const parsedLogs = txEvent.filterLog(signature, contract.address);
-
-        // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
-        // configuration file for each Event log, respectively
-        parsedLogs.forEach((parsedLog) => {
-          // if there is an expression to check, verify the condition before creating an alert
-          if (expression !== undefined) {
-            if (!checkLogAgainstExpression(expressionObject, parsedLog)) {
-              return;
-            }
-          }
-
-          findings.push(createAlert(
-            name,
-            contract.name,
-            contract.address,
-            type,
-            severity,
-            parsedLog.args,
-            protocolName,
-            protocolAbbreviation,
-            developerAbbreviation,
-            expression,
-          ));
-        });
-      });
-    });
-
-    return findings;
-  };
-}
+	return findings;
+};
 
 module.exports = {
-  provideInitialize,
-  initialize: provideInitialize(initializeData),
-  provideHandleTransaction,
-  handleTransaction: provideHandleTransaction(initializeData),
+  initialize,
+  handleTransaction,
   createAlert,
 };

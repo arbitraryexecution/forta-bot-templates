@@ -6,6 +6,8 @@ const agents = [];
 function generateAllAgents(config) {
 	// TODO(cloin): Fill out agents from config
 }
+
+const config = require('agent-config.json');
 generateAllAgents(config);
 
 function provideInitialize(data) {

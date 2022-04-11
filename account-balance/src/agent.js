@@ -3,36 +3,6 @@ const {
   ethers, getEthersProvider, Finding, FindingSeverity, FindingType,
 } = require('forta-agent');
 
-const config = require('../agent-config.json');
-
-// Stores information about each account
-const initializeData = {};
-
-// Initializes data required for handler
-function provideInitialize(data) {
-  return async function initialize() {
-    /* eslint-disable no-param-reassign */
-    // assign configurable fields
-    data.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
-    data.protocolName = config.protocolName;
-    data.protocolAbbreviation = config.protocolAbbreviation;
-    data.developerAbbreviation = config.developerAbbreviation;
-
-    data.provider = getEthersProvider();
-    data.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
-      accountName,
-      accountAddress: entry.address,
-      accountThreshold: entry.thresholdEth,
-      startTime: 0,
-      numAlertsSinceLastFinding: 0,
-      alertType: entry.alert.type,
-      alertSeverity: entry.alert.severity,
-    }));
-    /* eslint-enable no-param-reassign */
-  };
-}
-
-// helper function to create alerts
 function createAlert(
   accountName,
   accountAddress,
@@ -78,67 +48,81 @@ function createAlert(
   return Finding.fromObject(findingObject);
 }
 
-function provideHandleBlock(data) {
-  return async function handleBlock(blockEvent) {
-    // upon the mining of a new block, check the specified accounts to make sure the balance of
-    // each account has not fallen below the specified threshold
-    const findings = [];
+const initialize = async (config) => {
+	let agentState = {};
 
-    const {
-      accounts, provider, alertMinimumIntervalSeconds,
-    } = data;
+	agentState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
+	agentState.protocolName = config.protocolName;
+	agentState.protocolAbbreviation = config.protocolAbbreviation;
+	agentState.developerAbbreviation = config.developerAbbreviation;
 
-    if (!provider) {
-      throw new Error('handleBlock called before initialization');
-    }
+	agentState.provider = getEthersProvider();
+	agentState.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
+		accountName,
+		accountAddress: entry.address,
+		accountThreshold: entry.thresholdEth,
+		startTime: 0,
+		numAlertsSinceLastFinding: 0,
+		alertType: entry.alert.type,
+		alertSeverity: entry.alert.severity,
+	}));
 
-    // get the block timestamp
-    const blockTimestamp = new BigNumber(blockEvent.block.timestamp);
+	return agentState;
+};
 
-    await Promise.all(accounts.map(async (account) => {
-      const {
-        accountName, accountAddress, accountThreshold,
-      } = account;
-      const accountBalance = await provider.getBalance(accountAddress);
+// upon the mining of a new block, check the specified accounts to make sure the balance of
+// each account has not fallen below the specified threshold
+const handleBlock = async (agentState, blockEvent) => {
+	const findings = [];
 
-      /* eslint-disable no-param-reassign */
-      // If balance < threshold add an alert to the findings
-      const exponent = ethers.BigNumber.from(10).pow(18);
-      if (accountBalance.lt(ethers.BigNumber.from(accountThreshold).mul(exponent))) {
-        // if less than the specified number of hours has elapsed, just increment the counter for
-        // the number of alerts that would have been generated
-        if (blockTimestamp.minus(account.startTime) < alertMinimumIntervalSeconds) {
-          account.numAlertsSinceLastFinding += 1;
-        } else {
-          findings.push(createAlert(
-            accountName,
-            accountAddress,
-            accountBalance,
-            accountThreshold,
-            account.numAlertsSinceLastFinding,
-            data.protocolName,
-            data.developerAbbreviation,
-            data.protocolAbbreviation,
-            account.alertType,
-            account.alertSeverity,
-          ));
+	const {
+		accounts, provider, alertMinimumIntervalSeconds,
+	} = agentState;
 
-          // restart the alert counter and update the start time
-          account.numAlertsSinceLastFinding = 0;
-          account.startTime = new BigNumber(blockTimestamp.toString());
-        }
-      }
-      /* eslint-enable no-param-reassign */
-    }));
+	if (!provider) {
+		throw new Error('handleBlock called before initialization');
+	}
 
-    return findings;
-  };
-}
+	const blockTimestamp = new BigNumber(blockEvent.block.timestamp);
+	await Promise.all(accounts.map(async (account) => {
+		const {
+			accountName, accountAddress, accountThreshold,
+		} = account;
+		const accountBalance = await provider.getBalance(accountAddress);
 
-// exports
+		// If balance < threshold add an alert to the findings
+		const exponent = ethers.BigNumber.from(10).pow(18);
+		if (accountBalance.lt(ethers.BigNumber.from(accountThreshold).mul(exponent))) {
+
+			// if less than the specified number of hours has elapsed, just increment the counter for
+			// the number of alerts that would have been generated
+			if (blockTimestamp.minus(account.startTime) < alertMinimumIntervalSeconds) {
+				account.numAlertsSinceLastFinding += 1;
+			} else {
+				findings.push(createAlert(
+					accountName,
+					accountAddress,
+					accountBalance,
+					accountThreshold,
+					account.numAlertsSinceLastFinding,
+					agentState.protocolName,
+					agentState.developerAbbreviation,
+					agentState.protocolAbbreviation,
+					account.alertType,
+					account.alertSeverity,
+				));
+
+				// restart the alert counter and update the start time
+				account.numAlertsSinceLastFinding = 0;
+				account.startTime = new BigNumber(blockTimestamp.toString());
+			}
+		}
+	}));
+
+	return findings;
+};
+
 module.exports = {
-  provideHandleBlock,
-  handleBlock: provideHandleBlock(initializeData),
-  provideInitialize,
-  initialize: provideInitialize(initializeData),
+  handleBlock,
+  initialize,
 };
