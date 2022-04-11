@@ -21,8 +21,7 @@ function createAlert(
   let alertId;
   if (protocolAbbreviation) {
     alertId = `${developerAbbreviation}-${protocolAbbreviation}-LOW-ACCOUNT-BALANCE`;
-  }
-  else {
+  } else {
     alertId = `${developerAbbreviation}-LOW-ACCOUNT-BALANCE`;
   }
 

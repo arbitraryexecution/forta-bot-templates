@@ -5,12 +5,6 @@ const {
 
 const utils = require('./utils');
 
-// load any agent configuration parameters
-const config = require('../agent-config.json');
-
-// set up a variable to hold initialization data used in the handler
-const initializeData = {};
-
 // helper function to create alerts
 function createAlert(
   variableName,
@@ -45,134 +39,119 @@ function createAlert(
   });
 }
 
-function provideInitialize(data) {
-  return async function initialize() {
-    /* eslint-disable no-param-reassign */
-    // assign configurable fields
-    data.protocolName = config.protocolName;
-    data.protocolAbbreviation = config.protocolAbbreviation;
-    data.developerAbbreviation = config.developerAbbreviation;
-    data.variableInfoList = [];
+const initialize = async (config) => {
+	let agentState = {};
 
-    const configEntries = config.contracts;
-    const provider = getEthersProvider();
-    // load the contract addresses, abis, and generate an ethers contract for each contract name
-    // listed in the config
-    const contractList = Object.entries(configEntries).map(([name, entry]) => {
-      if (entry.address === undefined) {
-        throw new Error(`No address found in configuration file for '${name}'`);
-      }
+	agentState.protocolName = config.protocolName;
+	agentState.protocolAbbreviation = config.protocolAbbreviation;
+	agentState.developerAbbreviation = config.developerAbbreviation;
+	agentState.variableInfoList = [];
 
-      if (entry.abiFile === undefined) {
-        throw new Error(`No ABI file found in configuration file for '${name}'`);
-      }
+	const configEntries = config.contracts;
+	const provider = getEthersProvider();
 
-      const abi = utils.getAbi(entry.abiFile);
-      const contract = new ethers.Contract(entry.address, abi, provider);
-      return {
-        name,
-        contract,
-      };
-    });
+	// load the contract addresses, abis, and generate an ethers contract for each contract name
+	// listed in the config
+	const contractList = Object.entries(configEntries).map(([name, entry]) => {
+		if (entry.address === undefined) {
+			throw new Error(`No address found in configuration file for '${name}'`);
+		}
 
-    contractList.forEach((contractEntry) => {
-      const entry = configEntries[contractEntry.name];
-      const { info } = utils.getVariableInfo(entry, contractEntry);
-      data.variableInfoList.push(...info);
-    });
+		if (entry.abiFile === undefined) {
+			throw new Error(`No ABI file found in configuration file for '${name}'`);
+		}
 
-    /* eslint-enable no-param-reassign */
-  };
-}
+		const abi = utils.getAbi(entry.abiFile);
+		const contract = new ethers.Contract(entry.address, abi, provider);
+		return { name, contract, };
+	});
 
-function provideHandleBlock(data) {
-  return async function handleBlock() {
-    const {
-      protocolName, protocolAbbreviation, developerAbbreviation, variableInfoList,
-    } = data;
+	contractList.forEach((contractEntry) => {
+		const entry = configEntries[contractEntry.name];
+		const { info } = utils.getVariableInfo(entry, contractEntry);
+		data.variableInfoList.push(...info);
+	});
 
-    // for each item present in variableInfoList, attempt to invoke the getter method
-    // corresponding to the item's name and make sure it is within the specified threshold percent
-    const variablePromises = variableInfoList.map(async (variableInfo) => {
-      const variableFindings = [];
-      const {
-        name: variableName,
-        type,
-        severity,
-        contractInfo,
-        upperThresholdPercent,
-        lowerThresholdPercent,
-        minNumElements,
-        pastValues,
-      } = variableInfo;
-      const { name: contractName, contract } = contractInfo;
+	return agentState;
+};
 
-      // attempt to invoke the getter method for the specified variable name
-      let newValue = await contract[variableName]();
-      newValue = new BigNumber(newValue.toString());
+const handleBlock = async (agentState, blockEvent) => {
+	// for each item present in variableInfoList, attempt to invoke the getter method
+	// corresponding to the item's name and make sure it is within the specified threshold percent
+	const variablePromises = agentState.variableInfoList.map(async (variableInfo) => {
+		const variableFindings = [];
+		const {
+			name: variableName,
+			type,
+			severity,
+			contractInfo,
+			upperThresholdPercent,
+			lowerThresholdPercent,
+			minNumElements,
+			pastValues,
+		} = variableInfo;
+		const { name: contractName, contract } = contractInfo;
 
-      // get the average value
-      const averageBN = pastValues.getAverage();
+		let newValue = await contract[variableName]();
+		newValue = new BigNumber(newValue.toString());
+		const averageBN = pastValues.getAverage();
 
-      // check the current number of elements in the pastValues array
-      if (pastValues.getNumElements() >= minNumElements) {
-        // only check for an upperThresholdPercent change if upperThresholdPercent exists and the
-        // new value is greater than the current average
-        if (upperThresholdPercent !== undefined && newValue.gt(averageBN)) {
-          const percentOver = utils.checkThreshold(upperThresholdPercent, newValue, pastValues);
-          if (percentOver !== undefined) {
-            variableFindings.push(createAlert(
-              variableName,
-              contractName,
-              contract.address,
-              type,
-              severity,
-              protocolName,
-              protocolAbbreviation,
-              developerAbbreviation,
-              'upper',
-              upperThresholdPercent,
-              percentOver.toString(),
-            ));
-          }
-        }
+		// check the current number of elements in the pastValues array
+		if (pastValues.getNumElements() >= minNumElements) {
+			// only check for an upperThresholdPercent change if upperThresholdPercent exists and the
+			// new value is greater than the current average
+			if (upperThresholdPercent !== undefined && newValue.gt(averageBN)) {
+				const percentOver = utils.checkThreshold(upperThresholdPercent, newValue, pastValues);
+				if (percentOver !== undefined) {
+					variableFindings.push(createAlert(
+						variableName,
+						contractName,
+						contract.address,
+						type,
+						severity,
+						agentState.protocolName,
+						agentState.protocolAbbreviation,
+						agentState.developerAbbreviation,
+						'upper',
+						upperThresholdPercent,
+						percentOver.toString(),
+					));
+				}
+			}
 
-        // only check for a lowerThresholdPercent change if lowerThresholdPercent exists and the
-        // new value is less than the current average
-        if (lowerThresholdPercent !== undefined && newValue.lt(averageBN)) {
-          const percentOver = utils.checkThreshold(lowerThresholdPercent, newValue, pastValues);
-          if (percentOver !== undefined) {
-            variableFindings.push(createAlert(
-              variableName,
-              contractName,
-              contract.address,
-              type,
-              severity,
-              protocolName,
-              protocolAbbreviation,
-              developerAbbreviation,
-              'lower',
-              lowerThresholdPercent,
-              percentOver.toString(),
-            ));
-          }
-        }
-      }
+			// only check for a lowerThresholdPercent change if lowerThresholdPercent exists and the
+			// new value is less than the current average
+			if (lowerThresholdPercent !== undefined && newValue.lt(averageBN)) {
+				const percentOver = utils.checkThreshold(lowerThresholdPercent, newValue, pastValues);
+				if (percentOver !== undefined) {
+					variableFindings.push(createAlert(
+						variableName,
+						contractName,
+						contract.address,
+						type,
+						severity,
+						agentState.protocolName,
+						agentState.protocolAbbreviation,
+						agentState.developerAbbreviation,
+						'lower',
+						lowerThresholdPercent,
+						percentOver.toString(),
+					));
+				}
+			}
+		}
 
-      // add the value received in this iteration to the pastValues array
-      pastValues.addElement(newValue);
-      return variableFindings;
-    });
+		// add the value received in this iteration to the pastValues array
+		pastValues.addElement(newValue);
+		return variableFindings;
+	});
 
-    const findings = (await Promise.all(variablePromises)).flat();
-    return findings;
-  };
-}
+	const findings = (await Promise.all(variablePromises)).flat();
+	return findings;
+};
 
 module.exports = {
-  provideInitialize,
-  initialize: provideInitialize(initializeData),
-  provideHandleBlock,
-  handleBlock: provideHandleBlock(initializeData),
+  initialize,
+  handleBlock,
   createAlert,
 };
