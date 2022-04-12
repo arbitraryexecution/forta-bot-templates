@@ -1,6 +1,6 @@
 {
   "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-account-balance",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "This agent template monitors the account balance (in Ether) of specific addresses.",
   "scripts": {
     "start": "npm run start:dev",
@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "bignumber.js": "^9.0.2",
-    "forta-agent": "^0.0.34"
+    "forta-agent": "^0.1.1"
   },
   "devDependencies": {
     "eslint": "^8.7.0",
