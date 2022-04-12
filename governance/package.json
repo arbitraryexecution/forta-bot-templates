@@ -1,6 +1,6 @@
 {
   "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-governance-events",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Forta Agent template for monitoring emitted events from the {protocolName} Governance contract",
   "scripts": {
     "start": "npm run start:dev",
@@ -18,7 +18,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "forta-agent": "^0.0.33"
+    "forta-agent": "^0.1.1"
   },
   "devDependencies": {
     "eslint": "^7.32.0",

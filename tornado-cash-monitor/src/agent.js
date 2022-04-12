@@ -50,7 +50,7 @@ function provideInitialize(data) {
       protocolName,
       protocolAbbreviation,
       observationIntervalInBlocks,
-      addressList,
+      contracts,
     } = config;
 
     data.developerAbbreviation = developerAbbreviation;
@@ -60,7 +60,7 @@ function provideInitialize(data) {
     data.iface = new ethers.utils.Interface(abi);
 
     // get the address names specified in the config
-    const addressNames = Object.keys(addressList);
+    const addressNames = Object.keys(contracts);
     if (addressNames.length === 0) {
       throw new Error('Must supply at least one address to watch');
     }
@@ -69,9 +69,9 @@ function provideInitialize(data) {
     addressNames.forEach((addressName) => {
       const info = {
         name: addressName,
-        address: addressList[addressName].address,
-        type: addressList[addressName].type,
-        severity: addressList[addressName].severity,
+        address: contracts[addressName].address,
+        type: contracts[addressName].tornado.type,
+        severity: contracts[addressName].tornado.severity,
       };
 
       data.addressesToMonitor.push(info);

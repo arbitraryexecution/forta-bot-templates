@@ -26,7 +26,7 @@ abbreviated `"SUSH"`, etc.
 5. `observationIntervalInBlocks` (required) - Type in a number that corresponds to the number of blocks
 you would like the agent to monitor suspicious adresses for.
 
-6. The Object value for the `addressList` key corresponds to addresses that we want to monitor. Each
+6. The Object value for the `contracts` key corresponds to addresses that we want to monitor. Each
 key in the Object is an address name, and each value is another object with three fields:
     * address: the address of the contract or EOA that will be watched
     * type: Forta Finding Type
@@ -44,6 +44,8 @@ repository. Also update the name and description fields in the `package.json` fi
     COPYING
     LICENSE
     Dockerfile
+    .eslintrc.js
+    .gitignore
     forta.config.json
     package.json
     agent-config.json

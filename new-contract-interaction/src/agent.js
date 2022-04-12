@@ -75,9 +75,7 @@ function provideInitialize(data) {
     data.protocolName = config.protocolName;
     data.protocolAbbreviation = config.protocolAbbreviation;
 
-    const contractNames = Object.keys(data.contractInfo);
-
-    data.contracts = contractNames.map((name) => {
+    data.contracts = Object.entries(data.contractInfo).map(([name, entry]) => {
       const {
         thresholdBlockCount,
         thresholdTransactionCount,
@@ -85,7 +83,7 @@ function provideInitialize(data) {
         filteredAddresses,
         findingType,
         findingSeverity,
-      } = data.contractInfo[name];
+      } = entry.newContractEOA;
 
       const contract = {
         name,
@@ -148,10 +146,10 @@ function provideHandleTransaction(data) {
 
         results.forEach((result) => {
           if (result.status === 'fulfilled') {
-            if (result.value.code !== '0x') {
+            if (result.value.code !== '0x') { // if theres code, then its a contract
               contractResults[result.value.transactionAddress] = result.value.code;
             } else {
-              eoaAddresses.push(result.value.transactionAddress);
+              eoaAddresses.push(result.value.transactionAddress); // if no code, then its an EOA
             }
           }
         });

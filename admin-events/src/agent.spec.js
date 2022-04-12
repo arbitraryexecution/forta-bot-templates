@@ -156,18 +156,16 @@ describe('monitor emitted events', () => {
 
       // initialize mock transaction event with default values
       mockTxEvent = createTransactionEvent({
-        receipt: {
-          logs: [
-            {
-              name: '',
-              address: '',
-              signature: '',
-              topics: [],
-              data: `0x${'0'.repeat(1000)}`,
-              args: [],
-            },
-          ],
-        },
+        logs: [
+          {
+            name: '',
+            address: '',
+            signature: '',
+            topics: [],
+            data: `0x${'0'.repeat(1000)}`,
+            args: [],
+          },
+        ],
       });
     });
 
@@ -182,7 +180,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = ethers.constants.AddressZero;
       defaultLog.topics = mockTopics;
@@ -203,7 +201,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventNotInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -224,7 +222,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -269,9 +267,9 @@ describe('monitor emitted events', () => {
 
     it('returns a finding if a target contract emits a monitored event and the expression condition is met', async () => {
       // get the expression object information from the config
-      // in the beforeEach block, the first event from the first `contracts` element is assigned to `eventInConfig`
-      // therefore, we will retrieve the corresponding expression from the `initializeData` object to enforce the
-      // proper condition for this test to emit a finding
+      // in the beforeEach block, the first event from the first `contracts` element is assigned to
+      // `eventInConfig` therefore, we will retrieve the corresponding expression from the
+      // `initializeData` object to enforce the proper condition for this test to emit a finding
       const { eventInfo } = initializeData.contracts[0];
       const { expressionObject, expression } = eventInfo[0];
       const { variableName: argName, operator, value: operand } = expressionObject;
@@ -286,7 +284,7 @@ describe('monitor emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -341,7 +339,7 @@ describe('monitor emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
