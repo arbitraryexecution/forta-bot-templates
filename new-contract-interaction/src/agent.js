@@ -2,11 +2,6 @@ const {
   Finding, FindingSeverity, FindingType, getEthersProvider,
 } = require('forta-agent');
 
-const config = require('../agent-config.json');
-
-// set up a variable to hold initialization data used in the handler
-const initializeData = {};
-
 // helper function to create alert for contract interaction
 function createContractInteractionAlert(
   contractName,
@@ -65,149 +60,139 @@ function createEOAInteractionAlert(
   return Finding.fromObject(finding);
 }
 
-function provideInitialize(data) {
-  return async function initialize() {
-    /* eslint-disable no-param-reassign */
-    data.provider = getEthersProvider();
+const initialize = async (config) => {
+	let agentState = {};
+	agentState.provider = getEthersProvider();
 
-    data.contractInfo = config.contracts;
-    data.developerAbbreviation = config.developerAbbreviation;
-    data.protocolName = config.protocolName;
-    data.protocolAbbreviation = config.protocolAbbreviation;
+	agentState.contractInfo = config.contracts;
+	agentState.developerAbbreviation = config.developerAbbreviation;
+	agentState.protocolName = config.protocolName;
+	agentState.protocolAbbreviation = config.protocolAbbreviation;
 
-    data.contracts = Object.entries(data.contractInfo).map(([name, entry]) => {
-      const {
-        thresholdBlockCount,
-        thresholdTransactionCount,
-        address,
-        filteredAddresses,
-        findingType,
-        findingSeverity,
-      } = entry.newContractEOA;
+	agentState.contracts = Object.entries(agentState.contractInfo).map(([name, entry]) => {
+		const {
+			thresholdBlockCount,
+			thresholdTransactionCount,
+			address,
+			filteredAddresses,
+			findingType,
+			findingSeverity,
+		} = entry.newContractEOA;
 
-      const contract = {
-        name,
-        address,
-        filteredAddresses,
-        thresholdBlockCount,
-        thresholdTransactionCount,
-        findingType,
-        findingSeverity,
-      };
+		const contract = {
+			name,
+			address,
+			filteredAddresses,
+			thresholdBlockCount,
+			thresholdTransactionCount,
+			findingType,
+			findingSeverity,
+		};
 
-      return contract;
-    });
-  /* eslint-enable no-param-reassign */
-  };
-}
+		return contract;
+	});
 
-function provideHandleTransaction(data) {
-  return async function handleTransaction(txEvent) {
-    const {
-      contracts, developerAbbreviation, protocolName, protocolAbbreviation,
-    } = data;
+	return agentState;
+};
 
-    const findings = [];
+const handleTransaction = async (agentState, txEvent) => {
+	const findings = [];
 
-    // get all addresses involved with this transaction
-    const transactionAddresses = Object.keys(txEvent.addresses);
+	// get all addresses involved with this transaction
+	const transactionAddresses = Object.keys(txEvent.addresses);
 
-    // iterate over all of the contracts from the configuration file
-    await Promise.all(contracts.map(async (contract) => {
-      const {
-        name,
-        address,
-        filteredAddresses,
-        thresholdBlockCount,
-        thresholdTransactionCount,
-        findingType,
-        findingSeverity,
-      } = contract;
+	await Promise.all(agentState.contracts.map(async (contract) => {
+		const {
+			name,
+			address,
+			filteredAddresses,
+			thresholdBlockCount,
+			thresholdTransactionCount,
+			findingType,
+			findingSeverity,
+		} = contract;
 
-      let exclusions = [
-        address,
-      ];
-      exclusions = exclusions.concat(filteredAddresses);
-      // filter transaction addresses to remove specified addresses
-      const filteredTransactionAddresses = transactionAddresses
-        .filter((item) => !exclusions.includes(item));
+		let exclusions = [
+			address,
+		];
+		exclusions = exclusions.concat(filteredAddresses);
+		// filter transaction addresses to remove specified addresses
+		const filteredTransactionAddresses = transactionAddresses
+			.filter((item) => !exclusions.includes(item));
 
-      // watch for recently created contracts interacting with configured contract address
-      if (txEvent.transaction.to === address) {
-        const contractResults = {};
-        const eoaAddresses = [];
+		// watch for recently created contracts interacting with configured contract address
+		if (txEvent.transaction.to === address) {
+			const contractResults = {};
+			const eoaAddresses = [];
 
-        const results = await Promise.allSettled(
-          filteredTransactionAddresses.map(async (transactionAddress) => {
-            const contractCode = await data.provider.getCode(transactionAddress);
-            return { transactionAddress, code: contractCode };
-          }),
-        );
+			const results = await Promise.allSettled(
+				filteredTransactionAddresses.map(async (transactionAddress) => {
+					const contractCode = await data.provider.getCode(transactionAddress);
+					return { transactionAddress, code: contractCode };
+				}),
+			);
 
-        results.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            if (result.value.code !== '0x') { // if theres code, then its a contract
-              contractResults[result.value.transactionAddress] = result.value.code;
-            } else {
-              eoaAddresses.push(result.value.transactionAddress); // if no code, then its an EOA
-            }
-          }
-        });
+			results.forEach((result) => {
+				if (result.status === 'fulfilled') {
+					if (result.value.code !== '0x') { // if theres code, then its a contract
+						contractResults[result.value.transactionAddress] = result.value.code;
+					} else {
+						eoaAddresses.push(result.value.transactionAddress); // if no code, then its an EOA
+					}
+				}
+			});
 
-        await Promise.all(eoaAddresses.map(async (eoaAddress) => {
-          const eoaTransactionCount = await data.provider.getTransactionCount(eoaAddress);
+			await Promise.all(eoaAddresses.map(async (eoaAddress) => {
+				const eoaTransactionCount = await data.provider.getTransactionCount(eoaAddress);
 
-          if (eoaTransactionCount < thresholdTransactionCount) {
-            findings.push(createEOAInteractionAlert(
-              name,
-              address,
-              eoaAddress,
-              eoaTransactionCount,
-              findingType,
-              findingSeverity,
-              protocolName,
-              protocolAbbreviation,
-              developerAbbreviation,
-            ));
-          }
-        }));
+				if (eoaTransactionCount < thresholdTransactionCount) {
+					findings.push(createEOAInteractionAlert(
+						name,
+						address,
+						eoaAddress,
+						eoaTransactionCount,
+						findingType,
+						findingSeverity,
+						agentState.protocolName,
+						agentState.protocolAbbreviation,
+						agentState.developerAbbreviation,
+					));
+				}
+			}));
 
-        const blockOverride = txEvent.blockNumber - thresholdBlockCount;
-        const blockResults = await Promise.allSettled(
-          Object.keys(contractResults).map(async (contractResult) => {
-            const contractCode = await data.provider.getCode(contractResult, blockOverride);
-            return { transactionAddress: contractResult, code: contractCode };
-          }),
-        );
+			const blockOverride = txEvent.blockNumber - thresholdBlockCount;
+			const blockResults = await Promise.allSettled(
+				Object.keys(contractResults).map(async (contractResult) => {
+					const contractCode = await data.provider.getCode(contractResult, blockOverride);
+					return { transactionAddress: contractResult, code: contractCode };
+				}),
+			);
 
-        blockResults.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            if (result.value.code !== contractResults[result.value.transactionAddress]) {
-              findings.push(createContractInteractionAlert(
-                name,
-                address,
-                result.value.transactionAddress,
-                findingType,
-                findingSeverity,
-                protocolName,
-                protocolAbbreviation,
-                developerAbbreviation,
-              ));
-            }
-          }
-        });
-      }
-    }));
+			blockResults.forEach((result) => {
+				if (result.status === 'fulfilled') {
+					if (result.value.code !== contractResults[result.value.transactionAddress]) {
+						findings.push(createContractInteractionAlert(
+							name,
+							address,
+							result.value.transactionAddress,
+							findingType,
+							findingSeverity,
+							agentState.protocolName,
+							agentState.protocolAbbreviation,
+							agentState.developerAbbreviation,
+						));
+					}
+				}
+			});
+		}
+	}));
 
-    return findings;
-  };
-}
+	return findings;
+};
 
 module.exports = {
-  provideInitialize,
-  initialize: provideInitialize(initializeData),
-  provideHandleTransaction,
-  handleTransaction: provideHandleTransaction(initializeData),
+  initialize,
+  handleTransaction,
   createContractInteractionAlert,
   createEOAInteractionAlert,
 };

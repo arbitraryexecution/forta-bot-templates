@@ -2,10 +2,6 @@ const {
   Finding, FindingSeverity, FindingType,
 } = require('forta-agent');
 
-const config = require('../agent-config.json');
-
-const initializeData = {};
-
 // formats provided data into a Forta alert
 function createAlert(
   name,
@@ -36,100 +32,84 @@ function createAlert(
   });
 }
 
-function provideInitialize(data) {
-  return async function initialize() {
-    /* eslint-disable no-param-reassign */
-    // assign configurable fields
-    data.protocolName = config.protocolName;
-    data.protocolAbbreviation = config.protocolAbbreviation;
-    data.developerAbbreviation = config.developerAbbreviation;
-    data.blockWindow = config.blockWindow;
+const initialize = async (config) => {
+	let agentState = {};
 
-    data.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
-      contractName,
-      contractAddress: entry.address.toLowerCase(),
-      txFailureLimit: entry.transactionFailuresLimit,
-      failedTxs: {},
-      alertType: entry.type,
-      alertSeverity: entry.severity,
-    }));
+	agentState.protocolName = config.protocolName;
+	agentState.protocolAbbreviation = config.protocolAbbreviation;
+	agentState.developerAbbreviation = config.developerAbbreviation;
+	agentState.blockWindow = config.blockWindow;
 
-    /* eslint-enable no-param-reassign */
-  };
-}
+	agentState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
+		contractName,
+		contractAddress: entry.address.toLowerCase(),
+		txFailureLimit: entry.transactionFailuresLimit,
+		failedTxs: {},
+		alertType: entry.type,
+		alertSeverity: entry.severity,
+	}));
 
-function provideHandleTransaction(data) {
-  return async function handleTransaction(txEvent) {
-    const {
-      contracts,
-      blockWindow,
-      protocolName,
-      protocolAbbreviation,
-      developerAbbreviation,
-    } = data;
+	return agentState;
+};
 
-    const findings = [];
+const handleTransaction = async (agentState, txEvent) => {
+	const findings = [];
 
-    // we are only interested in failed transactions
-    if (txEvent.receipt.status) {
-      return findings;
-    }
+	// we are only interested in failed transactions
+	if (txEvent.receipt.status) {
+		return findings;
+	}
 
-    // check to see if any of the contracts was involved in the failed transaction
-    contracts.forEach((contract) => {
-      const {
-        contractName: name,
-        contractAddress: address,
-        txFailureLimit: limit,
-        alertType,
-        alertSeverity,
-      } = contract;
+	// check to see if any of the contracts was involved in the failed transaction
+	agentState.contracts.forEach((contract) => {
+		const {
+			contractName: name,
+			contractAddress: address,
+			txFailureLimit: limit,
+			alertType,
+			alertSeverity,
+		} = contract;
 
-      if (txEvent.to !== address) return;
+		if (txEvent.to !== address) return;
 
-      /* eslint-disable no-param-reassign */
-      // add new occurrence
-      contract.failedTxs[txEvent.hash] = txEvent.blockNumber;
+		// add new occurrence
+		contract.failedTxs[txEvent.hash] = txEvent.blockNumber;
 
-      // filter out occurrences older than blockWindow
-      Object.entries(contract.failedTxs).forEach(([hash, blockNumber]) => {
-        if (blockNumber < txEvent.blockNumber - blockWindow) {
-          delete contract.failedTxs[hash];
-        }
-      });
+		// filter out occurrences older than blockWindow
+		Object.entries(contract.failedTxs).forEach(([hash, blockNumber]) => {
+			if (blockNumber < txEvent.blockNumber - agentState.blockWindow) {
+				delete contract.failedTxs[hash];
+			}
+		});
 
-      // create finding if there are too many failed txs
-      const failedTxHashes = Object.keys(contract.failedTxs);
-      if (failedTxHashes.length >= limit) {
-        findings.push(
-          createAlert(
-            name,
-            address,
-            failedTxHashes,
-            limit,
-            blockWindow,
-            protocolName,
-            protocolAbbreviation,
-            developerAbbreviation,
-            alertType,
-            alertSeverity,
-          ),
-        );
+		// create finding if there are too many failed txs
+		const failedTxHashes = Object.keys(contract.failedTxs);
+		if (failedTxHashes.length >= limit) {
+			findings.push(
+				createAlert(
+					name,
+					address,
+					failedTxHashes,
+					limit,
+					agentState.blockWindow,
+					agentState.protocolName,
+					agentState.protocolAbbreviation,
+					agentState.developerAbbreviation,
+					alertType,
+					alertSeverity,
+				),
+			);
 
-        // if we raised an alert, clear out the array of failed transactions to avoid over-alerting
-        contract.failedTxs = {};
-      }
-      /* eslint-enable no-param-reassign */
-    });
+			// if we raised an alert, clear out the array of failed transactions to avoid over-alerting
+			contract.failedTxs = {};
+		}
+	});
 
-    return findings;
-  };
-}
+	return findings;
+};
 
 module.exports = {
-  provideInitialize,
-  initialize: provideInitialize(initializeData),
-  provideHandleTransaction,
-  handleTransaction: provideHandleTransaction(initializeData),
+  initialize,
+  handleTransaction,
   createAlert,
 };

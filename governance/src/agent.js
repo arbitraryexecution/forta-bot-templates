@@ -1,14 +1,7 @@
 const { Finding, ethers } = require('forta-agent');
-
-const config = require('../agent-config.json');
-
 const { getAbi, createProposalFromLog } = require('./utils');
 
-// set up a variable to hold initialization data used in the handler
-const initializeData = {};
-
 // alert for when a new governance proposal is created
-/* eslint-disable no-shadow */
 function proposalCreatedFinding(proposal, address, config) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Created`,
@@ -186,142 +179,127 @@ function proposalThresholdSetFinding(address, config, oldThresh, newThresh) {
   });
 }
 
-function provideInitialize(data) {
-  return async function initialize() {
-    /* eslint-disable no-param-reassign */
-    data.config = {
-      developerAbbreviation: config.developerAbbreviation,
-      protocolName: config.protocolName,
-      protocolAbbreviation: config.protocolAbbreviation,
-    };
-    data.goverance = config.contracts;
-    data.contracts = Object.entries(data.goverance).map(([name, entry]) => {
-      const { governance: { abiFile }, address } = entry;
+const initialize = async (config) => {
+	let agentState = {};
 
-      if (address === undefined) {
-        throw new Error(`No address found in configuration file for '${name}'`);
-      }
+	agentState.config = {
+		developerAbbreviation: config.developerAbbreviation,
+		protocolName: config.protocolName,
+		protocolAbbreviation: config.protocolAbbreviation,
+	};
+	agentState.goverance = config.contracts;
+	agentState.contracts = Object.entries(agentState.goverance).map(([name, entry]) => {
+		const { governance: { abiFile }, address } = entry;
 
-      if (abiFile === undefined) {
-        throw new Error(`No ABI file found in configuration file for '${name}'`);
-      }
+		if (address === undefined) {
+			throw new Error(`No address found in configuration file for '${name}'`);
+		}
 
-      const abi = getAbi(abiFile);
-      const iface = new ethers.utils.Interface(abi);
-      const names = Object.keys(iface.events);
-      const ftype = ethers.utils.FormatTypes.full;
-      const eventSignatures = names.map((eventName) => iface.getEvent(eventName).format(ftype));
+		if (abiFile === undefined) {
+			throw new Error(`No ABI file found in configuration file for '${name}'`);
+		}
 
-      const contract = {
-        address,
-        eventSignatures,
-      };
-      return contract;
-    });
-    /* eslint-enable no-param-reassign */
-  };
-}
+		const abi = getAbi(abiFile);
+		const iface = new ethers.utils.Interface(abi);
+		const names = Object.keys(iface.events);
+		const ftype = ethers.utils.FormatTypes.full;
+		const eventSignatures = names.map((eventName) => iface.getEvent(eventName).format(ftype));
 
-function provideHandleTransaction(data) {
-  return async function handleTransaction(txEvent) {
-    const {
-      config,
-      contracts,
-    } = data;
+		const contract = {
+			address,
+			eventSignatures,
+		};
+		return contract;
+	});
 
-    const findings = [];
+	return agentState;
+};
 
-    contracts.forEach((contract) => {
-      const { address, eventSignatures } = contract;
-      const logs = txEvent.filterLog(eventSignatures, address);
-      // iterate over all logs to determine what governance actions were taken
-      let results = logs.map((log) => {
-        let proposal;
-        let voteInfo;
-        switch (log.name) {
-          case 'ProposalCreated':
-            // create a finding for a new proposal
-            proposal = createProposalFromLog(log);
-            return proposalCreatedFinding(
-              proposal,
-              address,
-              config,
-            );
-          case 'VoteCast':
-            // add the vote to the corresponding proposal object
-            voteInfo = {
-              voter: log.args.voter,
-              proposalId: log.args.proposalId.toString(),
-              support: log.args.support,
-              weight: log.args.weight,
-              reason: log.args.reason,
-            };
-            // create a finding indicating that the vote was cast
-            return voteCastFinding(voteInfo, address, config);
-          case 'ProposalCanceled':
-            // create a finding indicating that the proposal has been canceled,
-            return proposalCanceledFinding(log.args.proposalId.toString(), address, config);
-          case 'ProposalExecuted':
-            // create a finding indicating that the proposal has been executed,
-            return proposalExecutedFinding(log.args.proposalId.toString(), address, config);
-          case 'QuorumNumeratorUpdated':
-            return quorumNumeratorUpdatedFinding(
-              address,
-              config,
-              log.args.oldQuorumNumerator.toString(),
-              log.args.newQuorumNumerator.toString(),
-            );
-          case 'ProposalQueued':
-            return proposalQueuedFinding(
-              log.args.proposalId.toString(),
-              address,
-              config,
-              log.args.eta.toString(),
-            );
-          case 'TimelockChange':
-            return timelockChangeFinding(
-              address,
-              config,
-              log.args.oldTimelock,
-              log.args.newTimelock,
-            );
-          case 'VotingDelaySet':
-            return votingDelaySetFinding(
-              address,
-              config,
-              log.args.oldVotingDelay.toString(),
-              log.args.newVotingDelay.toString(),
-            );
-          case 'VotingPeriodSet':
-            return votingPeriodSetFinding(
-              address,
-              config,
-              log.args.oldVotingDelay.toString(),
-              log.args.newVotingDelay.toString(),
-            );
-          case 'ProposalThresholdSet':
-            return proposalThresholdSetFinding(
-              address,
-              config,
-              log.args.oldProposalThreshold.toString(),
-              log.args.newProposalThreshold.toString(),
-            );
-          default:
-            return undefined;
-        }
-      });
+const handleTransaction = async (agentState, txEvent) => {
+	const findings = [];
 
-      results = results.filter((result) => result !== undefined);
+	agentState.contracts.forEach((contract) => {
+		const { address, eventSignatures } = contract;
+		const logs = txEvent.filterLog(eventSignatures, address);
 
-      findings.push(...(results.flat()));
-    });
-    return findings;
-  };
-}
+		// iterate over all logs to determine what governance actions were taken
+		let results = logs.map((log) => {
+			switch (log.name) {
+				case 'ProposalCreated':
+					const proposal = createProposalFromLog(log);
+					return proposalCreatedFinding(
+						proposal,
+						address,
+						agentState.config,
+					);
+				case 'VoteCast':
+					const voteInfo = {
+						voter: log.args.voter,
+						proposalId: log.args.proposalId.toString(),
+						support: log.args.support,
+						weight: log.args.weight,
+						reason: log.args.reason,
+					};
+					return voteCastFinding(voteInfo, address, agentState.config);
+				case 'ProposalCanceled':
+					return proposalCanceledFinding(log.args.proposalId.toString(), address, agentState.config);
+				case 'ProposalExecuted':
+					return proposalExecutedFinding(log.args.proposalId.toString(), address, agentState.config);
+				case 'QuorumNumeratorUpdated':
+					return quorumNumeratorUpdatedFinding(
+						address,
+						agentState.config,
+						log.args.oldQuorumNumerator.toString(),
+						log.args.newQuorumNumerator.toString(),
+					);
+				case 'ProposalQueued':
+					return proposalQueuedFinding(
+						log.args.proposalId.toString(),
+						address,
+						agentState.config,
+						log.args.eta.toString(),
+					);
+				case 'TimelockChange':
+					return timelockChangeFinding(
+						address,
+						agentState.config,
+						log.args.oldTimelock,
+						log.args.newTimelock,
+					);
+				case 'VotingDelaySet':
+					return votingDelaySetFinding(
+						address,
+						agentState.config,
+						log.args.oldVotingDelay.toString(),
+						log.args.newVotingDelay.toString(),
+					);
+				case 'VotingPeriodSet':
+					return votingPeriodSetFinding(
+						address,
+						agentState.config,
+						log.args.oldVotingDelay.toString(),
+						log.args.newVotingDelay.toString(),
+					);
+				case 'ProposalThresholdSet':
+					return proposalThresholdSetFinding(
+						address,
+						agentState.config,
+						log.args.oldProposalThreshold.toString(),
+						log.args.newProposalThreshold.toString(),
+					);
+				default:
+					return undefined;
+			}
+		});
+
+		results = results.filter((result) => result !== undefined);
+		findings.push(...(results.flat()));
+	});
+
+	return findings;
+};
 
 module.exports = {
-  provideInitialize,
-  initialize: provideInitialize(initializeData),
-  provideHandleTransaction,
-  handleTransaction: provideHandleTransaction(initializeData),
+	initialize,
+	handleTransaction,
 };
