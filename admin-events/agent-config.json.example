@@ -27,7 +27,8 @@
     "contractName3": {
       "address": "contractAddress3",
       "abiFile": "filename3.json",
-      "proxy": "contractName2"
+      "proxy": "contractName2",
+      "events": {}
     }
   }
 }
