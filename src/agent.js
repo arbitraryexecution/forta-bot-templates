@@ -15,27 +15,27 @@ let agentImports = [
 	{name: 'transaction-failure-count', mod: import('../transaction-failure-count/src/agent.js')}
 ];
 
-let agent_states = [];
+let agentStates = [];
 const agentMap = new Map();
 const config = require('../agent-config.json');
 
 async function generateAllAgents(_config) {
-	let mod_proms = [];
-	let mod_names = [];
+	let modProms = [];
+	let modNames = [];
 	for (let i = 0; i < agentImports.length; i++) {
 		const imp = agentImports[i];
-		mod_proms.push(imp.mod);
-		mod_names.push(imp.name);
+		modProms.push(imp.mod);
+		modNames.push(imp.name);
 	}
 
-	await Promise.all(mod_proms).then((data) => {
+	await Promise.all(modProms).then((data) => {
 		for (let i = 0; i < data.length; i++) {
 			const module = data[i];
-			const name = mod_names[i];
+			const name = modNames[i];
 			agentMap.set(name, module);
 		}
 	}).catch((err) => {
-		console.log(err);
+		throw(err);
 	});
 
 	let agent_configs = [];
@@ -53,29 +53,29 @@ async function generateAllAgents(_config) {
 }
 
 async function initialize() {
-	let agent_configs = await generateAllAgents(config);
+	let agentConfigs = await generateAllAgents(config);
 
-	for (let i = 0; i < agent_configs.length; i++) {
-		const agent = agent_configs[i];
+	for (let i = 0; i < agentConfigs.length; i++) {
+		const agent = agentConfigs[i];
 
-		const agent_module = agentMap.get(agent.agentType);
-		const agent_state_prom = agent_module.initialize(agent);
-		agent_state_prom.then((agent_state) => {
-			agent_state.agentType = agent.agentType;
-			agent_states.push(agent_state);
+		const agentModule = agentMap.get(agent.agentType);
+		const agentStateProm = agentModule.initialize(agent);
+		agentStateProm.then((agentState) => {
+			agentState.agentType = agent.agentType;
+			agentStates.push(agentState);
 		}).catch((err) => {
-			console.log(err);
+			throw(err);
 		});
 	}
 }
 
-function handleAllTransactions(_agent_map, _agent_states) {
+function handleAllTransactions(_agentMap, _agentStates) {
 	return async function handleTransaction(txEvent) {
 		let findings = [];
-		for (let i = 0; i < _agent_states.length; i++) {
-			const agent = _agent_states[i];
+		for (let i = 0; i < _agentStates.length; i++) {
+			const agent = _agentStates[i];
 
-			const agentMod = _agent_map.get(agent.agentType);
+			const agentMod = _agentMap.get(agent.agentType);
 			if (agentMod["handleTransaction"] === undefined) {
 				continue;
 			}
@@ -88,13 +88,13 @@ function handleAllTransactions(_agent_map, _agent_states) {
 	}
 }
 
-function handleAllBlocks(_agent_map, _agent_states) {
+function handleAllBlocks(_agentMap, _agentStates) {
 	return async function handleBlock(blockEvent) {
 		let findings = [];
-		for (let i = 0; i < _agent_states.length; i++) {
-			const agent = _agent_states[i];
+		for (let i = 0; i < _agentStates.length; i++) {
+			const agent = _agentStates[i];
 
-			const agentMod = _agent_map.get(agent.agentType);
+			const agentMod = _agentMap.get(agent.agentType);
 			if (agentMod["handleBlock"] === undefined) {
 				continue;
 			}
@@ -110,7 +110,7 @@ function handleAllBlocks(_agent_map, _agent_states) {
 module.exports = {
   initialize,
   handleAllTransactions,
-  handleTransaction: handleAllTransactions(agentMap, agent_states),
+  handleTransaction: handleAllTransactions(agentMap, agentStates),
   handleAllBlocks,
-  handleBlock: handleAllBlocks(agentMap, agent_states),
+  handleBlock: handleAllBlocks(agentMap, agentStates),
 };
