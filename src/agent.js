@@ -34,11 +34,9 @@ async function generateAllAgents(_config) {
 			const name = modNames[i];
 			agentMap.set(name, module);
 		}
-	}).catch((err) => {
-		throw(err);
 	});
 
-	let agent_configs = [];
+	let agentConfigs = [];
 	for (let i = 0; i < _config.agents.length; i++) {
 		const _agent = _config.agents[i];
 
@@ -46,10 +44,10 @@ async function generateAllAgents(_config) {
 		agent.developerAbbreviation = _config.developerAbbreviation;
 		agent.protocolAbbreviation = _config.protocolAbbreviation;
 		agent.protocolName = _config.protocolName;
-		agent_configs.push(agent);
+		agentConfigs.push(agent);
 	}
 
-	return agent_configs;
+	return agentConfigs;
 }
 
 async function initialize() {
@@ -63,8 +61,6 @@ async function initialize() {
 		agentStateProm.then((agentState) => {
 			agentState.agentType = agent.agentType;
 			agentStates.push(agentState);
-		}).catch((err) => {
-			throw(err);
 		});
 	}
 }
