@@ -112,7 +112,7 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-	let agentState = {};
+	let agentState = {...config};
 
 	/* eslint-disable no-param-reassign */
 	// assign configurable fields

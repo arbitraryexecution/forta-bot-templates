@@ -6,7 +6,7 @@ let agentImports = [
 	{name: 'account-balance',           mod: import('../account-balance/src/agent.js')},
 	{name: 'address-watch',             mod: import('../address-watch/src/agent.js')},
 	{name: 'admin-events',              mod: import('../admin-events/src/agent.js')},
-	{name: 'contract-variable',         mod: import('../contract-variable-monitor/src/agent.js')},
+	{name: 'contract-variable-monitor', mod: import('../contract-variable-monitor/src/agent.js')},
 	{name: 'gnosis-safe-multisig',      mod: import('../gnosis-safe-multisig/src/agent.js')},
 	{name: 'governance',                mod: import('../governance/src/agent.js')},
 	{name: 'monitor-function-calls',    mod: import('../monitor-function-calls/src/agent.js')},
@@ -56,9 +56,14 @@ async function initialize() {
 	for (let i = 0; i < agentConfigs.length; i++) {
 		const agent = agentConfigs[i];
 
-		const agentModule = agentMap.get(agent.agentType);
-		const agentStateProm = agentModule.initialize(agent);
-		agentStateProm.then((agentState) => {
+		const agentMod = agentMap.get(agent.agentType);
+		console.log(agent.agentType);
+		if (agentMod["initialize"] === undefined) {
+			continue;
+		}
+
+		const agentStateProm = agentMod.initialize(agent);
+		await agentStateProm.then((agentState) => {
 			agentState.agentType = agent.agentType;
 			agentStates.push(agentState);
 		});
@@ -67,7 +72,7 @@ async function initialize() {
 
 function handleAllTransactions(_agentMap, _agentStates) {
 	return async function handleTransaction(txEvent) {
-		let findings = [];
+		let find_prom = [];
 		for (let i = 0; i < _agentStates.length; i++) {
 			const agent = _agentStates[i];
 
@@ -77,16 +82,25 @@ function handleAllTransactions(_agentMap, _agentStates) {
 			}
 
 			let ret = agentMod.handleTransaction(agent, txEvent);
-			findings = findings.concat(ret);
+			find_prom.push(ret);
 		}
 
+		let findings = [];
+		await Promise.all(find_prom).then((data) => {
+			for (let i = 0; i < data.length; i++) {
+				findings.concat(data[i]);
+			}
+		}).catch((err) => {
+			console.log(err);
+			throw(err);
+		});
 		return findings;
 	}
 }
 
 function handleAllBlocks(_agentMap, _agentStates) {
 	return async function handleBlock(blockEvent) {
-		let findings = [];
+		let find_prom = [];
 		for (let i = 0; i < _agentStates.length; i++) {
 			const agent = _agentStates[i];
 
@@ -96,9 +110,18 @@ function handleAllBlocks(_agentMap, _agentStates) {
 			}
 
 			let ret = agentMod.handleBlock(agent, blockEvent);
-			findings = findings.concat(ret);
+			find_prom.push(ret);
 		}
 
+		let findings = [];
+		await Promise.all(find_prom).then((data) => {
+			for (let i = 0; i < data.length; i++) {
+				findings.concat(data[i]);
+			}
+		}).catch((err) => {
+			console.log(err);
+			throw(err);
+		});
 		return findings;
 	}
 }

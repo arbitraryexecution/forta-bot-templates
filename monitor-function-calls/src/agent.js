@@ -48,7 +48,7 @@ function createAlert(
 
 
 const initialize = async (config) => {
-	let agentState = {};
+	let agentState = {...config};
 
 	agentState.contractInfo = config.contracts;
 	agentState.developerAbbreviation = config.developerAbbreviation;
@@ -56,7 +56,7 @@ const initialize = async (config) => {
 	agentState.protocolAbbreviation = config.protocolAbbreviation;
 
 	const contractNames = Object.keys(agentState.contractInfo);
-	data.contracts = contractNames.map((name) => {
+	agentState.contracts = contractNames.map((name) => {
 		const { address, abiFile, functions } = agentState.contractInfo[name];
 		const abi = getAbi(abiFile);
 		const iface = new ethers.utils.Interface(abi);
@@ -89,6 +89,8 @@ const initialize = async (config) => {
 		};
 		return contract;
 	});
+
+	return agentState;
 };
 
 const handleTransaction = async (agentState, txEvent) => {

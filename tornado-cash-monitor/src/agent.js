@@ -35,7 +35,7 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-	let agentState = {};
+	let agentState = {...config};
 
 	agentState.developerAbbreviation = config.developerAbbreviation;
 	agentState.protocolName = config.protocolName;
@@ -52,9 +52,9 @@ const initialize = async (config) => {
 	addressNames.forEach((addressName) => {
 		const info = {
 			name: addressName,
-			address: contracts[addressName].address,
-			type: contracts[addressName].tornado.type,
-			severity: contracts[addressName].tornado.severity,
+			address: config.contracts[addressName].address,
+			type: config.contracts[addressName].tornado.type,
+			severity: config.contracts[addressName].tornado.severity,
 		};
 
 		agentState.addressesToMonitor.push(info);
@@ -63,6 +63,8 @@ const initialize = async (config) => {
 	// create an object to hold addresses that have been identified as having interacted with a
 	// Tornado Cash Proxy
 	agentState.suspiciousAddresses = {};
+
+	return agentState;
 };
 
 const handleTransaction = async (agentState, txEvent) => {
@@ -91,14 +93,14 @@ const handleTransaction = async (agentState, txEvent) => {
 	// an address is already present in suspiciousAddresses then simply restart its block timer
 	addressesOfInterest.forEach((address) => {
 		// eslint-disable-next-line no-param-reassign
-		data.suspiciousAddresses[address] = { blockAdded: txEvent.blockNumber, };
+		agentState.suspiciousAddresses[address] = { blockAdded: txEvent.blockNumber, };
 	});
 
 	// iterate over the list of suspiciousAddresses and check to see if any address can be removed
 	const addressesToRemove = [];
-	Object.keys(data.suspiciousAddresses).forEach((address) => {
+	Object.keys(agentState.suspiciousAddresses).forEach((address) => {
 		const currBlock = txEvent.blockNumber;
-		const { blockAdded } = data.suspiciousAddresses[address];
+		const { blockAdded } = agentState.suspiciousAddresses[address];
 		if ((currBlock - blockAdded) > agentState.observationIntervalInBlocks) {
 			// block is older than observationIntervalInBlocks and can be removed from
 			// suspicousAddresses
@@ -107,11 +109,11 @@ const handleTransaction = async (agentState, txEvent) => {
 	});
 
 	// eslint-disable-next-line no-param-reassign
-	addressesToRemove.forEach((address) => delete data.suspiciousAddresses[address]);
+	addressesToRemove.forEach((address) => delete agentState.suspiciousAddresses[address]);
 
 	// now check to see if the higher level list of addresses in txEvent contains at least one
 	// address from suspiciousAddresses and one address from the addressesToMonitor
-	Object.keys(data.suspiciousAddresses).forEach((address) => {
+	Object.keys(agentState.suspiciousAddresses).forEach((address) => {
 		agentState.addressesToMonitor.forEach((addressInfo) => {
 			const { address: monitoredAddress } = addressInfo;
 			if (txEvent.addresses[address] !== undefined && txEvent.addresses[monitoredAddress] !== undefined) {

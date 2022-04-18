@@ -86,7 +86,7 @@ const handleTransaction = async (agentState, txEvent) => {
 	agentState.contracts.forEach((contract) => {
 		transferLogs.forEach((log) => {
 			const addressLower = contract.address.toLowerCase();
-			if (log.args.from.toLowerCase() !== addressLower && logs.args.to.toLowerCase() !== addressLower) {
+			if (log.args.from.toLowerCase() !== addressLower && log.args.to.toLowerCase() !== addressLower) {
 				return;
 			}
 
@@ -99,9 +99,9 @@ const handleTransaction = async (agentState, txEvent) => {
 		});
 
 		// filter for any events emitted by the safe contract
-		const logs = txEvent.filterLog(contract.eventSignatures, address);
+		const logs = txEvent.filterLog(contract.eventSignatures, contract.address);
 		logs.forEach((log) => {
-			const findingObject = versionUtils.getFindings(contract.version, log.name, agentState.alertFields, address, log.args);
+			const findingObject = versionUtils.getFindings(contract.version, log.name, agentState.alertFields, contract.address, log.args);
 			if (!findingObject) {
 				return;
 			}

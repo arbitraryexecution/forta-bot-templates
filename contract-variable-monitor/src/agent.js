@@ -40,7 +40,7 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-	let agentState = {};
+	let agentState = {...config};
 
 	agentState.protocolName = config.protocolName;
 	agentState.protocolAbbreviation = config.protocolAbbreviation;
@@ -69,7 +69,7 @@ const initialize = async (config) => {
 	contractList.forEach((contractEntry) => {
 		const entry = configEntries[contractEntry.name];
 		const { info } = utils.getVariableInfo(entry, contractEntry);
-		data.variableInfoList.push(...info);
+		agentState.variableInfoList.push(...info);
 	});
 
 	return agentState;
