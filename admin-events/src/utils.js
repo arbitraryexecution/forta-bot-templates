@@ -1,6 +1,10 @@
 const BigNumber = require('bignumber.js');
 const { ethers } = require('forta-agent');
 
+function isEmpty(object) {
+  return Object.keys(object).length === 0;
+}
+
 function getAbi(abiName) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
   const { abi } = require(`../abi/${abiName}`);
@@ -153,6 +157,7 @@ function checkLogAgainstExpression(expressionObject, log) {
 }
 
 module.exports = {
+  isEmpty,
   getAbi,
   extractEventArgs,
   isNumeric,
