@@ -33,79 +33,79 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-	let agentState = {};
+  let agentState = {};
 
-	agentState.protocolName = config.protocolName;
-	agentState.protocolAbbreviation = config.protocolAbbreviation;
-	agentState.developerAbbreviation = config.developerAbbreviation;
-	agentState.blockWindow = config.blockWindow;
+  agentState.protocolName = config.protocolName;
+  agentState.protocolAbbreviation = config.protocolAbbreviation;
+  agentState.developerAbbreviation = config.developerAbbreviation;
+  agentState.blockWindow = config.blockWindow;
 
-	agentState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
-		contractName,
-		contractAddress: entry.address.toLowerCase(),
-		txFailureLimit: entry.transactionFailuresLimit,
-		failedTxs: {},
-		alertType: entry.type,
-		alertSeverity: entry.severity,
-	}));
+  agentState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
+    contractName,
+    contractAddress: entry.address.toLowerCase(),
+    txFailureLimit: entry.transactionFailuresLimit,
+    failedTxs: {},
+    alertType: entry.type,
+    alertSeverity: entry.severity,
+  }));
 
-	return agentState;
+  return agentState;
 };
 
 const handleTransaction = async (agentState, txEvent) => {
-	const findings = [];
+  const findings = [];
 
-	// we are only interested in failed transactions
-	if (txEvent.receipt.status) {
-		return findings;
-	}
+  // we are only interested in failed transactions
+  if (txEvent.receipt.status) {
+    return findings;
+  }
 
-	// check to see if any of the contracts was involved in the failed transaction
-	agentState.contracts.forEach((contract) => {
-		const {
-			contractName: name,
-			contractAddress: address,
-			txFailureLimit: limit,
-			alertType,
-			alertSeverity,
-		} = contract;
+  // check to see if any of the contracts was involved in the failed transaction
+  agentState.contracts.forEach((contract) => {
+    const {
+      contractName: name,
+      contractAddress: address,
+      txFailureLimit: limit,
+      alertType,
+      alertSeverity,
+    } = contract;
 
-		if (txEvent.to !== address) return;
+    if (txEvent.to !== address) return;
 
-		// add new occurrence
-		contract.failedTxs[txEvent.hash] = txEvent.blockNumber;
+    // add new occurrence
+    contract.failedTxs[txEvent.hash] = txEvent.blockNumber;
 
-		// filter out occurrences older than blockWindow
-		Object.entries(contract.failedTxs).forEach(([hash, blockNumber]) => {
-			if (blockNumber < txEvent.blockNumber - agentState.blockWindow) {
-				delete contract.failedTxs[hash];
-			}
-		});
+    // filter out occurrences older than blockWindow
+    Object.entries(contract.failedTxs).forEach(([hash, blockNumber]) => {
+      if (blockNumber < txEvent.blockNumber - agentState.blockWindow) {
+        delete contract.failedTxs[hash];
+      }
+    });
 
-		// create finding if there are too many failed txs
-		const failedTxHashes = Object.keys(contract.failedTxs);
-		if (failedTxHashes.length >= limit) {
-			findings.push(
-				createAlert(
-					name,
-					address,
-					failedTxHashes,
-					limit,
-					agentState.blockWindow,
-					agentState.protocolName,
-					agentState.protocolAbbreviation,
-					agentState.developerAbbreviation,
-					alertType,
-					alertSeverity,
-				),
-			);
+    // create finding if there are too many failed txs
+    const failedTxHashes = Object.keys(contract.failedTxs);
+    if (failedTxHashes.length >= limit) {
+      findings.push(
+        createAlert(
+          name,
+          address,
+          failedTxHashes,
+          limit,
+          agentState.blockWindow,
+          agentState.protocolName,
+          agentState.protocolAbbreviation,
+          agentState.developerAbbreviation,
+          alertType,
+          alertSeverity,
+        ),
+      );
 
-			// if we raised an alert, clear out the array of failed transactions to avoid over-alerting
-			contract.failedTxs = {};
-		}
-	});
+      // if we raised an alert, clear out the array of failed transactions to avoid over-alerting
+      contract.failedTxs = {};
+    }
+  });
 
-	return findings;
+  return findings;
 };
 
 module.exports = {

@@ -1,14 +1,16 @@
 const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 
 const initialize = async (config) => {
-	// get list of addresses to watch
-	const contractList = Object.values(config.contracts);
-	if (contractList.length === 0) {
-	  throw new Error('Must supply at least one address to watch');
-	}
+  const agentState = {...config};
 
-	const agentState = config;
-	return agentState;
+  // get list of addresses to watch
+  const contractList = Object.values(config.contracts);
+  if (contractList.length === 0) {
+    throw new Error('Must supply at least one address to watch');
+  }
+
+  agentState.contractList = contractList;
+  return agentState;
 };
 
 function createAlert(agentState, address, contractName, type, severity) {
@@ -26,7 +28,7 @@ const handleTransaction = async (agentState, txEvent) => {
   const txAddrs = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
 
   // check if an address in the watchlist was the initiator of the transaction
-  contractList.forEach((contract, index) => {
+  agentState.contractList.forEach((contract, index) => {
     if (txAddrs.includes(contract.address.toLowerCase())) {
       const params = Object.values(agentState.contracts)[index];
       findings.push(createAlert(agentState, contract.address, params.name, params.watch.type, params.watch.severity));

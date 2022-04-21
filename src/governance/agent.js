@@ -216,90 +216,90 @@ const initialize = async (config) => {
 };
 
 const handleTransaction = async (agentState, txEvent) => {
-	const findings = [];
+  const findings = [];
 
-	agentState.contracts.forEach((contract) => {
-		const { address, eventSignatures } = contract;
-		const logs = txEvent.filterLog(eventSignatures, address);
+  agentState.contracts.forEach((contract) => {
+    const { address, eventSignatures } = contract;
+    const logs = txEvent.filterLog(eventSignatures, address);
 
-		// iterate over all logs to determine what governance actions were taken
-		let results = logs.map((log) => {
-			switch (log.name) {
-				case 'ProposalCreated':
-					const proposal = createProposalFromLog(log);
-					return proposalCreatedFinding(
-						proposal,
-						address,
-						agentState.config,
-					);
-				case 'VoteCast':
-					const voteInfo = {
-						voter: log.args.voter,
-						proposalId: log.args.proposalId.toString(),
-						support: log.args.support,
-						weight: log.args.weight,
-						reason: log.args.reason,
-					};
-					return voteCastFinding(voteInfo, address, agentState.config);
-				case 'ProposalCanceled':
-					return proposalCanceledFinding(log.args.proposalId.toString(), address, agentState.config);
-				case 'ProposalExecuted':
-					return proposalExecutedFinding(log.args.proposalId.toString(), address, agentState.config);
-				case 'QuorumNumeratorUpdated':
-					return quorumNumeratorUpdatedFinding(
-						address,
-						agentState.config,
-						log.args.oldQuorumNumerator.toString(),
-						log.args.newQuorumNumerator.toString(),
-					);
-				case 'ProposalQueued':
-					return proposalQueuedFinding(
-						log.args.proposalId.toString(),
-						address,
-						agentState.config,
-						log.args.eta.toString(),
-					);
-				case 'TimelockChange':
-					return timelockChangeFinding(
-						address,
-						agentState.config,
-						log.args.oldTimelock,
-						log.args.newTimelock,
-					);
-				case 'VotingDelaySet':
-					return votingDelaySetFinding(
-						address,
-						agentState.config,
-						log.args.oldVotingDelay.toString(),
-						log.args.newVotingDelay.toString(),
-					);
-				case 'VotingPeriodSet':
-					return votingPeriodSetFinding(
-						address,
-						agentState.config,
-						log.args.oldVotingDelay.toString(),
-						log.args.newVotingDelay.toString(),
-					);
-				case 'ProposalThresholdSet':
-					return proposalThresholdSetFinding(
-						address,
-						agentState.config,
-						log.args.oldProposalThreshold.toString(),
-						log.args.newProposalThreshold.toString(),
-					);
-				default:
-					return undefined;
-			}
-		});
+    // iterate over all logs to determine what governance actions were taken
+    let results = logs.map((log) => {
+      switch (log.name) {
+        case 'ProposalCreated':
+          const proposal = createProposalFromLog(log);
+          return proposalCreatedFinding(
+            proposal,
+            address,
+            agentState.config,
+          );
+        case 'VoteCast':
+          const voteInfo = {
+            voter: log.args.voter,
+            proposalId: log.args.proposalId.toString(),
+            support: log.args.support,
+            weight: log.args.weight,
+            reason: log.args.reason,
+          };
+          return voteCastFinding(voteInfo, address, agentState.config);
+        case 'ProposalCanceled':
+          return proposalCanceledFinding(log.args.proposalId.toString(), address, agentState.config);
+        case 'ProposalExecuted':
+          return proposalExecutedFinding(log.args.proposalId.toString(), address, agentState.config);
+        case 'QuorumNumeratorUpdated':
+          return quorumNumeratorUpdatedFinding(
+            address,
+            agentState.config,
+            log.args.oldQuorumNumerator.toString(),
+            log.args.newQuorumNumerator.toString(),
+          );
+        case 'ProposalQueued':
+          return proposalQueuedFinding(
+            log.args.proposalId.toString(),
+            address,
+            agentState.config,
+            log.args.eta.toString(),
+          );
+        case 'TimelockChange':
+          return timelockChangeFinding(
+            address,
+            agentState.config,
+            log.args.oldTimelock,
+            log.args.newTimelock,
+          );
+        case 'VotingDelaySet':
+          return votingDelaySetFinding(
+            address,
+            agentState.config,
+            log.args.oldVotingDelay.toString(),
+            log.args.newVotingDelay.toString(),
+          );
+        case 'VotingPeriodSet':
+          return votingPeriodSetFinding(
+            address,
+            agentState.config,
+            log.args.oldVotingDelay.toString(),
+            log.args.newVotingDelay.toString(),
+          );
+        case 'ProposalThresholdSet':
+          return proposalThresholdSetFinding(
+            address,
+            agentState.config,
+            log.args.oldProposalThreshold.toString(),
+            log.args.newProposalThreshold.toString(),
+          );
+        default:
+          return undefined;
+      }
+    });
 
-		results = results.filter((result) => result !== undefined);
-		findings.push(...(results.flat()));
-	});
+    results = results.filter((result) => result !== undefined);
+    findings.push(...(results.flat()));
+  });
 
-	return findings;
+  return findings;
 };
 
 module.exports = {
-	initialize,
-	handleTransaction,
+  initialize,
+  handleTransaction,
 };
