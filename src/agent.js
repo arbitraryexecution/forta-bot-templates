@@ -1,18 +1,14 @@
-const {
-  Finding, FindingSeverity, FindingType, ethers, getEthersProvider,
-} = require('forta-agent');
-
-let agentImports = [
-  {name: 'account-balance',           mod: import('./account-balance/agent.js')},
-  {name: 'address-watch',             mod: import('./address-watch/agent.js')},
-  {name: 'admin-events',              mod: import('./admin-events/agent.js')},
-  {name: 'contract-variable-monitor', mod: import('./contract-variable-monitor/agent.js')},
-  {name: 'gnosis-safe-multisig',      mod: import('./gnosis-safe-multisig/agent.js')},
-  {name: 'governance',                mod: import('./governance/agent.js')},
-  {name: 'monitor-function-calls',    mod: import('./monitor-function-calls/agent.js')},
-  {name: 'new-contract-interaction',  mod: import('./new-contract-interaction/agent.js')},
-  {name: 'tornado-cash-monitor',      mod: import('./tornado-cash-monitor/agent.js')},
-  {name: 'transaction-failure-count', mod: import('./transaction-failure-count/agent.js')}
+const agentImports = [
+  {name: 'account-balance',           mod: require('./account-balance/agent')},
+  {name: 'address-watch',             mod: require('./address-watch/agent')},
+  {name: 'admin-events',              mod: require('./admin-events/agent')},
+  {name: 'contract-variable-monitor', mod: require('./contract-variable-monitor/agent')},
+  {name: 'gnosis-safe-multisig',      mod: require('./gnosis-safe-multisig/agent')},
+  {name: 'governance',                mod: require('./governance/agent')},
+  {name: 'monitor-function-calls',    mod: require('./monitor-function-calls/agent')},
+  {name: 'new-contract-interaction',  mod: require('./new-contract-interaction/agent')},
+  {name: 'tornado-cash-monitor',      mod: require('./tornado-cash-monitor/agent')},
+  {name: 'transaction-failure-count', mod: require('./transaction-failure-count/agent')}
 ];
 
 let agentStates = [];
@@ -51,85 +47,66 @@ async function generateAllAgents(_config) {
 }
 
 async function initialize() {
-  let agentConfigs = await generateAllAgents(config);
+  const agentConfigs = await generateAllAgents(config);
 
-  for (let i = 0; i < agentConfigs.length; i++) {
-    const agent = agentConfigs[i];
-
+  const agentStateProms = agentConfigs.map((agent) => {
     const agentMod = agentMap.get(agent.agentType);
     console.log(`${agent.name}: ${agent.agentType}`);
     if (agentMod["initialize"] === undefined) {
       const agentState = {...agent};
-      agentStates.push(agentState);
-      continue;
+      return new Promise(() => {agentState});
     }
 
-    const agentStateProm = agentMod.initialize(agent);
-    await agentStateProm.then((agentState) => {
-      agentState.agentType = agent.agentType;
-      agentStates.push(agentState);
-    });
-  }
+    return agentMod.initialize(agent);
+  });
+  agentStates = await Promise.all(agentStateProms);
 }
 
 function handleAllTransactions(_agentMap, _agentStates) {
   return async function handleTransaction(txEvent) {
-    let findProm = [];
-    for (let i = 0; i < _agentStates.length; i++) {
-      const agent = _agentStates[i];
-
+    const findProms = _agentStates.map((agent) => {
       const agentMod = _agentMap.get(agent.agentType);
       if (agentMod["handleTransaction"] === undefined) {
-        continue;
+        return;
       }
 
-      let ret = agentMod.handleTransaction(agent, txEvent);
-      findProm.push(ret);
-    }
+      return agentMod.handleTransaction(agent, txEvent);
+    });
 
     let findings = [];
-    await Promise.all(findProm).then((data) => {
-      for (let i = 0; i < data.length; i++) {
-        findings.push(...data[i]);
-      }
-    }).catch((err) => {
-      console.log(err);
-      throw(err);
-    });
+    let findArrs = await Promise.all(findProms);
+    for (let i = 0; i < findArrs.length; i++) {
+      findings.push(...findArrs[i]);
+    }
+
     return findings;
   }
 }
 
 function handleAllBlocks(_agentMap, _agentStates) {
   return async function handleBlock(blockEvent) {
-    let findProm = [];
-    for (let i = 0; i < _agentStates.length; i++) {
-      const agent = _agentStates[i];
-
+    const findProms = _agentStates.map((agent) => {
       const agentMod = _agentMap.get(agent.agentType);
       if (agentMod["handleBlock"] === undefined) {
-        continue;
+        return;
       }
 
-      let ret = agentMod.handleBlock(agent, blockEvent);
-      findProm.push(ret);
-    }
+      return agentMod.handleBlock(agent, blockEvent);
+    });
 
     let findings = [];
-    await Promise.all(findProm).then((data) => {
-      for (let i = 0; i < data.length; i++) {
-        findings.push(...data[i]);
-      }
-    }).catch((err) => {
-      console.log(err);
-      throw(err);
-    });
+    let findArrs = await Promise.all(findProms);
+    for (let i = 0; i < findArrs.length; i++) {
+      findings.push(...findArrs[i]);
+    }
+
     return findings;
   }
 }
 
 module.exports = {
   initialize,
+  agentImports,
   handleAllTransactions,
   handleTransaction: handleAllTransactions(agentMap, agentStates),
   handleAllBlocks,
