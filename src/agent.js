@@ -90,7 +90,7 @@ function handleAllTransactions(_agentMap, _agentStates) {
     let findings = [];
     await Promise.all(findProm).then((data) => {
       for (let i = 0; i < data.length; i++) {
-        findings.concat(data[i]);
+        findings.push(...data[i]);
       }
     }).catch((err) => {
       console.log(err);
@@ -101,31 +101,31 @@ function handleAllTransactions(_agentMap, _agentStates) {
 }
 
 function handleAllBlocks(_agentMap, _agentStates) {
-	return async function handleBlock(blockEvent) {
-		let findProm = [];
-		for (let i = 0; i < _agentStates.length; i++) {
-			const agent = _agentStates[i];
+  return async function handleBlock(blockEvent) {
+    let findProm = [];
+    for (let i = 0; i < _agentStates.length; i++) {
+      const agent = _agentStates[i];
 
-			const agentMod = _agentMap.get(agent.agentType);
-			if (agentMod["handleBlock"] === undefined) {
-				continue;
-			}
+      const agentMod = _agentMap.get(agent.agentType);
+      if (agentMod["handleBlock"] === undefined) {
+        continue;
+      }
 
-			let ret = agentMod.handleBlock(agent, blockEvent);
-			findProm.push(ret);
-		}
+      let ret = agentMod.handleBlock(agent, blockEvent);
+      findProm.push(ret);
+    }
 
-		let findings = [];
-		await Promise.all(findProm).then((data) => {
-			for (let i = 0; i < data.length; i++) {
-				findings.concat(data[i]);
-			}
-		}).catch((err) => {
-			console.log(err);
-			throw(err);
-		});
-		return findings;
-	}
+    let findings = [];
+    await Promise.all(findProm).then((data) => {
+      for (let i = 0; i < data.length; i++) {
+        findings.push(...data[i]);
+      }
+    }).catch((err) => {
+      console.log(err);
+      throw(err);
+    });
+    return findings;
+  }
 }
 
 module.exports = {

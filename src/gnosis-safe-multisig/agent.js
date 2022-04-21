@@ -118,7 +118,7 @@ const handleBlock = async (agentState) => {
     developerAbbreviation,
     protocolAbbreviation,
     protocolName,
-  } = agentState.alertFields;
+  } = agentState;
 
   // find changes in eth balance and tokens for every gnosis safe address
   let totalFindings = await Promise.all(agentState.contracts.map(async (contract) => {
