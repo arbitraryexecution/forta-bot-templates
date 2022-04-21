@@ -12,7 +12,7 @@ function getAbi(agentName, abiFile) {
 
 function getInternalAbi(agentType, abiFile) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  const abiPath = `./${agentType}/internal_abi`;
+  const abiPath = `./${agentType}/internal-abi`;
   console.log(`getting: ${abiPath}/${abiFile}`);
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;

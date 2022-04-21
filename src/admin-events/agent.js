@@ -114,11 +114,6 @@ function createAlert(
 const initialize = async (config) => {
   let agentState = {...config};
 
-  agentState.adminEvents = config.contracts;
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
-  agentState.developerAbbreviation = config.developerAbbreviation;
-
   // load the contract addresses, abis, and ethers interfaces
   agentState.contracts = Object.entries(agentState.adminEvents).map(([name, entry]) => {
     if (entry.address === undefined) {
