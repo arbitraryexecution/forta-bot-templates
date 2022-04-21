@@ -3,16 +3,16 @@ const {
 } = require('forta-agent');
 
 let agentImports = [
-	{name: 'account-balance',           mod: import('../account-balance/src/agent.js')},
-	{name: 'address-watch',             mod: import('../address-watch/src/agent.js')},
-	{name: 'admin-events',              mod: import('../admin-events/src/agent.js')},
-	{name: 'contract-variable-monitor', mod: import('../contract-variable-monitor/src/agent.js')},
-	{name: 'gnosis-safe-multisig',      mod: import('../gnosis-safe-multisig/src/agent.js')},
-	{name: 'governance',                mod: import('../governance/src/agent.js')},
-	{name: 'monitor-function-calls',    mod: import('../monitor-function-calls/src/agent.js')},
-	{name: 'new-contract-interaction',  mod: import('../new-contract-interaction/src/agent.js')},
-	{name: 'tornado-cash-monitor',      mod: import('../tornado-cash-monitor/src/agent.js')},
-	{name: 'transaction-failure-count', mod: import('../transaction-failure-count/src/agent.js')}
+	{name: 'account-balance',           mod: import('./account-balance/agent.js')},
+	{name: 'address-watch',             mod: import('./address-watch/agent.js')},
+	{name: 'admin-events',              mod: import('./admin-events/agent.js')},
+	{name: 'contract-variable-monitor', mod: import('./contract-variable-monitor/agent.js')},
+	{name: 'gnosis-safe-multisig',      mod: import('./gnosis-safe-multisig/agent.js')},
+	{name: 'governance',                mod: import('./governance/agent.js')},
+	{name: 'monitor-function-calls',    mod: import('./monitor-function-calls/agent.js')},
+	{name: 'new-contract-interaction',  mod: import('./new-contract-interaction/agent.js')},
+	{name: 'tornado-cash-monitor',      mod: import('./tornado-cash-monitor/agent.js')},
+	{name: 'transaction-failure-count', mod: import('./transaction-failure-count/agent.js')}
 ];
 
 let agentStates = [];
@@ -57,7 +57,7 @@ async function initialize() {
 		const agent = agentConfigs[i];
 
 		const agentMod = agentMap.get(agent.agentType);
-		console.log(agent.agentType);
+		console.log(`${agent.name}: ${agent.agentType}`);
 		if (agentMod["initialize"] === undefined) {
 			continue;
 		}
