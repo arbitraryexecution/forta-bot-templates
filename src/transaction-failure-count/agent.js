@@ -33,12 +33,7 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-  let agentState = {};
-
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
-  agentState.developerAbbreviation = config.developerAbbreviation;
-  agentState.blockWindow = config.blockWindow;
+  let agentState = {...config};
 
   agentState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
     contractName,
@@ -55,13 +50,8 @@ const initialize = async (config) => {
 const handleTransaction = async (agentState, txEvent) => {
   const findings = [];
 
-  // we are only interested in failed transactions
-  if (txEvent.receipt.status) {
-    return findings;
-  }
-
   // check to see if any of the contracts was involved in the failed transaction
-  agentState.contracts.forEach((contract) => {
+  const promises = agentState.contracts.map(async (contract) => {
     const {
       contractName: name,
       contractAddress: address,
@@ -72,6 +62,11 @@ const handleTransaction = async (agentState, txEvent) => {
 
     if (txEvent.to !== address) return;
 
+    // grab the receipt for the transaction event
+    const receipt = await getTransactionReceipt(txEvent.hash);
+    if (receipt.status) return;
+
+    /* eslint-disable no-param-reassign */
     // add new occurrence
     contract.failedTxs[txEvent.hash] = txEvent.blockNumber;
 
@@ -103,7 +98,11 @@ const handleTransaction = async (agentState, txEvent) => {
       // if we raised an alert, clear out the array of failed transactions to avoid over-alerting
       contract.failedTxs = {};
     }
+    /* eslint-enable no-param-reassign */
   });
+
+  // wait for the promises to settle
+  await Promise.all(promises);
 
   return findings;
 };

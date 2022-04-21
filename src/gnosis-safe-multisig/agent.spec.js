@@ -125,8 +125,7 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler with a non-matching log
-      const receipt = { logs: logsNoMatchEvent };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
       findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -150,8 +149,7 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
-      const receipt = { logs: logsNoMatchEvent };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
       findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -188,8 +186,7 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
-      const receipt = { logs: logsNoMatchEvent };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
       findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -213,8 +210,7 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
-      const receipt = { logs: logsNoMatchEvent };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
       findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -274,8 +270,7 @@ describe('gnosis-safe multisig monitoring', () => {
           data: ethers.constants.HashZero,
         },
       ];
-      let receipt = { logs: logsNewTransferToEvent };
-      let mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      let mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNewTransferToEvent, null);
 
       // invoke the transaction handler
       findings = await handleTransaction(mockTxEvent);
@@ -286,8 +281,7 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
 
-      receipt = { logs: logsNoMatchEvent };
-      mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
 
       // invoke the transaction handler again, this time without a Transfer event
       findings = await handleTransaction(mockTxEvent);
@@ -330,8 +324,7 @@ describe('gnosis-safe multisig monitoring', () => {
           data: ethers.constants.HashZero,
         },
       ];
-      let receipt = { logs: logsNewTransferToEvent };
-      let mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      let mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNewTransferToEvent, null);
 
       // invoke the transaction handler
       findings = await handleTransaction(mockTxEvent);
@@ -342,8 +335,7 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
 
-      receipt = { logs: logsNoMatchEvent };
-      mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
 
       // invoke the transaction handler again, this time without a Transfer event
       findings = await handleTransaction(mockTxEvent);
@@ -419,24 +411,21 @@ describe('gnosis-safe multisig monitoring', () => {
 
     it('returns empty findings if the address does not match', async () => {
       // invoke the transaction handler with a non-matching log
-      const receipt = { logs: logsNoMatchEvent };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
       const findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
     it('returns empty findings if the address matches but the event does not', async () => {
       // invoke the transaction handler with a non-matching log
-      const receipt = { logs: logsAddressMatchNoEventMatch };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsAddressMatchNoEventMatch, null);
       const findings = await handleTransaction(mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
     it('returns findings if the address and event match', async () => {
       // invoke the transaction handler with a non-matching log
-      const receipt = { logs: logsAddressAndEventMatch };
-      const mockTxEvent = new TransactionEvent(null, null, null, receipt, [], [], null);
+      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsAddressAndEventMatch, null);
       const findings = await handleTransaction(mockTxEvent);
 
       // create expected findings

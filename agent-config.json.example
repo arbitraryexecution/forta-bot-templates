@@ -5,6 +5,7 @@
 	"agents": [
 		{
 			"agentType": "account-balance",
+			"name": "agent_1",
 			"accountBalance": {
 				"contractName1": {
 					"address": "",
@@ -16,6 +17,7 @@
 		},
 		{
 			"agentType": "address-watch",
+			"name": "agent_2",
 			"everestId": "0x55d07cab60a86966a01680e2242c4af4080a5566",
 			"addressList": {
 				"0xFe1A6056EE03235f30f7a48407A5673BBf25eD48": {
@@ -27,6 +29,7 @@
 		},
 		{
 			"agentType": "admin-events",
+			"name": "agent_3",
 			"contracts": {
 				"contractName1": {
 					"address": "contractAddress1",
@@ -41,6 +44,7 @@
 		},
 		{
 			"agentType": "contract-variable-monitor",
+			"name": "agent_4",
 			"contracts": {
 				"contractName1": {
 					"address": "contractAddress1",
@@ -59,6 +63,7 @@
 		},
 		{
 			"agentType": "gnosis-safe-multisig",
+			"name": "agent_5",
 			"gnosisSafe": {
 				"address": "contractAddress",
 				"version": "gnosisSafeContractVersion"
@@ -66,6 +71,7 @@
 		},
 		{
 			"agentType": "governance",
+			"name": "agent_6",
 			"governance": {
 				"address": "",
 				"abiFile": ""
@@ -73,6 +79,7 @@
 		},
 		{
 			"agentType": "monitor-function-calls",
+			"name": "agent_7",
 			"contracts": {
 				"contractName1": {
 					"address": "contractAddress1",
@@ -89,6 +96,7 @@
 		},
 		{
 			"agentType": "new-contract-interaction",
+			"name": "agent_8",
 			"contracts": {
 				"contractName1": {
 					"thresholdBlockCount": 7,
@@ -105,6 +113,7 @@
 		},
 		{
 			"agentType": "tornado-cash-monitor",
+			"name": "agent_9",
 			"addressList": {
 				"contractName1": {
 					"address": "contractAddress1",
@@ -115,6 +124,7 @@
 		},
 		{
 			"agentType": "transaction-failure-count",
+			"name": "agent_10",
 			"blockWindow": 25,
 			"failedTransactions": {
 				"contractName1": {

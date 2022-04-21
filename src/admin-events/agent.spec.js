@@ -156,18 +156,16 @@ describe('monitor emitted events', () => {
 
       // initialize mock transaction event with default values
       mockTxEvent = createTransactionEvent({
-        receipt: {
-          logs: [
-            {
-              name: '',
-              address: '',
-              signature: '',
-              topics: [],
-              data: `0x${'0'.repeat(1000)}`,
-              args: [],
-            },
-          ],
-        },
+        logs: [
+          {
+            name: '',
+            address: '',
+            signature: '',
+            topics: [],
+            data: `0x${'0'.repeat(1000)}`,
+            args: [],
+          },
+        ],
       });
     });
 
@@ -182,7 +180,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = ethers.constants.AddressZero;
       defaultLog.topics = mockTopics;
@@ -203,7 +201,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventNotInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -224,7 +222,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -286,7 +284,7 @@ describe('monitor emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -341,7 +339,7 @@ describe('monitor emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;

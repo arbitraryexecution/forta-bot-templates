@@ -114,6 +114,8 @@ function createAlert(
 const initialize = async (config) => {
   let agentState = {...config};
 
+  agentState.adminEvents = config.contracts;
+
   // load the contract addresses, abis, and ethers interfaces
   agentState.contracts = Object.entries(agentState.adminEvents).map(([name, entry]) => {
     if (entry.address === undefined) {
@@ -158,17 +160,17 @@ const handleTransaction = async (agentState, txEvent) => {
         }
 
         findings.push(createAlert(
-              ev.name,
-              contract.name,
-              contract.address,
-              ev.type,
-              ev.severity,
-              parsedLog.args,
-              agentState.protocolName,
-              agentState.protocolAbbreviation,
-              agentState.developerAbbreviation,
-              ev.expression,
-              ));
+          ev.name,
+          contract.name,
+          contract.address,
+          ev.type,
+          ev.severity,
+          parsedLog.args,
+          agentState.protocolName,
+          agentState.protocolAbbreviation,
+          agentState.developerAbbreviation,
+          ev.expression,
+        ));
       });
     });
   });

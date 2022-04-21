@@ -117,18 +117,16 @@ describe('monitor governance contracts for emitted events', () => {
 
       // initialize mock transaction event with default values
       mockTxEvent = createTransactionEvent({
-        receipt: {
-          logs: [
-            {
-              name: '',
-              address: '',
-              signature: '',
-              topics: [],
-              data: `0x${'0'.repeat(1000)}`,
-              args: [],
-            },
-          ],
-        },
+        logs: [
+          {
+            name: '',
+            address: '',
+            signature: '',
+            topics: [],
+            data: `0x${'0'.repeat(1000)}`,
+            args: [],
+          },
+        ],
       });
     });
 
@@ -147,7 +145,7 @@ describe('monitor governance contracts for emitted events', () => {
       } = createMockEventLogs(validEvent, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = mockContractName;
       defaultLog.address = ethers.constants.AddressZero;
       defaultLog.topics = mockTopics;
@@ -168,7 +166,7 @@ describe('monitor governance contracts for emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(invalidEvent, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = mockContractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -189,7 +187,7 @@ describe('monitor governance contracts for emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(validEvent, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = mockContractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
