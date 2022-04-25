@@ -1,12 +1,12 @@
 {
     "developerAbbreviation": "DEV",
     "protocolName": "FullName",
-    "protocolAbbreviation": "ABREV",
-    "observationIntervalInBlocks": 10,
+    "protocolAbbrev": "ABREV",
     "contracts": {
         "contractName1": {
+            "name": "accountName1",
             "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
-            "tornado": {
+            "watch" : {
                 "type": "Info",
                 "severity": "Info"
             }

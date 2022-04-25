@@ -43,7 +43,9 @@ describe('check agent configuration file', () => {
   it('contracts key values must be valid', () => {
     const { contracts } = config;
     Object.keys(contracts).forEach((key) => {
-      const { address, abiFile, events } = contracts[key];
+      const {
+        address, abiFile, events, proxy,
+      } = contracts[key];
 
       // check that the address is a valid address
       expect(utils.isAddress(address)).toBe(true);
@@ -53,6 +55,14 @@ describe('check agent configuration file', () => {
       const abi = utils.getAbi(abiFile);
 
       const eventObjects = getObjectsFromAbi(abi, 'event');
+
+      // check the proxy value before iterating over events
+      if (proxy) {
+        if ((events === undefined) || (utils.isEmpty(events))) {
+          // the events key is missing or it's an empty Object
+          return;
+        }
+      }
 
       // for all of the events specified, verify that they exist in the ABI
       Object.keys(events).forEach((eventName) => {
@@ -115,10 +125,16 @@ describe('monitor emitted events', () => {
       protocolAbbreviation = config.protocolAbbreviation;
       developerAbbreviation = config.developerAbbreviation;
 
-      [contractName] = Object.keys(configContracts);
-      const { abiFile, events } = configContracts[contractName];
-      validContractAddress = configContracts[contractName].address;
-
+      const contractNames = Object.keys(configContracts);
+      let abiFile;
+      let events;
+      for (let i = 0; i < contractNames.length; i += 1) {
+        contractName = contractNames[i];
+        ({ abiFile, events, address: validContractAddress } = configContracts[contractName]);
+        if ((abiFile) && (events) && (!utils.isEmpty(events))) {
+          break;
+        }
+      }
       abi = utils.getAbi(abiFile);
 
       const results = getEventFromConfig(abi, events);
@@ -156,18 +172,16 @@ describe('monitor emitted events', () => {
 
       // initialize mock transaction event with default values
       mockTxEvent = createTransactionEvent({
-        receipt: {
-          logs: [
-            {
-              name: '',
-              address: '',
-              signature: '',
-              topics: [],
-              data: `0x${'0'.repeat(1000)}`,
-              args: [],
-            },
-          ],
-        },
+        logs: [
+          {
+            name: '',
+            address: '',
+            signature: '',
+            topics: [],
+            data: `0x${'0'.repeat(1000)}`,
+            args: [],
+          },
+        ],
       });
     });
 
@@ -182,7 +196,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = ethers.constants.AddressZero;
       defaultLog.topics = mockTopics;
@@ -203,7 +217,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventNotInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -224,7 +238,7 @@ describe('monitor emitted events', () => {
       const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -235,10 +249,14 @@ describe('monitor emitted events', () => {
         .format(ethers.utils.FormatTypes.minimal)
         .substring(6);
 
-      // eliminate any expression
-      const { eventInfo } = initializeData.contracts[0];
-      delete eventInfo[0].expression;
-      delete eventInfo[0].expressionObject;
+      // eliminate any expression for the contract we are concerned with
+      for (let i = 0; i < initializeData.contracts.length; i += 1) {
+        if (initializeData.contracts[i].name === contractName) {
+          delete initializeData.contracts[i].eventInfo[0].expression;
+          delete initializeData.contracts[i].eventInfo[0].expressionObject;
+          break;
+        }
+      }
 
       let expectedMetaData = {};
       Object.keys(mockArgs).forEach((name) => {
@@ -269,9 +287,9 @@ describe('monitor emitted events', () => {
 
     it('returns a finding if a target contract emits a monitored event and the expression condition is met', async () => {
       // get the expression object information from the config
-      // in the beforeEach block, the first event from the first `contracts` element is assigned to `eventInConfig`
-      // therefore, we will retrieve the corresponding expression from the `initializeData` object to enforce the
-      // proper condition for this test to emit a finding
+      // in the beforeEach block, the first event from the first `contracts` element is assigned to
+      // `eventInConfig` therefore, we will retrieve the corresponding expression from the
+      // `initializeData` object to enforce the proper condition for this test to emit a finding
       const { eventInfo } = initializeData.contracts[0];
       const { expressionObject, expression } = eventInfo[0];
       const { variableName: argName, operator, value: operand } = expressionObject;
@@ -286,7 +304,7 @@ describe('monitor emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -341,7 +359,7 @@ describe('monitor emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = contractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;

@@ -31,8 +31,9 @@ const filteredAddress = `0x3${'0'.repeat(39)}`;
 
 const config = require('../agent-config.json');
 
+// grab first contract to test
 const [testContract] = Object.keys(config.contracts);
-const { address: testContractAddress } = config.contracts[testContract];
+const { address: testContractAddress } = config.contracts[testContract].newContractEOA;
 
 // utility function specific for this test module
 // we are intentionally not using the Forta SDK function due to issues with
@@ -52,7 +53,7 @@ function createTransactionEvent(txObject) {
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-  it('procotolName key required', () => {
+  it('protocolName key required', () => {
     const { protocolName } = config;
     expect(typeof protocolName).toBe('string');
     expect(protocolName).not.toBe('');
@@ -72,13 +73,15 @@ describe('check agent configuration file', () => {
 
   it('contracts key required', () => {
     const { contracts } = config;
-    expect(typeof contracts).toBe('object');
-    expect(contracts).not.toBe({});
+    Object.values(contracts).forEach((contract) => {
+      expect(typeof contract).toBe('object');
+      expect(contract).not.toBe({});
+    });
   });
 
   it('contracts key values must be valid', () => {
     const { contracts } = config;
-    Object.keys(contracts).forEach((key) => {
+    Object.values(contracts).forEach((contract) => {
       const {
         thresholdBlockCount,
         thresholdTransactionCount,
@@ -86,8 +89,7 @@ describe('check agent configuration file', () => {
         filteredAddresses,
         findingType,
         findingSeverity,
-      } = contracts[key];
-
+      } = contract.newContractEOA;
       // make sure value for thresholdBlockCount in config is a number
       expect(thresholdBlockCount).toEqual(expect.any(Number));
 

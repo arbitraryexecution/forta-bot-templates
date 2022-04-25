@@ -12,6 +12,7 @@ WORKDIR /app
 # if using obfuscated code from build stage:
 # COPY --from=builder /app/dist ./src
 # else if using unobfuscated code:
+LABEL "network.forta.settings.agent-logs.enable"="true"
 COPY ./src ./src
 COPY agent-config.json ./
 COPY package*.json ./

@@ -41,24 +41,24 @@ describe('check agent configuration file', () => {
   });
 
   it('addressList key required', () => {
-    const { addressList } = config;
-    expect(typeof (addressList)).toBe('object');
-    expect(addressList).not.toBe({});
+    const { contracts } = config;
+    expect(typeof (contracts)).toBe('object');
+    expect(contracts).not.toBe({});
   });
 
   it('addressList key values must be valid', () => {
-    const { addressList } = config;
-    Object.keys(addressList).forEach((key) => {
-      const { address, type, severity } = addressList[key];
+    const { contracts } = config;
+    Object.keys(contracts).forEach((key) => {
+      const { address, tornado } = contracts[key];
 
       // check that the address is a valid address
       expect(ethers.utils.isHexString(address, 20)).toBe(true);
 
       // check type, this will fail if 'type' is not valid
-      expect(Object.prototype.hasOwnProperty.call(FindingType, type)).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(FindingType, tornado.type)).toBe(true);
 
       // check severity, this will fail if 'severity' is not valid
-      expect(Object.prototype.hasOwnProperty.call(FindingSeverity, severity)).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(FindingSeverity, tornado.severity)).toBe(true);
     });
   });
 });
@@ -79,9 +79,9 @@ describe('handleTransaction', () => {
 
     // set up test configuration parameters that won't change with each test
     // grab the first entry from the 'addressList' key in the configuration file
-    const { addressList } = config;
-    [addressName] = Object.keys(addressList);
-    testAddressInfo = addressList[addressName];
+    const { contracts } = config;
+    [addressName] = Object.keys(contracts);
+    testAddressInfo = contracts[addressName];
 
     // initialize the handler
     await (provideInitialize(initializeData))();
@@ -290,8 +290,8 @@ describe('handleTransaction', () => {
         + ` transaction with an address ${mockSuspiciousAddress} that has previously interacted`
         + ' with Tornado Cash',
       alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-TORNADO-CASH-MONITOR`,
-      type: FindingType[testAddressInfo.type],
-      severity: FindingSeverity[testAddressInfo.severity],
+      type: FindingType[testAddressInfo.tornado.type],
+      severity: FindingSeverity[testAddressInfo.tornado.severity],
       metadata: {
         monitoredAddress: testAddressInfo.address,
         name: addressName,

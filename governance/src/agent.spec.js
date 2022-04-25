@@ -35,38 +35,42 @@ describe('check agent configuration file', () => {
     expect(developerAbbreviation).not.toBe('');
   });
 
-  it('governance key required', () => {
-    const { governance } = config;
-    expect(typeof governance).toBe('object');
-    expect(governance).not.toBe({});
+  Int32Array('governance key required', () => {
+    const governance = Object.values(config.contracts);
+    governance.forEach((gov) => {
+      expect(typeof (gov)).toBe('object');
+      expect(gov).not.toBe({});
+    });
   });
 
   it('governance key values must be valid', () => {
-    const { governance } = config;
-    const { abiFile, address } = governance;
+    const governance = Object.values(config.contracts);
+    governance.forEach((gov) => {
+      const { abiFile } = gov.governance;
+      const { address } = gov;
+      // check that the address is a valid address
+      expect(ethers.utils.isHexString(address, 20)).toBe(true);
 
-    // check that the address is a valid address
-    expect(ethers.utils.isHexString(address, 20)).toBe(true);
+      // load the ABI from the specified file
+      // the call to getAbi will fail if the file does not exist
+      const abi = utils.getAbi(abiFile);
 
-    // load the ABI from the specified file
-    // the call to getAbi will fail if the file does not exist
-    const abi = utils.getAbi(abiFile);
+      // extract all of the event names from the ABI
+      const events = getObjectsFromAbi(abi, 'event');
 
-    // extract all of the event names from the ABI
-    const events = getObjectsFromAbi(abi, 'event');
-
-    // verify that at least the minimum list of supported events are present
-    MINIMUM_EVENT_LIST.forEach((eventName) => {
-      if (Object.keys(events).indexOf(eventName) === -1) {
-        throw new Error(
-          `ABI does not contain minimum supported event: ${eventName}`,
-        );
-      }
+      // verify that at least the minimum list of supported events are present
+      MINIMUM_EVENT_LIST.forEach((eventName) => {
+        if (Object.keys(events).indexOf(eventName) === -1) {
+          throw new Error(`ABI does not contain minimum supported event: ${eventName}`);
+        }
+      });
     });
   });
 });
 
-const abi = utils.getAbi(config.governance.abiFile);
+// grab the first entry from the 'contracts' key in the config file to test
+const firstContractName = Object.keys(config.contracts)[0];
+const abi = utils.getAbi(config.contracts[firstContractName].governance.abiFile);
 
 const invalidEvent = {
   anonymous: false,
@@ -103,25 +107,24 @@ describe('monitor governance contracts for emitted events', () => {
       await provideInitialize(initializeData)();
       handleTransaction = provideHandleTransaction(initializeData);
 
-      validContractAddress = config.governance.address;
+      // grab the first entry from the 'contracts' key in the config file
+      validContractAddress = config.contracts[firstContractName].address;
 
       const eventsInAbi = getObjectsFromAbi(abi, 'event');
       validEvent = eventsInAbi[validEventName];
 
       // initialize mock transaction event with default values
       mockTxEvent = createTransactionEvent({
-        receipt: {
-          logs: [
-            {
-              name: '',
-              address: '',
-              signature: '',
-              topics: [],
-              data: `0x${'0'.repeat(1000)}`,
-              args: [],
-            },
-          ],
-        },
+        logs: [
+          {
+            name: '',
+            address: '',
+            signature: '',
+            topics: [],
+            data: `0x${'0'.repeat(1000)}`,
+            args: [],
+          },
+        ],
       });
     });
 
@@ -139,7 +142,7 @@ describe('monitor governance contracts for emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = mockContractName;
       defaultLog.address = ethers.constants.AddressZero;
       defaultLog.topics = mockTopics;
@@ -163,7 +166,7 @@ describe('monitor governance contracts for emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = mockContractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;
@@ -187,7 +190,7 @@ describe('monitor governance contracts for emitted events', () => {
       );
 
       // update mock transaction event
-      const [defaultLog] = mockTxEvent.receipt.logs;
+      const [defaultLog] = mockTxEvent.logs;
       defaultLog.name = mockContractName;
       defaultLog.address = validContractAddress;
       defaultLog.topics = mockTopics;

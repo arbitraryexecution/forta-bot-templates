@@ -193,6 +193,8 @@ reflect who is creating the agent and what the agent monitors.
     COPYING
     LICENSE
     Dockerfile
+    .eslintrc.js
+    .gitignore
     forta.config.json
     package.json
     agent-config.json
