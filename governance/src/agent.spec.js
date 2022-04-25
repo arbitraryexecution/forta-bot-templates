@@ -1,6 +1,4 @@
-const {
-  Finding, createTransactionEvent, ethers,
-} = require('forta-agent');
+const { Finding, createTransactionEvent, ethers } = require('forta-agent');
 
 const { provideHandleTransaction, provideInitialize } = require('./agent');
 
@@ -19,25 +17,25 @@ const MINIMUM_EVENT_LIST = [
 
 // check the configuration file to verify the values
 describe('check agent configuration file', () => {
-  describe('procotolName key required', () => {
+  it('protocolName key required', () => {
     const { protocolName } = config;
-    expect(typeof (protocolName)).toBe('string');
+    expect(typeof protocolName).toBe('string');
     expect(protocolName).not.toBe('');
   });
 
-  describe('protocolAbbreviation key required', () => {
+  it('protocolAbbreviation key required', () => {
     const { protocolAbbreviation } = config;
-    expect(typeof (protocolAbbreviation)).toBe('string');
+    expect(typeof protocolAbbreviation).toBe('string');
     expect(protocolAbbreviation).not.toBe('');
   });
 
-  describe('developerAbbreviation key required', () => {
+  it('developerAbbreviation key required', () => {
     const { developerAbbreviation } = config;
-    expect(typeof (developerAbbreviation)).toBe('string');
+    expect(typeof developerAbbreviation).toBe('string');
     expect(developerAbbreviation).not.toBe('');
   });
 
-  describe('governance key required', () => {
+  Int32Array('governance key required', () => {
     const governance = Object.values(config.contracts);
     governance.forEach((gov) => {
       expect(typeof (gov)).toBe('object');
@@ -45,9 +43,9 @@ describe('check agent configuration file', () => {
     });
   });
 
-  describe('governance key values must be valid', () => {
-    const goveranance = Object.values(config.contracts);
-    goveranance.forEach((gov) => {
+  it('governance key values must be valid', () => {
+    const governance = Object.values(config.contracts);
+    governance.forEach((gov) => {
       const { abiFile } = gov.governance;
       const { address } = gov;
       // check that the address is a valid address
@@ -106,7 +104,7 @@ describe('monitor governance contracts for emitted events', () => {
       initializeData = {};
 
       // initialize the handler
-      await (provideInitialize(initializeData))();
+      await provideInitialize(initializeData)();
       handleTransaction = provideHandleTransaction(initializeData);
 
       // grab the first entry from the 'contracts' key in the config file
@@ -138,11 +136,10 @@ describe('monitor governance contracts for emitted events', () => {
     it('returns empty findings if contract address does not match', async () => {
       // encode event data
       // valid event name with valid name, signature, topic, and args
-      const {
-        mockArgs,
-        mockTopics,
-        data,
-      } = createMockEventLogs(validEvent, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        validEvent,
+        iface,
+      );
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.logs;
@@ -163,7 +160,10 @@ describe('monitor governance contracts for emitted events', () => {
 
     it('returns empty findings if contract address matches but no monitored event was emitted', async () => {
       // encode event data - valid event with valid arguments
-      const { mockArgs, mockTopics, data } = createMockEventLogs(invalidEvent, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        invalidEvent,
+        iface,
+      );
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.logs;
@@ -184,7 +184,10 @@ describe('monitor governance contracts for emitted events', () => {
 
     it('returns findings if contract address matches and monitored event was emitted', async () => {
       // encode event data - valid event with valid arguments
-      const { mockArgs, mockTopics, data } = createMockEventLogs(validEvent, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        validEvent,
+        iface,
+      );
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.logs;
