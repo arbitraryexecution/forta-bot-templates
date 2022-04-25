@@ -51,12 +51,8 @@ const initialize = async (config) => {
   let agentState = {...config};
 
   agentState.contractInfo = config.contracts;
-  agentState.developerAbbreviation = config.developerAbbreviation;
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
 
-  const contractNames = Object.keys(agentState.contractInfo);
-  agentState.contracts = contractNames.map((name) => {
+  agentState.contracts = Object.keys(agentState.contractInfo).map((name) => {
     const { address, abiFile, functions } = agentState.contractInfo[name];
     const abi = getAbi(config.name, abiFile);
     const iface = new ethers.utils.Interface(abi);

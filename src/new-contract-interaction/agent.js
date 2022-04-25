@@ -61,13 +61,10 @@ function createEOAInteractionAlert(
 }
 
 const initialize = async (config) => {
-  let agentState = {};
+  let agentState = {...config};
   agentState.provider = getEthersProvider();
 
   agentState.contractInfo = config.contracts;
-  agentState.developerAbbreviation = config.developerAbbreviation;
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
 
   agentState.contracts = Object.entries(agentState.contractInfo).map(([name, entry]) => {
     const {
@@ -79,17 +76,10 @@ const initialize = async (config) => {
       findingSeverity,
     } = entry.newContractEOA;
 
-    const contract = {
+    return {
       name,
-      address,
-      filteredAddresses,
-      thresholdBlockCount,
-      thresholdTransactionCount,
-      findingType,
-      findingSeverity,
+      ...entry.newContractEOA,
     };
-
-    return contract;
   });
 
   return agentState;
@@ -134,7 +124,7 @@ const handleTransaction = async (agentState, txEvent) => {
 
       results.forEach((result) => {
         if (result.status === 'fulfilled') {
-          if (result.value.code !== '0x') { // if theres code, then its a contract
+          if (result.value.code !== '0x') { // if there's code, then it's a contract
             contractResults[result.value.transactionAddress] = result.value.code;
           } else {
             eoaAddresses.push(result.value.transactionAddress); // if no code, then its an EOA

@@ -50,7 +50,7 @@ const initialize = async (config) => {
 const handleTransaction = async (agentState, txEvent) => {
   const findings = [];
 
-  // check to see if any of the contracts was involved in the failed transaction
+  // check to see if any of the contracts were involved in the failed transaction
   const promises = agentState.contracts.map(async (contract) => {
     const {
       contractName: name,

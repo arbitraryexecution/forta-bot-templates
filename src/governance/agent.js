@@ -180,39 +180,40 @@ function proposalThresholdSetFinding(address, config, oldThresh, newThresh) {
 }
 
 const initialize = async (config) => {
-	let agentState = {};
+  let agentState = {};
 
-	agentState.config = {
-		developerAbbreviation: config.developerAbbreviation,
-		protocolName: config.protocolName,
-		protocolAbbreviation: config.protocolAbbreviation,
-	};
-	agentState.goverance = config.contracts;
-	agentState.contracts = Object.entries(agentState.goverance).map(([name, entry]) => {
-		const { governance: { abiFile }, address } = entry;
+  agentState.config = {
+    developerAbbreviation: config.developerAbbreviation,
+    protocolName: config.protocolName,
+    protocolAbbreviation: config.protocolAbbreviation,
+  };
 
-		if (address === undefined) {
-			throw new Error(`No address found in configuration file for '${name}'`);
-		}
+  agentState.goverance = config.contracts;
+  agentState.contracts = Object.entries(agentState.goverance).map(([name, entry]) => {
+    const { governance: { abiFile }, address } = entry;
 
-		if (abiFile === undefined) {
-			throw new Error(`No ABI file found in configuration file for '${name}'`);
-		}
+    if (address === undefined) {
+      throw new Error(`No address found in configuration file for '${name}'`);
+    }
 
-		const abi = getInternalAbi(config.agentType, abiFile);
-		const iface = new ethers.utils.Interface(abi);
-		const names = Object.keys(iface.events);
-		const ftype = ethers.utils.FormatTypes.full;
-		const eventSignatures = names.map((eventName) => iface.getEvent(eventName).format(ftype));
+    if (abiFile === undefined) {
+      throw new Error(`No ABI file found in configuration file for '${name}'`);
+    }
 
-		const contract = {
-			address,
-			eventSignatures,
-		};
-		return contract;
-	});
+    const abi = getInternalAbi(config.agentType, abiFile);
+    const iface = new ethers.utils.Interface(abi);
+    const names = Object.keys(iface.events);
+    const ftype = ethers.utils.FormatTypes.full;
+    const eventSignatures = names.map((eventName) => iface.getEvent(eventName).format(ftype));
 
-	return agentState;
+    const contract = {
+      address,
+      eventSignatures,
+    };
+    return contract;
+  });
+
+  return agentState;
 };
 
 const handleTransaction = async (agentState, txEvent) => {

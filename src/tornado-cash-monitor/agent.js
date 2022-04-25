@@ -37,9 +37,6 @@ function createAlert(
 const initialize = async (config) => {
   let agentState = {...config};
 
-  agentState.developerAbbreviation = config.developerAbbreviation;
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
   agentState.observationIntervalInBlocks = config.observationIntervalInBlocks;
 
   const abi = getInternalAbi(config.agentType, "TornadoProxy.json");
