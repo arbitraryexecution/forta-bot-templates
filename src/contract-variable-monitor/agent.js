@@ -42,9 +42,6 @@ function createAlert(
 const initialize = async (config) => {
   let agentState = {...config};
 
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
-  agentState.developerAbbreviation = config.developerAbbreviation;
   agentState.variableInfoList = [];
 
   const configEntries = config.contracts;

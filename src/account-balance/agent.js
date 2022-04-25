@@ -48,12 +48,9 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-  let agentState = {};
+  let agentState = {...config};
 
   agentState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
-  agentState.developerAbbreviation = config.developerAbbreviation;
 
   agentState.provider = getEthersProvider();
   agentState.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
