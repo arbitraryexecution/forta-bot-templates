@@ -12,27 +12,27 @@ const MINIMUM_EVENT_LIST = [
   'ProposalExecuted',
 ];
 
-const tests = async (state, agent) => {
+const tests = async (config, agent) => {
   describe('check agent configuration file', () => {
-    describe('procotolName key required', () => {
+    it('procotolName key required', () => {
       const { protocolName } = config;
       expect(typeof (protocolName)).toBe('string');
       expect(protocolName).not.toBe('');
     });
 
-    describe('protocolAbbreviation key required', () => {
+    it('protocolAbbreviation key required', () => {
       const { protocolAbbreviation } = config;
       expect(typeof (protocolAbbreviation)).toBe('string');
       expect(protocolAbbreviation).not.toBe('');
     });
 
-    describe('developerAbbreviation key required', () => {
+    it('developerAbbreviation key required', () => {
       const { developerAbbreviation } = config;
       expect(typeof (developerAbbreviation)).toBe('string');
       expect(developerAbbreviation).not.toBe('');
     });
 
-    describe('governance key required', () => {
+    it('governance key required', () => {
       const governance = Object.values(config.contracts);
       governance.forEach((gov) => {
         expect(typeof (gov)).toBe('object');
@@ -40,7 +40,7 @@ const tests = async (state, agent) => {
       });
     });
 
-    describe('governance key values must be valid', () => {
+    it('governance key values must be valid', () => {
       const goveranance = Object.values(config.contracts);
       goveranance.forEach((gov) => {
         const { abiFile } = gov.governance;

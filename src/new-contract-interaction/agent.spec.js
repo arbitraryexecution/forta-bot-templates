@@ -22,13 +22,6 @@ const mockGetCodeResponseContract = '0xabcd';
 
 const filteredAddress = `0x3${'0'.repeat(39)}`;
 
-const initialize = (config, agent) => {
-
-  // grab first contract to test
-  const [testContract] = Object.keys(config.contracts);
-  const { address: testContractAddress } = config.contracts[testContract].newContractEOA;
-}
-
 // utility function specific for this test module
 // we are intentionally not using the Forta SDK function due to issues with
 // jest mocking the module and interfering with default function values
@@ -45,7 +38,11 @@ function createTransactionEvent(txObject) {
   return txEvent;
 }
 
-const test = async (state, agent) => {
+const tests = async (config, agent) => {
+  // grab first contract to test
+  const [testContract] = Object.keys(config.contracts);
+  const { address: testContractAddress } = config.contracts[testContract].newContractEOA;
+
   describe('check agent configuration file', () => {
     describe('procotolName key required', () => {
       const { protocolName } = config;
@@ -351,4 +348,8 @@ const test = async (state, agent) => {
       });
     });
   });
+};
+
+module.exports = {
+  tests,
 };

@@ -70,9 +70,10 @@ const runTests = async () => {
       continue;
     }
 
-    const state = await test.initialize(config, agent);
-    test.tests(state, agent);
+    test.tests(config, agent);
   };
 };
 
-runTests();
+describe("pain", async () => {
+  await runTests();
+});

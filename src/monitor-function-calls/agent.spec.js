@@ -10,33 +10,33 @@ const {
 } = require('../test-utils');
 const utils = require('../utils');
 
-const tests = (state, agent) => {
+const tests = (config, agent) => {
   describe('check agent configuration file', () => {
-    describe('procotolName key required', () => {
+    it('procotolName key required', () => {
       const { protocolName } = config;
       expect(typeof (protocolName)).toBe('string');
       expect(protocolName).not.toBe('');
     });
 
-    describe('protocolAbbreviation key required', () => {
+    it('protocolAbbreviation key required', () => {
       const { protocolAbbreviation } = config;
       expect(typeof (protocolAbbreviation)).toBe('string');
       expect(protocolAbbreviation).not.toBe('');
     });
 
-    describe('developerAbbreviation key required', () => {
+    it('developerAbbreviation key required', () => {
       const { developerAbbreviation } = config;
       expect(typeof (developerAbbreviation)).toBe('string');
       expect(developerAbbreviation).not.toBe('');
     });
 
-    describe('contracts key required', () => {
+    it('contracts key required', () => {
       const { contracts } = config;
       expect(typeof (contracts)).toBe('object');
       expect(contracts).not.toBe({});
     });
 
-    describe('contracts key values must be valid', () => {
+    it('contracts key values must be valid', () => {
       const { contracts } = config;
       Object.keys(contracts).forEach((key) => {
         const { address, abiFile, functions } = contracts[key];

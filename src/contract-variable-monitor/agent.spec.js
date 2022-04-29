@@ -22,40 +22,36 @@ const {
 } = require('../test-utils');
 const utils = require('../utils');
 
-const initialize = (config, agent) => {
-  return agent.initialize(config);
-}
-
-const tests = async (state, agent) => {
+const tests = async (config, agent) => {
   const checkThresholdSpy = jest.spyOn(utils, 'checkThreshold');
 
   describe('check agent configuration file', () => {
     it('procotolName key required', () => {
-      const { protocolName } = state;
+      const { protocolName } = config;
       expect(typeof (protocolName)).toBe('string');
       expect(protocolName).not.toBe('');
     });
 
     it('protocolAbbreviation key required', () => {
-      const { protocolAbbreviation } = state;
+      const { protocolAbbreviation } = config;
       expect(typeof (protocolAbbreviation)).toBe('string');
       expect(protocolAbbreviation).not.toBe('');
     });
 
     it('developerAbbreviation key required', () => {
-      const { developerAbbreviation } = state;
+      const { developerAbbreviation } = config;
       expect(typeof (developerAbbreviation)).toBe('string');
       expect(developerAbbreviation).not.toBe('');
     });
 
     it('contracts key required', () => {
-      const { contracts } = state;
+      const { contracts } = config;
       expect(typeof (contracts)).toBe('object');
       expect(contracts).not.toBe({});
     });
 
     it('contracts key values must be valid', () => {
-      const { contracts } = state;
+      const { contracts } = config;
       Object.keys(contracts).forEach((key) => {
         const { address, abiFile, variables } = contracts[key];
 
@@ -449,6 +445,5 @@ const tests = async (state, agent) => {
 };
 
 module.exports = {
-  initialize,
   tests,
 };

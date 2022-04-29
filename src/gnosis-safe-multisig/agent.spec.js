@@ -36,7 +36,7 @@ const {
   ethers,
 } = require('forta-agent');
 
-const initialize = async (config, agent) => {
+const tests = async (config, agent) => {
   const utils = require('../utils');
   const erc20Abi = utils.getInternalAbi(config.agentType, "ERC20.json");
   erc20Interface = new ethers.utils.Interface(erc20Abi);
@@ -85,12 +85,6 @@ const initialize = async (config, agent) => {
       });
     });
   });
-
-  console.log(config);
-  return agent.initialize(config);
-};
-
-const tests = async (state, agent) => {
   describe('gnosis-safe multisig monitoring', () => {
     describe('handleBlock', () => {
       let initializeData;
@@ -454,6 +448,5 @@ const tests = async (state, agent) => {
 };
 
 module.exports = {
-  initialize,
   tests,
 };

@@ -6,7 +6,7 @@ const {
   FindingSeverity,
 } = require('forta-agent');
 
-const tests = async (state, agent) => {
+const tests = async (config, agent) => {
   describe('check agent configuration file', () => {
     it('procotolName key required', () => {
       const { protocolName } = config;
@@ -295,4 +295,8 @@ const tests = async (state, agent) => {
       expect(findings).toStrictEqual(expectedFinding);
     });
   });
+};
+
+module.exports = {
+  tests,
 };
