@@ -2,20 +2,31 @@ const { agentImports } = require("./agent");
 
 async function generateAllAgents(_config) {
   const agentMap = new Map();
+  const testMap = new Map();
 
-  let modProms = [];
+  let modAgentProms = [];
+  let modTestProms = [];
   let modNames = [];
   for (let i = 0; i < agentImports.length; i++) {
     const imp = agentImports[i];
-    modProms.push(imp.mod);
+    modAgentProms.push(imp.agent);
+    modTestProms.push(imp.test);
     modNames.push(imp.name);
   }
 
-  await Promise.all(modProms).then((data) => {
+  await Promise.all(modAgentProms).then((data) => {
     for (let i = 0; i < data.length; i++) {
       const module = data[i];
       const name = modNames[i];
       agentMap.set(name, module);
+    }
+  });
+
+  await Promise.all(modTestProms).then((data) => {
+    for (let i = 0; i < data.length; i++) {
+      const test = data[i];
+      const name = modNames[i];
+      testMap.set(name, test);
     }
   });
 
@@ -30,25 +41,38 @@ async function generateAllAgents(_config) {
     agentConfigs.push(agent);
   }
 
-  return { agentMap, agentConfigs };
+  return { agentMap, testMap, agentConfigs };
 }
 
-async function initAgents(agentMap, agentConfigs) {
-  const agentStateProms = agentConfigs.map((agent) => {
-    const agentMod = agentMap.get(agent.agentType);
-    if (agentMod["initialize"] === undefined) {
-      const agentState = {...agent};
-      return new Promise(() => {agentState});
+const runTests = async () => {
+  let testContexts = [];
+
+  const topConfig = require('../agent-config.json');
+  const { agentMap, testMap, agentConfigs } = await generateAllAgents(topConfig);
+
+  for (let i = 0; i < agentConfigs.length; i++) {
+    const config = agentConfigs[i];
+    const test = testMap.get(config.agentType);
+
+    if (test === undefined) {
+      throw new Error('Agent ' + config.agentType + ' test not in agentImports');
+    }
+    if (test == null) {
+      continue;
     }
 
-    return agentMod.initialize(agent);
-  });
+    const agent = agentMap.get(config.agentType);
+    if (agent === undefined) {
+      throw new Error('Agent ' + config.agentType + ' not in agentImports');
+    }
 
-  return await Promise.all(agentStateProms);
-}
+    if (test["initialize"] === undefined || test["tests"] === undefined) {
+      continue;
+    }
 
-const config = require('../agent-config.json');
-test('check agent configuration file', async () => {
-  const { agentMap, agentConfigs } = await generateAllAgents(config);
-  const agentStates = await initAgents(agentMap, agentConfigs);
-});
+    const state = await test.initialize(config, agent);
+    test.tests(state, agent);
+  };
+};
+
+runTests();

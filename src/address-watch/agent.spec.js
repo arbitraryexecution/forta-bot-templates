@@ -6,64 +6,62 @@ const {
   FindingSeverity,
 } = require('forta-agent');
 
-// local definitions
-const { handleTransaction } = require('./agent');
+const initialize = (config, module) => {
 
-// load config file
-const config = require('../agent-config.json');
+  // make sure addresses is populated
+  const addresses = Object.values(config.contracts);
+  if (addresses.length === 0) {
+    throw new Error('Must supply at least one address to watch');
+  }
 
-// load configuration data from agent config file
-const {
-  developerAbbreviation: developerAbbrev,
-  protocolName,
-  protocolAbbrev,
-  contracts,
-} = config;
+  return module.initialize(config);
+};
 
-// make sure addresses is populated
-const addresses = Object.values(contracts);
-if (addresses.length === 0) {
-  throw new Error('Must supply at least one address to watch');
-}
+const tests = async (state, module) => {
+  // tests
+  describe('handleTransaction', () => {
+    it('returns empty findings if no address match is found', async () => {
+      // build txEvent
+      const txEvent = createTransactionEvent({
+        addresses: {},
+      });
+      txEvent.addresses[ethers.constants.AddressZero] = true;
 
-// tests
-describe('handleTransaction', () => {
-  it('returns empty findings if no address match is found', async () => {
-    // build txEvent
-    const txEvent = createTransactionEvent({
-      addresses: {},
+      // run agent with txEvent
+      const findings = await module.handleTransaction(state, txEvent);
+
+      // assertions
+      expect(findings).toStrictEqual([]);
     });
-    txEvent.addresses[ethers.constants.AddressZero] = true;
 
-    // run agent with txEvent
-    const findings = await handleTransaction(txEvent);
+    it('returns a finding if a transaction participant is on the watch list', async () => {
+      const testAddr = Object.values(contracts)[0].address;
+      const params = Object.values(contracts)[0];
 
-    // assertions
-    expect(findings).toStrictEqual([]);
-  });
+      // build txEvent
+      const txEvent = createTransactionEvent({
+        addresses: {},
+      });
+      txEvent.addresses[testAddr] = true;
 
-  it('returns a finding if a transaction participant is on the watch list', async () => {
-    const testAddr = Object.values(contracts)[0].address;
-    const params = Object.values(contracts)[0];
+      // run agent with txEvent
+      const findings = await module.handleTransaction(state, txEvent);
 
-    // build txEvent
-    const txEvent = createTransactionEvent({
-      addresses: {},
+      // assertions
+      expect(findings).toStrictEqual([
+        Finding.fromObject({
+          name: `${state.protocolName} Address Watch`,
+          description: `Address ${testAddr} (${params.name}) was involved in a transaction`,
+          alertId: `${state.developerAbbreviation}-${state.protocolAbbrev}-ADDRESS-WATCH`,
+          type: FindingType[params.watch.type],
+          severity: FindingSeverity[params.watch.severity],
+        }),
+      ]);
     });
-    txEvent.addresses[testAddr] = true;
-
-    // run agent with txEvent
-    const findings = await handleTransaction(txEvent);
-
-    // assertions
-    expect(findings).toStrictEqual([
-      Finding.fromObject({
-        name: `${protocolName} Address Watch`,
-        description: `Address ${testAddr} (${params.name}) was involved in a transaction`,
-        alertId: `${developerAbbrev}-${protocolAbbrev}-ADDRESS-WATCH`,
-        type: FindingType[params.watch.type],
-        severity: FindingSeverity[params.watch.severity],
-      }),
-    ]);
   });
-});
+};
+
+module.exports = {
+  initialize,
+  tests,
+};

@@ -5,7 +5,6 @@ const { ethers } = require('forta-agent');
 function getAbi(agentName, abiFile) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
   const abiPath = `../abi/${agentName}`;
-  console.log(`getting: ${abiPath}/${abiFile}`);
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }
@@ -13,7 +12,6 @@ function getAbi(agentName, abiFile) {
 function getInternalAbi(agentType, abiFile) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
   const abiPath = `./${agentType}/internal-abi`;
-  console.log(`getting: ${abiPath}/${abiFile}`);
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }
