@@ -6,8 +6,39 @@ const {
 const utils = require('../utils');
 const versionUtils = require('./version-utils');
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["contracts"] === undefined) {
+      errMsg = `No contracts found`;
+      return { ok, errMsg };
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   let agentState = {...config};
+
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
+
   agentState.provider = getEthersProvider();
 
   // grab erc20 abi and create an interface
@@ -196,6 +227,7 @@ const handleBlock = async (agentState) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleTransaction,
   handleBlock,

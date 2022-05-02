@@ -368,10 +368,10 @@ const tests = async (config, agent) => {
       let handleTransaction;
 
       // grab first safe to test
-      const firstContractName = Object.keys(state.contracts)[0];
-      const { version } = state.contracts[firstContractName].gnosisSafe;
+      const firstContractName = Object.keys(config.contracts)[0];
+      const { version } = config.contracts[firstContractName].gnosisSafe;
       // eslint-disable-next-line import/no-dynamic-require,global-require
-      const { abi } = require(`../abi/${version}/gnosis_safe.json`);
+      const { abi } = utils.getInternalAbi(config.agentType, `${version}/gnosis_safe.json`);
       const iface = new ethers.utils.Interface(abi);
 
       const logsNoMatchEvent = [
@@ -383,7 +383,7 @@ const tests = async (config, agent) => {
 
       const logsAddressMatchNoEventMatch = [
         {
-          address: state.contracts[firstContractName].address, // use first address to test
+          address: config.contracts[firstContractName].address, // use first address to test
           topics: [ethers.constants.HashZero],
         },
       ];
@@ -391,7 +391,7 @@ const tests = async (config, agent) => {
       const topics = iface.encodeFilterTopics('AddedOwner', []);
       const logsAddressAndEventMatch = [
         {
-          address: state.contracts[firstContractName].address, // use first address to test
+          address: config.contracts[firstContractName].address, // use first address to test
           topics,
           data: ethers.constants.HashZero,
         },

@@ -34,19 +34,51 @@ function createAlert(
   });
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["contracts"] === undefined) {
+      errMsg = `No contracts found`;
+      return { ok, errMsg };
+  }
+  if (config["observationIntervalInBlocks"] === undefined) {
+      errMsg = `No observationIntervalInBlocks found`;
+      return { ok, errMsg };
+  }
+  if (Object.keys(config.contracts).length === 0) {
+    errMsg = 'Must supply at least one address to watch';
+    return { ok, errMsg };
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   let agentState = {...config};
 
-  agentState.observationIntervalInBlocks = config.observationIntervalInBlocks;
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
 
   const abi = getInternalAbi(config.agentType, "TornadoProxy.json");
   agentState.iface = new ethers.utils.Interface(abi);
 
   const addressNames = Object.keys(config.contracts);
-  if (addressNames.length === 0) {
-    throw new Error('Must supply at least one address to watch');
-  }
-
   agentState.addressesToMonitor = [];
   addressNames.forEach((addressName) => {
     const info = {
@@ -58,6 +90,8 @@ const initialize = async (config) => {
 
     agentState.addressesToMonitor.push(info);
   });
+
+  agentState.observationIntervalInBlocks = config.observationIntervalInBlocks;
 
   // create an object to hold addresses that have been identified as having interacted with a
   // Tornado Cash Proxy
@@ -135,6 +169,7 @@ const handleTransaction = async (agentState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   TORNADO_CASH_ADDRESSES,
   initialize,
   handleTransaction,

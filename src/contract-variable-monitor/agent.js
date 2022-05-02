@@ -39,32 +39,61 @@ function createAlert(
   });
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+
+  for (const [name, entry] of Object.entries(config.contracts)) {
+    if (entry.address === undefined) {
+      errMsg = `No address found in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+
+    if (entry.abiFile === undefined) {
+      errMsg = `No ABI file found in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   let agentState = {...config};
 
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
+
   agentState.variableInfoList = [];
 
-  const configEntries = config.contracts;
   const provider = getEthersProvider();
 
   // load the contract addresses, abis, and generate an ethers contract for each contract name
   // listed in the config
-  const contractList = Object.entries(configEntries).map(([name, entry]) => {
-    if (entry.address === undefined) {
-      throw new Error(`No address found in configuration file for '${name}'`);
-    }
-
-    if (entry.abiFile === undefined) {
-      throw new Error(`No ABI file found in configuration file for '${name}'`);
-    }
-
+  const contractList = Object.entries(config.contracts).map(([name, entry]) => {
     const abi = utils.getAbi(config.name, entry.abiFile);
     const contract = new ethers.Contract(entry.address, abi, provider);
     return { name, contract, };
   });
 
   contractList.forEach((contractEntry) => {
-    const entry = configEntries[contractEntry.name];
+    const entry = config.contracts[contractEntry.name];
     const { info } = utils.getVariableInfo(entry, contractEntry);
     agentState.variableInfoList.push(...info);
   });
@@ -148,6 +177,7 @@ const handleBlock = async (agentState, blockEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleBlock,
   createAlert,

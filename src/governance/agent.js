@@ -179,26 +179,55 @@ function proposalThresholdSetFinding(address, config, oldThresh, newThresh) {
   });
 }
 
-const initialize = async (config) => {
-  let agentState = {};
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
 
-  agentState.config = {
-    developerAbbreviation: config.developerAbbreviation,
-    protocolName: config.protocolName,
-    protocolAbbreviation: config.protocolAbbreviation,
-  };
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
 
-  agentState.goverance = config.contracts;
-  agentState.contracts = Object.entries(agentState.goverance).map(([name, entry]) => {
+  for (const [name, entry] of Object.entries(config.contracts)) {
     const { governance: { abiFile }, address } = entry;
 
     if (address === undefined) {
-      throw new Error(`No address found in configuration file for '${name}'`);
+      errMsg = `No address found in configuration file for '${name}'`;
+      return { ok, errMsg };
     }
 
     if (abiFile === undefined) {
-      throw new Error(`No ABI file found in configuration file for '${name}'`);
+      errMsg = `No ABI file found in configuration file for '${name}'`;
+      return { ok, errMsg };
     }
+  }
+
+  ok = true;
+  return {ok, errMsg};
+};
+
+const initialize = async (config) => {
+  let agentState = {};
+
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
+
+  agentState.developerAbbreviation = config.developerAbbreviation;
+  agentState.protocolName = config.protocolName;
+  agentState.protocolAbbreviation = config.protocolAbbreviation;
+
+  agentState.contracts = Object.entries(config.contracts).map(([name, entry]) => {
+    const { governance: { abiFile }, address } = entry;
 
     const abi = getInternalAbi(config.agentType, abiFile);
     const iface = new ethers.utils.Interface(abi);
@@ -231,7 +260,7 @@ const handleTransaction = async (agentState, txEvent) => {
           return proposalCreatedFinding(
             proposal,
             address,
-            agentState.config,
+            agentState,
           );
         case 'VoteCast':
           const voteInfo = {
@@ -243,13 +272,13 @@ const handleTransaction = async (agentState, txEvent) => {
           };
           return voteCastFinding(voteInfo, address, agentState.config);
         case 'ProposalCanceled':
-          return proposalCanceledFinding(log.args.proposalId.toString(), address, agentState.config);
+          return proposalCanceledFinding(log.args.proposalId.toString(), address, agentState);
         case 'ProposalExecuted':
-          return proposalExecutedFinding(log.args.proposalId.toString(), address, agentState.config);
+          return proposalExecutedFinding(log.args.proposalId.toString(), address, agentState);
         case 'QuorumNumeratorUpdated':
           return quorumNumeratorUpdatedFinding(
             address,
-            agentState.config,
+            agentState,
             log.args.oldQuorumNumerator.toString(),
             log.args.newQuorumNumerator.toString(),
           );
@@ -257,34 +286,34 @@ const handleTransaction = async (agentState, txEvent) => {
           return proposalQueuedFinding(
             log.args.proposalId.toString(),
             address,
-            agentState.config,
+            agentState,
             log.args.eta.toString(),
           );
         case 'TimelockChange':
           return timelockChangeFinding(
             address,
-            agentState.config,
+            agentState,
             log.args.oldTimelock,
             log.args.newTimelock,
           );
         case 'VotingDelaySet':
           return votingDelaySetFinding(
             address,
-            agentState.config,
+            agentState,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
           );
         case 'VotingPeriodSet':
           return votingPeriodSetFinding(
             address,
-            agentState.config,
+            agentState,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
           );
         case 'ProposalThresholdSet':
           return proposalThresholdSetFinding(
             address,
-            agentState.config,
+            agentState,
             log.args.oldProposalThreshold.toString(),
             log.args.newProposalThreshold.toString(),
           );
@@ -301,6 +330,7 @@ const handleTransaction = async (agentState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleTransaction,
 };

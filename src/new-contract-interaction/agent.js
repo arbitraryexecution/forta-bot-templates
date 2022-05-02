@@ -60,13 +60,41 @@ function createEOAInteractionAlert(
   return Finding.fromObject(finding);
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["contracts"] === undefined) {
+      errMsg = `No contracts found`;
+      return { ok, errMsg };
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   let agentState = {...config};
+
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
+
   agentState.provider = getEthersProvider();
-
-  agentState.contractInfo = config.contracts;
-
-  agentState.contracts = Object.entries(agentState.contractInfo).map(([name, entry]) => {
+  agentState.contracts = Object.entries(agentState.contracts).map(([name, entry]) => {
     const {
       thresholdBlockCount,
       thresholdTransactionCount,
@@ -181,6 +209,7 @@ const handleTransaction = async (agentState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleTransaction,
   createContractInteractionAlert,

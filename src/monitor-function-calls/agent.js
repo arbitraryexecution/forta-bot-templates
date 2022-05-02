@@ -46,14 +46,41 @@ function createAlert(
   return Finding.fromObject(finding);
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["contracts"] === undefined) {
+      errMsg = `No contracts found`;
+      return { ok, errMsg };
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
 
 const initialize = async (config) => {
   let agentState = {...config};
 
-  agentState.contractInfo = config.contracts;
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
 
-  agentState.contracts = Object.keys(agentState.contractInfo).map((name) => {
-    const { address, abiFile, functions } = agentState.contractInfo[name];
+  agentState.contracts = Object.keys(config.contracts).map((name) => {
+    const { address, abiFile, functions } = config.contracts[name];
     const abi = getAbi(config.name, abiFile);
     const iface = new ethers.utils.Interface(abi);
     const functionNames = Object.keys(functions);
@@ -145,6 +172,7 @@ const handleTransaction = async (agentState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleTransaction,
 };

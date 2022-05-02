@@ -111,20 +111,55 @@ function createAlert(
   return Finding.fromObject(finding);
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["contracts"] === undefined) {
+      errMsg = `No contracts found`;
+      return { ok, errMsg };
+  }
+
+  for (const [name, entry] of Object.entries(config.contracts)) {
+    if (entry.address === undefined) {
+      errMsg = `No address found in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+
+    if (entry.abiFile === undefined) {
+      errMsg = `No ABI file found in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   let agentState = {...config};
+
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
 
   agentState.adminEvents = config.contracts;
 
   // load the contract addresses, abis, and ethers interfaces
   agentState.contracts = Object.entries(agentState.adminEvents).map(([name, entry]) => {
-    if (entry.address === undefined) {
-      throw new Error(`No address found in configuration file for '${name}'`);
-    }
-    if (entry.abiFile === undefined) {
-      throw new Error(`No ABI file found in configuration file for '${name}'`);
-    }
-
     const abi = getAbi(config.name, entry.abiFile);
     const iface = new ethers.utils.Interface(abi);
 
@@ -179,7 +214,8 @@ const handleTransaction = async (agentState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
+  createAlert,
   initialize,
   handleTransaction,
-  createAlert,
 };

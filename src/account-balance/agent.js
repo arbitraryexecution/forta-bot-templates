@@ -47,6 +47,19 @@ function createAlert(
   return Finding.fromObject(findingObject);
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["accountBalance"] === undefined) {
+    errMsg = "accountBalance not provided!";
+    return { ok, errMsg };
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   let agentState = {...config};
 
@@ -119,6 +132,7 @@ const handleBlock = async (agentState, blockEvent) => {
 };
 
 module.exports = {
-  handleBlock,
+  validateConfig,
   initialize,
+  handleBlock,
 };

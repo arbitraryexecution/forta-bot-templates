@@ -1,14 +1,14 @@
 const agentImports = [
-  {name: 'account-balance',           agent: require('./account-balance/agent'),           test: null},
-  {name: 'address-watch',             agent: require('./address-watch/agent'),             test: require('./address-watch/agent.spec.js')},
-  {name: 'admin-events',              agent: require('./admin-events/agent'),              test: require('./admin-events/agent.spec.js')},
-  {name: 'contract-variable-monitor', agent: require('./contract-variable-monitor/agent'), test: require('./contract-variable-monitor/agent.spec.js')},
-  {name: 'gnosis-safe-multisig',      agent: require('./gnosis-safe-multisig/agent'),      test: require('./gnosis-safe-multisig/agent.spec.js')},
-  {name: 'governance',                agent: require('./governance/agent'),                test: require('./governance/agent.spec.js')},
-  {name: 'monitor-function-calls',    agent: require('./monitor-function-calls/agent'),    test: require('./monitor-function-calls/agent.spec.js')},
-  {name: 'new-contract-interaction',  agent: require('./new-contract-interaction/agent'),  test: require('./new-contract-interaction/agent.spec.js')},
-  {name: 'tornado-cash-monitor',      agent: require('./tornado-cash-monitor/agent'),      test: require('./tornado-cash-monitor/agent.spec.js')},
-  {name: 'transaction-failure-count', agent: require('./transaction-failure-count/agent'), test: null}
+  {name: 'account-balance',           agent: require('./account-balance/agent')},
+  {name: 'address-watch',             agent: require('./address-watch/agent')},
+  {name: 'admin-events',              agent: require('./admin-events/agent')},
+  {name: 'contract-variable-monitor', agent: require('./contract-variable-monitor/agent')},
+  {name: 'gnosis-safe-multisig',      agent: require('./gnosis-safe-multisig/agent')},
+  {name: 'governance',                agent: require('./governance/agent')},
+  {name: 'monitor-function-calls',    agent: require('./monitor-function-calls/agent')},
+  {name: 'new-contract-interaction',  agent: require('./new-contract-interaction/agent')},
+  {name: 'tornado-cash-monitor',      agent: require('./tornado-cash-monitor/agent')},
+  {name: 'transaction-failure-count', agent: require('./transaction-failure-count/agent')}
 ];
 
 let agentStates = [];

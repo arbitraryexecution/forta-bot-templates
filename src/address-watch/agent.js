@@ -1,18 +1,5 @@
 const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 
-const initialize = async (config) => {
-  const agentState = {...config};
-
-  // get list of addresses to watch
-  const contractList = Object.values(config.contracts);
-  if (contractList.length === 0) {
-    throw new Error('Must supply at least one address to watch');
-  }
-
-  agentState.contractList = contractList;
-  return agentState;
-};
-
 function createAlert(agentState, address, contractName, type, severity) {
   return Finding.fromObject({
     name: `${agentState.protocolName} Address Watch`,
@@ -22,6 +9,49 @@ function createAlert(agentState, address, contractName, type, severity) {
     severity: FindingSeverity[severity],
   });
 }
+
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = "";
+
+  if (config["developerAbbreviation"] === undefined) {
+      errMsg = `No developerAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolName"] === undefined) {
+      errMsg = `No protocolName found`;
+      return { ok, errMsg };
+  }
+  if (config["protocolAbbreviation"] === undefined) {
+      errMsg = `No protocolAbbreviation found`;
+      return { ok, errMsg };
+  }
+  if (config["contracts"] === undefined) {
+      errMsg = `No contracts found`;
+      return { ok, errMsg };
+  }
+  if (Object.keys(config.contracts).length === 0) {
+    errMsg = 'Must supply at least one address to watch';
+    return { ok, errMsg };
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
+const initialize = async (config) => {
+  const agentState = {...config};
+
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
+
+  // get list of addresses to watch
+  agentState.contractList = Object.values(config.contracts);
+
+  return agentState;
+};
 
 const handleTransaction = async (agentState, txEvent) => {
   const findings = [];
@@ -39,6 +69,7 @@ const handleTransaction = async (agentState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleTransaction,
 };

@@ -66,14 +66,12 @@ const runTests = async () => {
       throw new Error('Agent ' + config.agentType + ' not in agentImports');
     }
 
-    if (test["initialize"] === undefined || test["tests"] === undefined) {
+    if (test["tests"] === undefined) {
       continue;
     }
 
-    test.tests(config, agent);
+    await test.tests(config, agent);
   };
 };
 
-describe("pain", async () => {
-  await runTests();
-});
+runTests();
