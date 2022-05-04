@@ -140,7 +140,9 @@ describe('new contract interaction monitoring', () => {
       });
 
       // intentionally setup the getCode function to throw an error
-      mockEthersProvider.getCode.mockImplementation(async () => { throw new Error('FAILED'); });
+      mockEthersProvider.getCode.mockImplementation(async () => {
+        throw new Error('FAILED');
+      });
 
       // run forta agent
       const findings = await handleTransaction(agentState, txEvent);
@@ -163,8 +165,12 @@ describe('new contract interaction monitoring', () => {
         block: { number: 1 },
       });
 
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseContract,
+      );
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseContract,
+      );
 
       // run forta agent
       const findings = await handleTransaction(agentState, txEvent);
@@ -208,20 +214,19 @@ describe('new contract interaction monitoring', () => {
         block: { number: blockNumber },
       });
 
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseContract);
-      mockEthersProvider.getCode.mockReturnValueOnce(mockGetCodeResponseNewContract);
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseContract,
+      );
+      mockEthersProvider.getCode.mockReturnValueOnce(
+        mockGetCodeResponseNewContract,
+      );
 
       // run forta agent
       const findings = await handleTransaction(agentState, txEvent);
 
       const expectedFindings = [];
       agentState.contracts.forEach((contract) => {
-        const {
-          name,
-          address,
-          findingType,
-          findingSeverity,
-        } = contract;
+        const { name, address, findingType, findingSeverity } = contract;
 
         expectedFindings.push(createContractInteractionAlert(
           name,
@@ -279,7 +284,9 @@ describe('new contract interaction monitoring', () => {
       const transactionCount = 1;
 
       mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
-      mockEthersProvider.getTransactionCount.mockResolvedValue(transactionCount);
+      mockEthersProvider.getTransactionCount.mockResolvedValue(
+        transactionCount,
+      );
 
       // run forta agent
       const findings = await handleTransaction(agentState, txEvent);
@@ -287,12 +294,7 @@ describe('new contract interaction monitoring', () => {
       // check assertions
       const expectedFindings = [];
       agentState.contracts.forEach((contract) => {
-        const {
-          name,
-          address,
-          findingType,
-          findingSeverity,
-        } = contract;
+        const { name, address, findingType, findingSeverity } = contract;
 
         expectedFindings.push(createEOAInteractionAlert(
           name,

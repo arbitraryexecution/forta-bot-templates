@@ -1,6 +1,4 @@
-const {
-  Finding, createTransactionEvent, ethers,
-} = require('forta-agent');
+const { Finding, createTransactionEvent, ethers } = require('forta-agent');
 
 const {
   initialize,
@@ -164,11 +162,10 @@ describe('monitor governance contracts for emitted events', () => {
     it('returns empty findings if contract address does not match', async () => {
       // encode event data
       // valid event name with valid name, signature, topic, and args
-      const {
-        mockArgs,
-        mockTopics,
-        data,
-      } = createMockEventLogs(validEvent, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        validEvent,
+        iface,
+      );
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.logs;
@@ -189,7 +186,10 @@ describe('monitor governance contracts for emitted events', () => {
 
     it('returns empty findings if contract address matches but no monitored event was emitted', async () => {
       // encode event data - valid event with valid arguments
-      const { mockArgs, mockTopics, data } = createMockEventLogs(invalidEvent, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        invalidEvent,
+        iface,
+      );
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.logs;
@@ -210,7 +210,10 @@ describe('monitor governance contracts for emitted events', () => {
 
     it('returns findings if contract address matches and monitored event was emitted', async () => {
       // encode event data - valid event with valid arguments
-      const { mockArgs, mockTopics, data } = createMockEventLogs(validEvent, iface);
+      const { mockArgs, mockTopics, data } = createMockEventLogs(
+        validEvent,
+        iface,
+      );
 
       // update mock transaction event
       const [defaultLog] = mockTxEvent.logs;
