@@ -2,225 +2,255 @@ const {
   Finding, createTransactionEvent, ethers,
 } = require('forta-agent');
 
+const {
+  initialize,
+  handleTransaction
+} = require('./agent');
+
 const utils = require('../utils');
 const { createMockEventLogs, getObjectsFromAbi } = require('../test-utils');
 
-const MINIMUM_EVENT_LIST = [
-  'ProposalCreated',
-  'VoteCast',
-  'ProposalCanceled',
-  'ProposalExecuted',
-];
+const config = {
+  developerAbbreviation: "DEVTEST",
+  protocolName: "PROTOTEST",
+  protocolAbbreviation: "PT",
+  agentType: "governance",
+  name: "test-agent",
+  contracts: {
+    contractName1: {
+      address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+      governance: {
+        abiFile: "Governor"
+      }
+    }
+  }
+};
+const firstContractName = Object.keys(config.contracts)[0];
 
-const tests = async (config, agent) => {
-  describe('check agent configuration file', () => {
-    it('procotolName key required', () => {
-      const { protocolName } = config;
-      expect(typeof (protocolName)).toBe('string');
-      expect(protocolName).not.toBe('');
-    });
-
-    it('protocolAbbreviation key required', () => {
-      const { protocolAbbreviation } = config;
-      expect(typeof (protocolAbbreviation)).toBe('string');
-      expect(protocolAbbreviation).not.toBe('');
-    });
-
-    it('developerAbbreviation key required', () => {
-      const { developerAbbreviation } = config;
-      expect(typeof (developerAbbreviation)).toBe('string');
-      expect(developerAbbreviation).not.toBe('');
-    });
-
-    it('governance key required', () => {
-      const governance = Object.values(config.contracts);
-      governance.forEach((gov) => {
-        expect(typeof (gov)).toBe('object');
-        expect(gov).not.toBe({});
-      });
-    });
-
-    it('governance key values must be valid', () => {
-      const goveranance = Object.values(config.contracts);
-      goveranance.forEach((gov) => {
-        const { abiFile } = gov.governance;
-        const { address } = gov;
-        // check that the address is a valid address
-        expect(ethers.utils.isHexString(address, 20)).toBe(true);
-
-        // load the ABI from the specified file
-        // the call to getAbi will fail if the file does not exist
-        const abi = utils.getAbi(abiFile);
-
-        // extract all of the event names from the ABI
-        const events = getObjectsFromAbi(abi, 'event');
-
-        // verify that at least the minimum list of supported events are present
-        MINIMUM_EVENT_LIST.forEach((eventName) => {
-          if (Object.keys(events).indexOf(eventName) === -1) {
-            throw new Error(`ABI does not contain minimum supported event: ${eventName}`);
-          }
-        });
-      });
-    });
-  });
-
-  // grab the first entry from the 'contracts' key in the config file to test
-  const firstContractName = Object.keys(config.contracts)[0];
-  const abi = utils.getAbi(config.contracts[firstContractName].governance.abiFile);
-
-  const invalidEvent = {
+const abi = [
+  {
     anonymous: false,
     inputs: [
       {
         indexed: false,
-        internalType: 'uint256',
-        name: 'testValue',
-        type: 'uint256',
+        internalType: "uint256",
+        name: "proposalId",
+        type: "uint256"
       },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "proposer",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "address[]",
+        name: "targets",
+        type: "address[]"
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "values",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
+        internalType: "string[]",
+        name: "signatures",
+        type: "string[]"
+      },
+      {
+        indexed: false,
+        internalType: "bytes[]",
+        name: "calldatas",
+        type: "bytes[]"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "endBlock",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "description",
+        type: "string"
+      }
     ],
-    name: 'TESTMockEvent',
-    type: 'event',
-  };
-  // push fake event to abi before creating the interface
-  abi.push(invalidEvent);
-  const iface = new ethers.utils.Interface(abi);
+    name: "ProposalCreated",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "proposalId",
+        type: "uint256"
+      }
+    ],
+    name: "ProposalCanceled",
+    type: "event"
+  }
+];
 
-  // tests
-  describe('monitor governance contracts for emitted events', () => {
-    describe('handleTransaction', () => {
-      let initializeData;
-      let handleTransaction;
-      let mockTxEvent;
-      let validEvent;
-      let validContractAddress;
-      const validEventName = 'ProposalCreated';
-      const mockContractName = 'mockContractName';
+const invalidEvent = {
+  anonymous: false,
+  inputs: [
+    {
+      indexed: false,
+      internalType: 'uint256',
+      name: 'testValue',
+      type: 'uint256',
+    },
+  ],
+  name: 'TESTMockEvent',
+  type: 'event',
+};
 
-      beforeEach(async () => {
-        initializeData = {};
+// push fake event to abi before creating the interface
+abi.push(invalidEvent);
+const iface = new ethers.utils.Interface(abi);
 
-        // initialize the handler
-        await (provideInitialize(initializeData))();
-        handleTransaction = provideHandleTransaction(initializeData);
+// tests
+describe('monitor governance contracts for emitted events', () => {
+  describe('handleTransaction', () => {
+    let agentState;
+    let mockTxEvent;
+    let validEvent;
+    let validContractAddress;
+    const validEventName = 'ProposalCreated';
+    const mockContractName = 'mockContractName';
 
-        // grab the first entry from the 'contracts' key in the config file
-        validContractAddress = config.contracts[firstContractName].address;
+    beforeEach(async () => {
+      agentState = await initialize(config);
 
-        const eventsInAbi = getObjectsFromAbi(abi, 'event');
-        validEvent = eventsInAbi[validEventName];
+      // grab the first entry from the 'contracts' key in the config file
+      validContractAddress = config.contracts[firstContractName].address;
 
-        // initialize mock transaction event with default values
-        mockTxEvent = createTransactionEvent({
-          logs: [
-            {
-              name: '',
-              address: '',
-              signature: '',
-              topics: [],
-              data: `0x${'0'.repeat(1000)}`,
-              args: [],
-            },
-          ],
-        });
-      });
+      const eventsInAbi = getObjectsFromAbi(abi, 'event');
+      validEvent = eventsInAbi[validEventName];
 
-      it('returns empty findings if no monitored events were emitted in the transaction', async () => {
-        const findings = await handleTransaction(mockTxEvent);
-        expect(findings).toStrictEqual([]);
-      });
-
-      it('returns empty findings if contract address does not match', async () => {
-        // encode event data
-        // valid event name with valid name, signature, topic, and args
-        const {
-          mockArgs,
-          mockTopics,
-          data,
-        } = createMockEventLogs(validEvent, iface);
-
-        // update mock transaction event
-        const [defaultLog] = mockTxEvent.logs;
-        defaultLog.name = mockContractName;
-        defaultLog.address = ethers.constants.AddressZero;
-        defaultLog.topics = mockTopics;
-        defaultLog.args = mockArgs;
-        defaultLog.data = data;
-        defaultLog.signature = iface
-          .getEvent(validEvent.name)
-          .format(ethers.utils.FormatTypes.minimal)
-          .substring(6);
-
-        const findings = await handleTransaction(mockTxEvent);
-
-        expect(findings).toStrictEqual([]);
-      });
-
-      it('returns empty findings if contract address matches but no monitored event was emitted', async () => {
-        // encode event data - valid event with valid arguments
-        const { mockArgs, mockTopics, data } = createMockEventLogs(invalidEvent, iface);
-
-        // update mock transaction event
-        const [defaultLog] = mockTxEvent.logs;
-        defaultLog.name = mockContractName;
-        defaultLog.address = validContractAddress;
-        defaultLog.topics = mockTopics;
-        defaultLog.args = mockArgs;
-        defaultLog.data = data;
-        defaultLog.signature = iface
-          .getEvent(invalidEvent.name)
-          .format(ethers.utils.FormatTypes.minimal)
-          .substring(6);
-
-        const findings = await handleTransaction(mockTxEvent);
-
-        expect(findings).toStrictEqual([]);
-      });
-
-      it('returns findings if contract address matches and monitored event was emitted', async () => {
-        // encode event data - valid event with valid arguments
-        const { mockArgs, mockTopics, data } = createMockEventLogs(validEvent, iface);
-
-        // update mock transaction event
-        const [defaultLog] = mockTxEvent.logs;
-        defaultLog.name = mockContractName;
-        defaultLog.address = validContractAddress;
-        defaultLog.topics = mockTopics;
-        defaultLog.args = mockArgs;
-        defaultLog.data = data;
-        defaultLog.signature = iface
-          .getEvent(validEvent.name)
-          .format(ethers.utils.FormatTypes.minimal)
-          .substring(6);
-
-        const findings = await handleTransaction(mockTxEvent);
-
-        const proposal = {
-          proposalId: '0',
-          _values: '0',
-          calldatas: '0xff',
-          description: 'test',
-          endBlock: '0',
-          startBlock: '0',
-          targets: ethers.constants.AddressZero,
-          proposer: ethers.constants.AddressZero,
-          signatures: 'test',
-        };
-        const expectedFinding = Finding.fromObject({
-          name: `${config.protocolName} Governance Proposal Created`,
-          description: `Governance Proposal ${proposal.proposalId} was just created`,
-          alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-PROPOSAL-CREATED`,
-          type: 'Info',
-          severity: 'Info',
-          protocol: config.protocolName,
-          metadata: {
-            address: validContractAddress,
-            ...proposal,
+      // initialize mock transaction event with default values
+      mockTxEvent = createTransactionEvent({
+        logs: [
+          {
+            name: '',
+            address: '',
+            signature: '',
+            topics: [],
+            data: `0x${'0'.repeat(1000)}`,
+            args: [],
           },
-        });
-
-        expect(findings).toStrictEqual([expectedFinding]);
+        ],
       });
     });
+
+    it('returns empty findings if no monitored events were emitted in the transaction', async () => {
+      const findings = await handleTransaction(agentState, mockTxEvent);
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns empty findings if contract address does not match', async () => {
+      // encode event data
+      // valid event name with valid name, signature, topic, and args
+      const {
+        mockArgs,
+        mockTopics,
+        data,
+      } = createMockEventLogs(validEvent, iface);
+
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.logs;
+      defaultLog.name = mockContractName;
+      defaultLog.address = ethers.constants.AddressZero;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(validEvent.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
+
+      const findings = await handleTransaction(agentState, mockTxEvent);
+
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns empty findings if contract address matches but no monitored event was emitted', async () => {
+      // encode event data - valid event with valid arguments
+      const { mockArgs, mockTopics, data } = createMockEventLogs(invalidEvent, iface);
+
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.logs;
+      defaultLog.name = mockContractName;
+      defaultLog.address = validContractAddress;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(invalidEvent.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
+
+      const findings = await handleTransaction(agentState, mockTxEvent);
+
+      expect(findings).toStrictEqual([]);
+    });
+
+    it('returns findings if contract address matches and monitored event was emitted', async () => {
+      // encode event data - valid event with valid arguments
+      const { mockArgs, mockTopics, data } = createMockEventLogs(validEvent, iface);
+
+      // update mock transaction event
+      const [defaultLog] = mockTxEvent.logs;
+      defaultLog.name = mockContractName;
+      defaultLog.address = validContractAddress;
+      defaultLog.topics = mockTopics;
+      defaultLog.args = mockArgs;
+      defaultLog.data = data;
+      defaultLog.signature = iface
+        .getEvent(validEvent.name)
+        .format(ethers.utils.FormatTypes.minimal)
+        .substring(6);
+
+      const findings = await handleTransaction(agentState, mockTxEvent);
+
+      const proposal = {
+        proposalId: '0',
+        _values: '0',
+        calldatas: '0xff',
+        description: 'test',
+        endBlock: '0',
+        startBlock: '0',
+        targets: ethers.constants.AddressZero,
+        proposer: ethers.constants.AddressZero,
+        signatures: 'test',
+      };
+      const expectedFinding = Finding.fromObject({
+        name: `${config.protocolName} Governance Proposal Created`,
+        description: `Governance Proposal ${proposal.proposalId} was just created`,
+        alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-PROPOSAL-CREATED`,
+        type: 'Info',
+        severity: 'Info',
+        protocol: config.protocolName,
+        metadata: {
+          address: validContractAddress,
+          ...proposal,
+        },
+      });
+
+      expect(findings).toStrictEqual([expectedFinding]);
+    });
   });
-};
+});

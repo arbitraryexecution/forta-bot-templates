@@ -2,7 +2,12 @@ const {
   Finding, FindingSeverity, FindingType, ethers,
 } = require('forta-agent');
 
-const { getInternalAbi } = require('../utils');
+const {
+  getInternalAbi,
+  isFilledString,
+  isObject,
+  isEmptyObject
+} = require('../utils');
 
 const TORNADO_CASH_ADDRESSES = [
   '0x722122dF12D4e14e13Ac3b6895a86e84145b6967',
@@ -38,30 +43,51 @@ const validateConfig = (config) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
+  if (!isFilledString(config.developerAbbreviation)) {
+      errMsg = `developerAbbreviation required`;
       return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
+  if (!isFilledString(config.protocolName)) {
+      errMsg = `protocolName required`;
       return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
+  if (!isFilledString(config.protocolAbbreviation)) {
+      errMsg = `protocolAbbreviation required`;
       return { ok, errMsg };
   }
-  if (config["contracts"] === undefined) {
-      errMsg = `No contracts found`;
+
+  if (typeof config.observationIntervalInBlocks != 'number') {
+      errMsg = `observationIntervalInBlocks key required`;
       return { ok, errMsg };
   }
-  if (config["observationIntervalInBlocks"] === undefined) {
-      errMsg = `No observationIntervalInBlocks found`;
-      return { ok, errMsg };
-  }
-  if (Object.keys(config.contracts).length === 0) {
-    errMsg = 'Must supply at least one address to watch';
+
+  const { contracts } = config;
+  if (!isObject(contracts) || isEmptyObject(contracts)) {
+    errMsg = `addressList key required`;
     return { ok, errMsg };
   }
+
+  Object.keys(contracts).forEach((key) => {
+    const { address, tornado } = contracts[key];
+
+    // check that the address is a valid address
+    if (!ethers.utils.isHexString(address, 20)) {
+      errMsg = `invalid address`;
+      return { ok, errMsg };
+    }
+
+    // check type, this will fail if 'type' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingType, tornado.type)) {
+      errMsg = `invalid tornado type!`;
+      return { ok, errMsg };
+    }
+
+    // check severity, this will fail if 'severity' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, tornado.severity)) {
+      errMsg = `invalid tornado severity!`;
+      return { ok, errMsg };
+    }
+  });
 
   ok = true;
   return { ok, errMsg };

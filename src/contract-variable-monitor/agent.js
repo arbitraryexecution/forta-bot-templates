@@ -4,6 +4,9 @@ const {
 } = require('forta-agent');
 
 const utils = require('../utils');
+const {
+  getObjectsFromAbi,
+} = require('../test-utils');
 
 // helper function to create alerts
 function createAlert(
@@ -39,32 +42,115 @@ function createAlert(
   });
 }
 
-const validateConfig = (config) => {
+const validateConfig = (config, abiOverride = null) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
+  if (!utils.isFilledString(config.developerAbbreviation)) {
+      errMsg = `developerAbbreviation required`;
       return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
+  if (!utils.isFilledString(config.protocolName)) {
+      errMsg = `protocolName required`;
       return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
+  if (!utils.isFilledString(config.protocolAbbreviation)) {
+      errMsg = `protocolAbbreviation required`;
       return { ok, errMsg };
   }
 
-  for (const [name, entry] of Object.entries(config.contracts)) {
-    if (entry.address === undefined) {
-      errMsg = `No address found in configuration file for '${name}'`;
+  const { contracts } = config;
+  if (!utils.isObject(contracts) || utils.isEmptyObject(contracts)) {
+    errMsg = `contracts key required`;
+    return { ok, errMsg };
+  }
+
+  for (const entry of Object.values(contracts)) {
+    const { address, abiFile, variables } = entry;
+
+    // check that the address is a valid address
+    if (!utils.isAddress(address)) {
+      errMsg = `invalid address`;
       return { ok, errMsg };
     }
 
-    if (entry.abiFile === undefined) {
-      errMsg = `No ABI file found in configuration file for '${name}'`;
-      return { ok, errMsg };
+    // load the ABI from the specified file
+    // the call to getAbi will fail if the file does not exist
+    let abi;
+    if (abiOverride != null) {
+      abi = abiOverride[abiFile];
+    } else {
+      abi = utils.getAbi(config.name, abiFile);
+    }
+
+    // get all of the function objects from the loaded ABI file
+    const functionObjects = getObjectsFromAbi(abi, 'function');
+
+    // for all of the variable names specified, verify that their corresponding getter function
+    // exists in the ABI
+    for (const variableName of Object.keys(variables)) {
+      if (Object.keys(functionObjects).indexOf(variableName) == -1) {
+        errMsg = `invalid event`;
+        return { ok, errMsg };
+      }
+
+      // assert that the output array length for the getter function is one
+      if (functionObjects[variableName].outputs.length != 1) {
+        errMsg = `invalid variable`;
+        return { ok, errMsg };
+      }
+
+      // assert that the type of the output for the getter function is a (u)int type
+      if (functionObjects[variableName].outputs[0].type.match(/^u?int/) == null) {
+        errMsg = `invalid getter function type`;
+        return { ok, errMsg };
+      }
+
+      // extract the keys from the configuration file for a specific function
+      const {
+        type,
+        severity,
+        upperThresholdPercent,
+        lowerThresholdPercent,
+        numDataPoints,
+      } = variables[variableName];
+
+      // check type, this will fail if 'type' is not valid
+      if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
+        errMsg = `invalid finding type!`;
+        return { ok, errMsg };
+      }
+
+      // check severity, this will fail if 'severity' is not valid
+      if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
+        errMsg = `invalid finding severity!`;
+        return { ok, errMsg };
+      }
+
+      // make sure there is at least one threshold value present in the config, otherwise fail
+      if (upperThresholdPercent === undefined && lowerThresholdPercent === undefined) {
+        errMsg = ('Either the upperThresholdPercent or lowerThresholdPercent for the'
+          + ` variable ${variableName} must be defined`);
+        return { ok, errMsg };
+      }
+
+      // if upperThresholdPercent is defined, make sure the value is a number
+      if (upperThresholdPercent !== undefined && typeof upperThresholdPercent != 'number') {
+        errMsg = `invalid upperThresholdPercent`;
+        return { ok, errMsg };
+      }
+
+      // if lowerThresholdPercent is defined, make sure the value is a number
+      if (lowerThresholdPercent !== undefined && typeof lowerThresholdPercent != 'number') {
+        errMsg = `invalid lowerThresholdPercent`;
+        return { ok, errMsg };
+      }
+
+      // make sure value for numDataPoints in config is a number
+      if (typeof numDataPoints != 'number') {
+        errMsg = `invalid numDataPoints`;
+        return { ok, errMsg };
+      }
     }
   }
 
@@ -72,10 +158,10 @@ const validateConfig = (config) => {
   return { ok, errMsg };
 };
 
-const initialize = async (config) => {
+const initialize = async (config, abiOverride = null) => {
   let agentState = {...config};
 
-  const { ok, errMsg } = validateConfig(config);
+  const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
     throw new Error(errMsg);
   }
@@ -87,7 +173,13 @@ const initialize = async (config) => {
   // load the contract addresses, abis, and generate an ethers contract for each contract name
   // listed in the config
   const contractList = Object.entries(config.contracts).map(([name, entry]) => {
-    const abi = utils.getAbi(config.name, entry.abiFile);
+    let abi;
+    if (abiOverride != null) {
+      abi = abiOverride[entry.abiFile];
+    } else {
+      abi = getAbi(config.name, entry.abiFile);
+    }
+
     const contract = new ethers.Contract(entry.address, abi, provider);
     return { name, contract, };
   });

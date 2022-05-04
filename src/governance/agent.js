@@ -1,5 +1,14 @@
 const { Finding, ethers } = require('forta-agent');
-const { getInternalAbi, createProposalFromLog } = require('../utils');
+const {
+  getInternalAbi,
+  createProposalFromLog,
+  isObject,
+  isEmptyObject,
+  isFilledString
+} = require('../utils');
+const {
+  getObjectsFromAbi,
+} = require('../test-utils');
 
 // alert for when a new governance proposal is created
 function proposalCreatedFinding(proposal, address, config) {
@@ -183,21 +192,34 @@ const validateConfig = (config) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
+  const MINIMUM_EVENT_LIST = [
+    'ProposalCreated',
+    'VoteCast',
+    'ProposalCanceled',
+    'ProposalExecuted',
+  ];
+
+  if (!isFilledString(config.developerAbbreviation)) {
+      errMsg = `developerAbbreviation required`;
       return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
+  if (!isFilledString(config.protocolName)) {
+      errMsg = `protocolName required`;
       return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
+  if (!isFilledString(config.protocolAbbreviation)) {
+      errMsg = `protocolAbbreviation required`;
       return { ok, errMsg };
   }
 
   for (const [name, entry] of Object.entries(config.contracts)) {
-    const { governance: { abiFile }, address } = entry;
+    if (!isObject(entry) || isEmptyObject(entry)) {
+      errMsg = `governance key required`;
+      return { ok, errMsg };
+    }
+
+    const { abiFile } = entry.governance;
+    const { address } = entry;
 
     if (address === undefined) {
       errMsg = `No address found in configuration file for '${name}'`;
@@ -207,6 +229,28 @@ const validateConfig = (config) => {
     if (abiFile === undefined) {
       errMsg = `No ABI file found in configuration file for '${name}'`;
       return { ok, errMsg };
+    }
+
+    // check that the address is a valid address
+    if (!ethers.utils.isHexString(address, 20)) {
+      errMsg = `invalid address`;
+      return { ok, errMsg };
+    }
+
+    // load the ABI from the specified file
+    // the call to getAbi will fail if the file does not exist
+    const abi = getInternalAbi(config.agentType, abiFile);
+
+    // extract all of the event names from the ABI
+    const events = getObjectsFromAbi(abi, 'event');
+
+    // verify that at least the minimum list of supported events are present
+    for (let i = 0; i < MINIMUM_EVENT_LIST.length; i++) {
+      const eventName = MINIMUM_EVENT_LIST[i];
+      if (Object.keys(events).indexOf(eventName) === -1) {
+        errMsg = `ABI does not contain minimum supported event: ${eventName}`;
+        return { ok, errMsg };
+      }
     }
   }
 

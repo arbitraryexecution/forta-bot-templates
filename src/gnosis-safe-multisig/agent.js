@@ -10,21 +10,49 @@ const validateConfig = (config) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
-      return { ok, errMsg };
+  if (!utils.isFilledString(config.developerAbbreviation)) {
+    errMsg = `developerAbbreviation required`;
+    return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
-      return { ok, errMsg };
+  if (!utils.isFilledString(config.protocolName)) {
+    errMsg = `protocolName required`;
+    return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
-      return { ok, errMsg };
+  if (!utils.isFilledString(config.protocolAbbreviation)) {
+    errMsg = `protocolAbbreviation required`;
+    return { ok, errMsg };
   }
-  if (config["contracts"] === undefined) {
-      errMsg = `No contracts found`;
+
+  const { contracts } = config;
+  if (!utils.isObject(contracts) || utils.isEmptyObject(contracts)) {
+    errMsg = `contracts key required`;
+    return { ok, errMsg };
+  }
+
+  const gnosisSafe = Object.values(contracts);
+  for (const safe of gnosisSafe) {
+    if (!utils.isObject(safe) || utils.isEmptyObject(safe)) {
+      errMsg = `gnosisSafe key required`;
       return { ok, errMsg };
+    }
+
+    const { version } = safe.gnosisSafe;
+    const { address } = safe;
+
+    // check that the address is a valid address
+    if (!utils.isAddress(address)) {
+      errMsg = `invalid address`;
+      return { ok, errMsg };
+    }
+
+    // check that there is a corresponding file for the version indicated
+    // eslint-disable-next-line import/no-dynamic-require,global-require
+    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis_safe.json`);
+
+    if (!utils.isObject(abi) || utils.isEmptyObject(abi)) {
+      errMsg = `gnosis_safe abi required`;
+      return { ok, errMsg };
+    }
   }
 
   ok = true;
@@ -128,14 +156,14 @@ const handleTransaction = async (agentState, txEvent) => {
     // filter for any events emitted by the safe contract
     const logs = txEvent.filterLog(contract.eventSignatures, contract.address);
     logs.forEach((log) => {
-      const findingObject = versionUtils.getFindings(contract.version, log.name, agentState.alertFields, contract.address, log.args);
+      const findingObject = versionUtils.getFindings(contract.version, log.name, agentState.protocolName, agentState.protocolAbbreviation, agentState.developerAbbreviation, contract.address, log.args);
       if (!findingObject) {
         return;
       }
 
       findingObject.type = FindingType.Info;
       findingObject.severity = FindingSeverity.Info;
-      findingObject.protocol = agentState.alertFields.protocolName;
+      findingObject.protocol = agentState.protocolName;
       const finding = Finding.fromObject(findingObject);
       findings.push(finding);
     });

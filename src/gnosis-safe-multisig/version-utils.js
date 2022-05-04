@@ -1,5 +1,4 @@
-function getFindings(version, eventName, alertFields, address, args) {
-  const { protocolName, protocolAbbreviation, developerAbbreviation } = alertFields;
+function getFindings(version, eventName, protocolName, protocolAbbreviation, developerAbbreviation, address, args) {
 
   const addedOwnerObject = {
     name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,

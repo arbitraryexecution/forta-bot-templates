@@ -7,7 +7,12 @@ const {
   extractEventArgs,
   parseExpression,
   checkLogAgainstExpression,
+  isFilledString,
+  isAddress,
+  isObject,
+  isEmptyObject
 } = require('../utils');
+const { getObjectsFromAbi } = require("../test-utils");
 
 // get the Array of events for a given contract
 function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
@@ -111,36 +116,86 @@ function createAlert(
   return Finding.fromObject(finding);
 }
 
-const validateConfig = (config) => {
+const validateConfig = (config, abiOverride = null) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
-      return { ok, errMsg };
+  if (!isFilledString(config.developerAbbreviation)) {
+    errMsg = `developerAbbreviation required`;
+    return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
-      return { ok, errMsg };
+  if (!isFilledString(config.protocolName)) {
+    errMsg = `protocolName required`;
+    return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
-      return { ok, errMsg };
-  }
-  if (config["contracts"] === undefined) {
-      errMsg = `No contracts found`;
-      return { ok, errMsg };
+  if (!isFilledString(config.protocolAbbreviation)) {
+    errMsg = `protocolAbbreviation required`;
+    return { ok, errMsg };
   }
 
-  for (const [name, entry] of Object.entries(config.contracts)) {
-    if (entry.address === undefined) {
-      errMsg = `No address found in configuration file for '${name}'`;
+  const { contracts } = config;
+  if (!isObject(contracts) || isEmptyObject(contracts)) {
+    errMsg = `contracts key required`;
+    return { ok, errMsg };
+  }
+
+  for (const [name, entry] of Object.entries(contracts)) {
+    const { address, abiFile, events } = entry;
+
+    // check that the address is a valid address
+    if (!isAddress(address)) {
+      errMsg = `invalid address`;
       return { ok, errMsg };
     }
 
-    if (entry.abiFile === undefined) {
-      errMsg = `No ABI file found in configuration file for '${name}'`;
-      return { ok, errMsg };
+    // load the ABI from the specified file
+    // the call to getAbi will fail if the file does not exist
+    let abi;
+    if (abiOverride != null) {
+      abi = abiOverride[abiFile];
+    } else {
+      abi = getAbi(config.name, abiFile);
+    }
+
+    const eventObjects = getObjectsFromAbi(abi, 'event');
+
+    // for all of the events specified, verify that they exist in the ABI
+    for (const eventName of Object.keys(events)) {
+      if (Object.keys(eventObjects).indexOf(eventName) == -1) {
+        errMsg = `invalid event`;
+        return { ok, errMsg };
+      }
+
+      const entry = events[eventName];
+      const { expression, type, severity } = entry;
+
+      // the expression key can be left out, but if it's present, verify the expression
+      if (expression !== undefined) {
+        // if the expression is not valid, the call to parseExpression will fail
+        const expressionObject = parseExpression(expression);
+
+        // check the event definition to verify the argument name
+        const { inputs } = eventObjects[eventName];
+        const argumentNames = inputs.map((inputEntry) => inputEntry.name);
+
+        // verify that the argument name is present in the event Object
+        if (argumentNames.indexOf(expressionObject.variableName) == -1) {
+          errMsg = `invalid argument`;
+          return { ok, errMsg };
+        }
+      }
+
+      // check type, this will fail if 'type' is not valid
+      if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
+        errMsg = `invalid finding type!`;
+        return { ok, errMsg };
+      }
+
+      // check severity, this will fail if 'severity' is not valid
+      if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
+        errMsg = `invalid finding severity!`;
+        return { ok, errMsg };
+      }
     }
   }
 
@@ -148,10 +203,10 @@ const validateConfig = (config) => {
   return { ok, errMsg };
 };
 
-const initialize = async (config) => {
+const initialize = async (config, abiOverride = null) => {
   let agentState = {...config};
 
-  const { ok, errMsg } = validateConfig(config);
+  const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
     throw new Error(errMsg);
   }
@@ -160,7 +215,12 @@ const initialize = async (config) => {
 
   // load the contract addresses, abis, and ethers interfaces
   agentState.contracts = Object.entries(agentState.adminEvents).map(([name, entry]) => {
-    const abi = getAbi(config.name, entry.abiFile);
+    let abi;
+    if (abiOverride != null) {
+      abi = abiOverride[entry.abiFile];
+    } else {
+      abi = getAbi(config.name, entry.abiFile);
+    }
     const iface = new ethers.utils.Interface(abi);
 
     const contract = { name, address: entry.address, iface, };

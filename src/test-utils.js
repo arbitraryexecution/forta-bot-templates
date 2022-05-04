@@ -230,11 +230,46 @@ function getFunctionFromConfig(abi, functions, fakeFunctionName) {
   };
 }
 
+function createMockFunctionArgs(functionObject, iface, override = undefined) {
+  const mockArgs = [];
+  const argTypes = [];
+  const argValues = [];
+
+  functionObject.inputs.forEach((entry) => {
+    let value;
+
+    // check to make sure type is supported
+    if (defaultTypeMap[entry.type] === undefined) {
+      throw new Error(`Type ${entry.type} is not supported`);
+    }
+
+    // determine whether to take the default value for the type, or if an override is given, take
+    // that value
+    if (override && entry.name === override.name) {
+      ({ value } = override);
+    } else {
+      value = defaultTypeMap[entry.type];
+    }
+
+    argTypes.push(entry.type);
+    argValues.push(value);
+
+    // do not overwrite reserved JS words!
+    if (mockArgs[entry.name] == null) {
+      mockArgs[entry.name] = value;
+    }
+  });
+
+  const data = iface.encodeFunctionData(functionObject.name, argValues);
+  return { mockArgs, argValues, data };
+}
+
 module.exports = {
   getObjectsFromAbi,
   getEventFromConfig,
+  getFunctionFromConfig,
   getExpressionOperand,
   createMockEventLogs,
-  getFunctionFromConfig,
+  createMockFunctionArgs,
   getRandomCharacterString,
 };

@@ -15,7 +15,7 @@
     "disable": "forta-agent disable",
     "enable": "forta-agent enable",
     "keyfile": "forta-agent keyfile",
-    "test": "jest --no-color -i ./agent-test.spec.js",
+    "test": "jest agent.spec.js",
     "validate": "node ./src/validate-config.js"
   },
   "dependencies": {

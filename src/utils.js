@@ -12,7 +12,6 @@ function getAbi(agentName, abiFile) {
 function getInternalAbi(agentType, abiFile) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
   const abiPath = `./${agentType}/internal-abi`;
-  console.log(`${abiPath}/${abiFile}`);
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }
@@ -252,15 +251,52 @@ function getRandomCharacterString(numCharacters) {
   return result;
 }
 
+function createProposalFromLog(log) {
+  const proposalId = log.args.proposalId.toString();
+  const proposal = {
+    proposalId,
+    proposer: log.args.proposer,
+    targets: log.args.targets.join(','),
+    // the 'values' key has to be parsed differently because `values` is a named method on Objects
+    // in JavaScript.  Also, this is why the key is prefixed with an underscore, to avoid
+    // overwriting the `values` method.
+    _values: (log.args[3].map((v) => v.toString())).join(','),
+    signatures: log.args.signatures.join(','),
+    calldatas: log.args.calldatas.join(','),
+    startBlock: log.args.startBlock.toString(),
+    endBlock: log.args.endBlock.toString(),
+    description: log.args.description,
+  };
+  return proposal;
+}
+
+// This looks goofy,
+// but *should* return false for obj == undefined/null
+function isObject(obj) {
+  return obj === Object(obj);
+}
+
+function isEmptyObject(obj) {
+  return Object.keys(obj).length === 0;
+}
+
+function isFilledString(str) {
+  return typeof str == 'string' && str != "";
+}
+
 module.exports = {
   getAbi,
   getInternalAbi,
   extractFunctionArgs,
   getVariableInfo,
   checkThreshold,
+  createProposalFromLog,
   extractEventArgs,
   isNumeric,
   isAddress,
+  isObject,
+  isEmptyObject,
+  isFilledString,
   addressComparison,
   booleanComparison,
   bigNumberComparison,

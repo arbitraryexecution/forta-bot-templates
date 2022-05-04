@@ -2,6 +2,13 @@ const {
   Finding, FindingSeverity, FindingType, getEthersProvider,
 } = require('forta-agent');
 
+const {
+  isFilledString,
+  isObject,
+  isEmptyObject,
+  isAddress
+} = require('../utils');
+
 // helper function to create alert for contract interaction
 function createContractInteractionAlert(
   contractName,
@@ -64,21 +71,78 @@ const validateConfig = (config) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
-      return { ok, errMsg };
+  if (!isFilledString(config.developerAbbreviation)) {
+    errMsg = `developerAbbreviation required`;
+    return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
-      return { ok, errMsg };
+  if (!isFilledString(config.protocolName)) {
+    errMsg = `protocolName required`;
+    return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
-      return { ok, errMsg };
+  if (!isFilledString(config.protocolAbbreviation)) {
+    errMsg = `protocolAbbreviation required`;
+    return { ok, errMsg };
   }
-  if (config["contracts"] === undefined) {
-      errMsg = `No contracts found`;
+
+  const { contracts } = config;
+  if (!isObject(contracts) || isEmptyObject(contracts)) {
+    errMsg = `contracts key required`;
+    return { ok, errMsg };
+  }
+
+  for (const contract of Object.values(contracts)) {
+    const {
+      thresholdBlockCount,
+      thresholdTransactionCount,
+      address,
+      filteredAddresses,
+      findingType,
+      findingSeverity,
+    } = contract.newContractEOA;
+
+    // make sure value for thresholdBlockCount in config is a number
+    if (typeof thresholdBlockCount != 'number') {
+      errMsg = `invalid thresholdBlockCount`;
       return { ok, errMsg };
+    }
+
+    // make sure value for thresholdTransactionCount in config is a number
+    if (typeof thresholdTransactionCount != 'number') {
+      errMsg = `invalid thresholdTransactionCount`;
+      return { ok, errMsg };
+    }
+
+    // check that the address is a valid address
+    if (!isAddress(address)) {
+      errMsg = `invalid address`;
+      return { ok, errMsg };
+    }
+
+    // check that filteredAddresses is an array
+    if (!Array.isArray(filteredAddresses)) {
+      errMsg = `invalid filteredAddresses`;
+      return { ok, errMsg };
+    }
+
+    // check that all entries in filteredAddresses are valid addresses
+    for (const entry of filteredAddresses) {
+      if (!isAddress(address)) {
+        errMsg = `invalid filteredAddress`;
+        return { ok, errMsg };
+      }
+    }
+
+    // check type, this will fail if 'type' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingType, findingType)) {
+      errMsg = `invalid finding type!`;
+      return { ok, errMsg };
+    }
+
+    // check severity, this will fail if 'severity' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity)) {
+      errMsg = `invalid finding severity!`;
+      return { ok, errMsg };
+    }
   }
 
   ok = true;
@@ -135,6 +199,7 @@ const handleTransaction = async (agentState, txEvent) => {
     ];
     exclusions = exclusions.concat(filteredAddresses);
     // filter transaction addresses to remove specified addresses
+
     const filteredTransactionAddresses = transactionAddresses
             .filter((item) => !exclusions.includes(item));
 
@@ -145,7 +210,7 @@ const handleTransaction = async (agentState, txEvent) => {
 
       const results = await Promise.allSettled(
         filteredTransactionAddresses.map(async (transactionAddress) => {
-          const contractCode = await data.provider.getCode(transactionAddress);
+          const contractCode = await agentState.provider.getCode(transactionAddress);
           return { transactionAddress, code: contractCode };
         }),
       );
@@ -161,7 +226,7 @@ const handleTransaction = async (agentState, txEvent) => {
       });
 
       await Promise.all(eoaAddresses.map(async (eoaAddress) => {
-        const eoaTransactionCount = await data.provider.getTransactionCount(eoaAddress);
+        const eoaTransactionCount = await agentState.provider.getTransactionCount(eoaAddress);
 
         if (eoaTransactionCount < thresholdTransactionCount) {
           findings.push(createEOAInteractionAlert(
@@ -181,7 +246,7 @@ const handleTransaction = async (agentState, txEvent) => {
       const blockOverride = txEvent.blockNumber - thresholdBlockCount;
       const blockResults = await Promise.allSettled(
         Object.keys(contractResults).map(async (contractResult) => {
-          const contractCode = await data.provider.getCode(contractResult, blockOverride);
+          const contractCode = await agentState.provider.getCode(contractResult, blockOverride);
           return { transactionAddress: contractResult, code: contractCode };
         }),
       );
