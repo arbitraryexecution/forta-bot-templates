@@ -8,18 +8,7 @@ and alert type and severity are specified per variable per contract address.
 
 The following steps will take you from a completely blank template to a functional agent.
 
-1. Copy the `agent-config.json.example` file to a new file named `agent-config.json`.
-
-2. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
-team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
-
-3. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap protocol you may
-type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may type in `"Sushi"` or `"SushiSwap"`, etc.
-
-4. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in `protocolName`.  For
-example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbreviated `"SUSH"`, etc.
-
-5.  `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor variable
+1.  `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor variable
 values for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
 monitoring by the agent). The Object corresponding to each contract name requires an `address` key/value pair,
@@ -67,7 +56,7 @@ entries for running the agent.
 Note: If a contract is proxied by another contract, make sure that the value for the `address` key is the
 address of the proxy contract.
 
-6. We can obtain the contract ABI from one of several locations. The most accurate ABI will be the one
+2. We can obtain the contract ABI from one of several locations. The most accurate ABI will be the one
 corresponding to the original contract code that was compiled and deployed onto the blockchain. This typically will
 come from the Github repository of the protocol being monitored. For the Uniswap example provided thus far, the
 deployed contracts are all present in the Uniswap Github repository here:
@@ -105,7 +94,7 @@ We need to modify the ABI to make the copied/pasted result an entry in an Array 
 in the file:
 
 ```json
-{ 
+{
   "abi": [
     {
       "constant": true,
@@ -129,44 +118,3 @@ in the file:
 The name of the JSON formatted file containing the ABI needs to have the same path as the value provided for
 the `abiFile` key in the `agent-config.json` file.  This will allow the agent to load the ABI correctly
 and call the requested getter functions corresponding to the variables listed in the config.
-
-7. Create a new README.md file to provide a description of your agent, using examples from the Forta Github
-repository.  Also update the `name` and `description` entries in the `package.json` file to appropriately
-reflect who is creating the agent and what the agent monitors.
-
-8. Move files to have the following directory structure:
-
-```
-  contract-variable-monitor/
-    README.md
-    SETUP.md
-    COPYING
-    LICENSE
-    Dockerfile
-    .eslintrc.js
-    .gitignore
-    forta.config.json
-    package.json
-    agent-config.json
-    src/
-      agent.js
-      agent.spec.js
-      test-utils.js
-      utils.js
-    abi/
-      ContractABIFile1.json
-      ContractABIFile2.json
-      ...
-      ContractABIFileN.json
-```
-
-9. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
-package.json.
-
-10. Once the `agent-config.json` file is populated and all corresponding ABI files are in the correct locations
-referred to in the `agent-config.json` file, the agent is complete. Please run the unit tests designed
-to make sure all the required config values are defined and test the agent template logic with your
-specific config.
-
-11. After sufficient testing, the agent may be published and deployed using the steps outlined in the Forta SDK
-documentation.

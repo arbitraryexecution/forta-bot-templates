@@ -1,7 +1,13 @@
 # Forta Agent Templates
 
 This repository contains Forta Agent templates that can be used to quickly create and deploy agents
-simply by creating configuration files. These Agent templates were designed by [Arbitrary Execution](https://www.arbitraryexecution.com/). More projects are available on [Arbitrary Execution's Github](https://github.com/arbitraryexecution)
+simply by creating configuration files. These Agent templates were designed by [Arbitrary Execution](https://www.arbitraryexecution.com/).
+More projects are available on [Arbitrary Execution's Github](https://github.com/arbitraryexecution)
+
+## Validating Your Config
+
+Once you're ready to deploy, `npm run validate` will check that your agent-config.json file is ready to go,
+and should let you know if there's any issues that might pop up during your run
 
 ## Agent Templates
 
