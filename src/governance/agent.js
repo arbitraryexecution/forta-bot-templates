@@ -259,7 +259,7 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let agentState = {};
+  let agentState = {...config};
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
