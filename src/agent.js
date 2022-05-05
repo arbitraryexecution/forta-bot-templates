@@ -51,7 +51,6 @@ async function initialize() {
 
   const agentStateProms = agentConfigs.map((agent) => {
     const agentMod = agentMap.get(agent.agentType);
-    console.log(`${agent.name}: ${agent.agentType}`);
     if (agentMod["initialize"] === undefined) {
       const agentState = {...agent};
       return new Promise(() => {agentState});
