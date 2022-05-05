@@ -41,9 +41,13 @@ repository.  Additionally, update the `name` entry in `package.json` to match th
     forta.config.json
     package.json
     agent-config.json
+    abi/
+      <agent-name>/
+        <abi-file.json>
     src/
-      agent.js
-      agent.spec.js
+      <template-name>/
+        agent.js
+        agent.spec.js
  ```
 
 8. Install all related `npm` packages using `npm i`.  This will create a `package-lock.json` file alongside
