@@ -47,10 +47,10 @@ const validateConfig = (config) => {
 
     // check that there is a corresponding file for the version indicated
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis_safe.json`);
+    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis-safe.json`);
 
     if (!utils.isObject(abi) || utils.isEmptyObject(abi)) {
-      errMsg = `gnosis_safe abi required`;
+      errMsg = `gnosis-safe abi required`;
       return { ok, errMsg };
     }
   }
@@ -78,7 +78,7 @@ const initialize = async (config) => {
   const ftype = ethers.utils.FormatTypes.full;
   agentState.transferSignature = erc20Interface.getEvent('Transfer').format(ftype);
 
-  // gnosis_safe specific configuration values
+  // gnosis-safe specific configuration values
   agentState.gnosisSafe = config.contracts;
 
   const safeEntries = Object.entries(agentState.gnosisSafe);
@@ -111,7 +111,7 @@ const initialize = async (config) => {
 
     // load the appropriate abi
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis_safe.json`);
+    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis-safe.json`);
     const iface = new ethers.utils.Interface(abi);
     const names = Object.keys(iface.events); // filter out only the events from the abi
     const eventSignatures = names.map((iName) => iface.getEvent(iName).format(ftype));

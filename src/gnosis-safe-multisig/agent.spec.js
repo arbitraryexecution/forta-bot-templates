@@ -340,7 +340,7 @@ describe('gnosis-safe multisig monitoring', () => {
     const firstContractName = Object.keys(config.contracts)[0];
     const { version } = config.contracts[firstContractName].gnosisSafe;
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis_safe.json`);
+    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis-safe.json`);
     const iface = new ethers.utils.Interface(abi);
 
     const logsNoMatchEvent = [
