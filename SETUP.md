@@ -16,7 +16,7 @@ type in `"Uniswap"` or `"Uniswap V3"`, for the Sushi Swap protocol you may type 
 4. For the `protocolAbbreviation` key, type in an appropriate abbreviation for the value in `protocolName`.  For
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be abbreviated `"SUSH"`, etc.
 
-5. Check out the SETUP.md in each agent directory for details on configuring each agent you want to use
+5. Check out the SETUP.md in each agent directory for details on configuring each agent you want to use.
 
 6. Set up any abi files that your agents need in the following directory structure:
 ```
