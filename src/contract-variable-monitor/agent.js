@@ -177,7 +177,7 @@ const initialize = async (config, abiOverride = null) => {
     if (abiOverride != null) {
       abi = abiOverride[entry.abiFile];
     } else {
-      abi = getAbi(config.name, entry.abiFile);
+      abi = utils.getAbi(config.name, entry.abiFile);
     }
 
     const contract = new ethers.Contract(entry.address, abi, provider);

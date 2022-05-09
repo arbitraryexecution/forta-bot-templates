@@ -2,6 +2,12 @@ const BigNumber = require('bignumber.js');
 const {
   ethers, getEthersProvider, Finding, FindingSeverity, FindingType,
 } = require('forta-agent');
+const {
+  isFilledString,
+  isAddress,
+  isObject,
+  isEmptyObject
+} = require('../utils');
 
 function createAlert(
   accountName,
@@ -51,9 +57,50 @@ const validateConfig = (config) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["accountBalance"] === undefined) {
-    errMsg = "accountBalance not provided!";
+  if (!isFilledString(config.developerAbbreviation)) {
+    errMsg = `developerAbbreviation required`;
     return { ok, errMsg };
+  }
+  if (!isFilledString(config.protocolName)) {
+    errMsg = `protocolName required`;
+    return { ok, errMsg };
+  }
+  if (!isFilledString(config.protocolAbbreviation)) {
+    errMsg = `protocolAbbreviation required`;
+    return { ok, errMsg };
+  }
+
+  if (!isObject(config.accountBalance) || isEmptyObject(config.accountBalance)) {
+    errMsg = `accountBalance key required`;
+    return { ok, errMsg };
+  }
+
+  for (const account of Object.values(config.accountBalance)) {
+    const { address, thresholdEth, alert: { type, severity } } = account;
+
+    if (!isAddress(address)) {
+      errMsg = `invalid address`;
+      return { ok, errMsg };
+    }
+
+    try {
+      ethers.BigNumber.from(thresholdEth);
+    } catch (error) {
+      errMsg = `Cannot convert value in thresholdEth to ethers.BigNumber: ${thresholdEth}`;
+      return { ok, errMsg };
+    }
+
+    // check type, this will fail if 'type' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
+      errMsg = `invalid finding type!`;
+      return { ok, errMsg };
+    }
+
+    // check severity, this will fail if 'severity' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
+      errMsg = `invalid finding severity!`;
+      return { ok, errMsg };
+    }
   }
 
   ok = true;

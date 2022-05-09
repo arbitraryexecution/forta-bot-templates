@@ -15,16 +15,13 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "admin-events",
+  agentType: "address-watch",
   name: "test-agent",
-  contracts: {
-    contractName1: {
-      name: "accountName1",
-      address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
-      watch : {
-        type: "Info",
-        severity: "Info"
-      }
+  addressList: {
+    0xFe1A6056EE03235f30f7a48407A5673BBf25eD48: {
+      name: "AaveDeployer",
+      type: "Info",
+      severity: "Info"
     }
   }
 };
