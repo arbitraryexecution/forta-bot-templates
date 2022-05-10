@@ -169,12 +169,9 @@ describe('handleTransaction', () => {
     mockTxEvent = createTransactionEvent({
       logs: [
         {
-          name: '',
           address: '',
-          signature: '',
           topics: [],
-          data: `0x${'0'.repeat(1000)}`,
-          args: [],
+          data: `0x`,
         },
       ],
     });
@@ -192,15 +189,9 @@ describe('handleTransaction', () => {
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
-    defaultLog.name = contractName;
     defaultLog.address = ethers.constants.AddressZero;
     defaultLog.topics = mockTopics;
-    defaultLog.args = mockArgs;
     defaultLog.data = data;
-    defaultLog.signature = iface
-      .getEvent(eventInConfig.name)
-      .format(ethers.utils.FormatTypes.minimal)
-      .substring(6);
 
     const findings = await handleTransaction(agentState, mockTxEvent);
 
@@ -213,15 +204,9 @@ describe('handleTransaction', () => {
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
-    defaultLog.name = contractName;
     defaultLog.address = validContractAddress;
     defaultLog.topics = mockTopics;
-    defaultLog.args = mockArgs;
     defaultLog.data = data;
-    defaultLog.signature = iface
-      .getEvent(eventNotInConfig.name)
-      .format(ethers.utils.FormatTypes.minimal)
-      .substring(6);
 
     const findings = await handleTransaction(agentState, mockTxEvent);
 
@@ -234,15 +219,9 @@ describe('handleTransaction', () => {
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
-    defaultLog.name = contractName;
     defaultLog.address = validContractAddress;
     defaultLog.topics = mockTopics;
-    defaultLog.args = mockArgs;
     defaultLog.data = data;
-    defaultLog.signature = iface
-      .getEvent(eventInConfig.name)
-      .format(ethers.utils.FormatTypes.minimal)
-      .substring(6);
 
     // eliminate any expression
     const { eventInfo } = agentState.contracts[0];
@@ -296,15 +275,9 @@ describe('handleTransaction', () => {
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
-    defaultLog.name = contractName;
     defaultLog.address = validContractAddress;
     defaultLog.topics = mockTopics;
-    defaultLog.args = mockArgs;
     defaultLog.data = data;
-    defaultLog.signature = iface
-      .getEvent(eventInConfig.name)
-      .format(ethers.utils.FormatTypes.minimal)
-      .substring(6);
 
     let expectedMetaData = {};
     Object.keys(mockArgs).forEach((name) => {
@@ -351,15 +324,9 @@ describe('handleTransaction', () => {
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
-    defaultLog.name = contractName;
     defaultLog.address = validContractAddress;
     defaultLog.topics = mockTopics;
-    defaultLog.args = mockArgs;
     defaultLog.data = data;
-    defaultLog.signature = iface
-      .getEvent(eventInConfig.name)
-      .format(ethers.utils.FormatTypes.minimal)
-      .substring(6);
 
     const findings = await handleTransaction(agentState, mockTxEvent);
 

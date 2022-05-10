@@ -36,8 +36,7 @@ const validateConfig = (config) => {
       return { ok, errMsg };
     }
 
-    const { version } = safe.gnosisSafe;
-    const { address } = safe;
+    const { address, gnosisSafe: { version } } = safe;
 
     // check that the address is a valid address
     if (!utils.isAddress(address)) {
@@ -156,7 +155,15 @@ const handleTransaction = async (agentState, txEvent) => {
     // filter for any events emitted by the safe contract
     const logs = txEvent.filterLog(contract.eventSignatures, contract.address);
     logs.forEach((log) => {
-      const findingObject = versionUtils.getFindings(contract.version, log.name, agentState.protocolName, agentState.protocolAbbreviation, agentState.developerAbbreviation, contract.address, log.args);
+      const findingObject = versionUtils.getFindings(
+        contract.version,
+        log.name,
+        agentState.protocolName,
+        agentState.protocolAbbreviation,
+        agentState.developerAbbreviation,
+        contract.address,
+        log.args
+      );
       if (!findingObject) {
         return;
       }

@@ -1,3 +1,10 @@
+const {
+  isFilledString,
+  isAddress,
+  isObject,
+  isEmptyObject
+} = require('../utils');
+
 const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 
 function createAlert(agentState, address, contractName, type, severity) {
@@ -14,25 +21,62 @@ const validateConfig = (config) => {
   let ok = false;
   let errMsg = "";
 
-  if (config["developerAbbreviation"] === undefined) {
-      errMsg = `No developerAbbreviation found`;
+  if (!isFilledString(config.developerAbbreviation)) {
+      errMsg = `developerAbbreviation required`;
       return { ok, errMsg };
   }
-  if (config["protocolName"] === undefined) {
-      errMsg = `No protocolName found`;
+  if (!isFilledString(config.protocolName)) {
+      errMsg = `protocolName required`;
       return { ok, errMsg };
   }
-  if (config["protocolAbbreviation"] === undefined) {
-      errMsg = `No protocolAbbreviation found`;
+  if (!isFilledString(config.protocolAbbreviation)) {
+      errMsg = `protocolAbbreviation required`;
       return { ok, errMsg };
   }
-  if (config["contracts"] === undefined) {
-      errMsg = `No contracts found`;
+
+  for (const [name, entry] of Object.entries(config.contracts)) {
+    if (!isObject(entry) || isEmptyObject(entry)) {
+      errMsg = `contract keys in contracts required`;
       return { ok, errMsg };
-  }
-  if (Object.keys(config.contracts).length === 0) {
-    errMsg = 'Must supply at least one address to watch';
-    return { ok, errMsg };
+    }
+
+    if (entry.address === undefined) {
+      errMsg = `No address found in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+
+    // check that the address is a valid address
+    if (!isAddress(entry.address)) {
+      errMsg = `invalid address`;
+      return { ok, errMsg };
+    }
+
+    if (entry.name === undefined) {
+      errMsg = `No name field in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+
+    if (!isFilledString(entry.name)) {
+      errMsg = `Name field needs to be filled in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+
+    if (!isObject(entry.watch)) {
+      errMsg = `watch field needs to be filled in configuration file for '${name}'`;
+      return { ok, errMsg };
+    }
+
+    // check type, this will fail if 'type' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingType, entry.watch.type)) {
+      errMsg = `invalid finding type!`;
+      return { ok, errMsg };
+    }
+
+    // check severity, this will fail if 'severity' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, entry.watch.severity)) {
+      errMsg = `invalid finding severity!`;
+      return { ok, errMsg };
+    }
   }
 
   ok = true;

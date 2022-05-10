@@ -41,7 +41,7 @@ function createTransactionEvent(txObject) {
     txObject.addresses,
     txObject.block,
     [],
-    [],
+    null,
   );
   return txEvent;
 }

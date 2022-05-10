@@ -4,7 +4,8 @@ const {
   createProposalFromLog,
   isObject,
   isEmptyObject,
-  isFilledString
+  isFilledString,
+  isAddress
 } = require('../utils');
 const {
   getObjectsFromAbi,
@@ -214,12 +215,11 @@ const validateConfig = (config) => {
 
   for (const [name, entry] of Object.entries(config.contracts)) {
     if (!isObject(entry) || isEmptyObject(entry)) {
-      errMsg = `governance key required`;
+      errMsg = `contract keys in contracts required`;
       return { ok, errMsg };
     }
 
-    const { abiFile } = entry.governance;
-    const { address } = entry;
+    const { governance: { abiFile }, address } = entry;
 
     if (address === undefined) {
       errMsg = `No address found in configuration file for '${name}'`;
@@ -232,7 +232,7 @@ const validateConfig = (config) => {
     }
 
     // check that the address is a valid address
-    if (!ethers.utils.isHexString(address, 20)) {
+    if (!isAddress(address)) {
       errMsg = `invalid address`;
       return { ok, errMsg };
     }
@@ -265,10 +265,6 @@ const initialize = async (config) => {
   if (!ok) {
     throw new Error(errMsg);
   }
-
-  agentState.developerAbbreviation = config.developerAbbreviation;
-  agentState.protocolName = config.protocolName;
-  agentState.protocolAbbreviation = config.protocolAbbreviation;
 
   agentState.contracts = Object.entries(config.contracts).map(([name, entry]) => {
     const { governance: { abiFile }, address } = entry;

@@ -65,10 +65,12 @@ const validateConfig = async (agentMap) => {
 
     console.log(`validating config for ${agentName(agent)}`);
 
-    const agentConfig = {...agent};
-    agentConfig.protocolName = protoName;
-    agentConfig.protocolAbbreviation = protoAbbrev;
-    agentConfig.developerAbbreviation = devAbbrev;
+    const agentConfig = {
+      ...agent,
+      protoName,
+      protoAbbrev,
+      devAbbrev,
+    };
 
     if (mod["validateConfig"] === undefined) {
       continue;
