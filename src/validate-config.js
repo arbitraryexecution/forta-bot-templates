@@ -15,22 +15,25 @@ function agentErr(agent, msg) {
 }
 
 const validateConfig = async (agentMap) => {
-  const devAbbrev = config["developerAbbreviation"];
-  if (devAbbrev === undefined) {
+  const {
+    developerAbbreviation,
+    protocolName,
+    protocolAbbreviation,
+    agents,
+  } = config;
+
+  if (developerAbbreviation === undefined) {
     panic("developerAbbreviation not defined!");
   }
 
-  const protoName = config["protocolName"];
-  if (protoName === undefined) {
+  if (protocolName === undefined) {
     panic("protocolName not defined!");
   }
 
-  const protoAbbrev = config["protocolAbbreviation"];
-  if (protoAbbrev === undefined) {
+  if (protocolAbbreviation === undefined) {
     panic("protocolAbbreviation not defined!");
   }
 
-  const agents = config["agents"];
   if (agents === undefined) {
     panic("agents not defined!");
   }
@@ -39,15 +42,15 @@ const validateConfig = async (agentMap) => {
   for (let i = 0; i < agents.length; i++) {
     const agent = agents[i];
 
-    if (agent["agentType"] === undefined) {
+    if (agent.agentType === undefined) {
       panic(`Agent ${i} has no type!`);
     }
 
-    if (agent["name"] === undefined) {
+    if (agent.name === undefined) {
       panic(`Agent ${i} has no name!`);
     }
 
-    if (agent["contracts"] === undefined) {
+    if (agent.contracts === undefined) {
       panic(agentErr(agent, `has no contracts!`));
     }
 
@@ -72,7 +75,7 @@ const validateConfig = async (agentMap) => {
       devAbbrev,
     };
 
-    if (mod["validateConfig"] === undefined) {
+    if (mod.validateConfig === undefined) {
       continue;
     }
 
