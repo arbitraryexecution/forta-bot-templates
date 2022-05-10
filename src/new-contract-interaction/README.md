@@ -1,6 +1,6 @@
-# New Contract Interaction Agent Template
+# New Contract Interaction Bot Template
 
-This agent monitors blockchain transactions for new contracts and EOAs with few transactions
+This bot monitors blockchain transactions for new contracts and EOAs with few transactions
 interacting with specific contract addresses. Alert type and severity are specified per contract.
 
-## [Agent Setup Walkthrough](SETUP.md)
+## [Bot Setup Walkthrough](SETUP.md)

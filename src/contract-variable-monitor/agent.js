@@ -159,14 +159,14 @@ const validateConfig = (config, abiOverride = null) => {
 };
 
 const initialize = async (config, abiOverride = null) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  agentState.variableInfoList = [];
+  botState.variableInfoList = [];
 
   const provider = getEthersProvider();
 
@@ -187,16 +187,16 @@ const initialize = async (config, abiOverride = null) => {
   contractList.forEach((contractEntry) => {
     const entry = config.contracts[contractEntry.name];
     const { info } = utils.getVariableInfo(entry, contractEntry);
-    agentState.variableInfoList.push(...info);
+    botState.variableInfoList.push(...info);
   });
 
-  return agentState;
+  return botState;
 };
 
-const handleBlock = async (agentState, blockEvent) => {
+const handleBlock = async (botState, blockEvent) => {
   // for each item present in variableInfoList, attempt to invoke the getter method
   // corresponding to the item's name and make sure it is within the specified threshold percent
-  const variablePromises = agentState.variableInfoList.map(async (variableInfo) => {
+  const variablePromises = botState.variableInfoList.map(async (variableInfo) => {
     const variableFindings = [];
     const {
       name: variableName,
@@ -227,9 +227,9 @@ const handleBlock = async (agentState, blockEvent) => {
             contract.address,
             type,
             severity,
-            agentState.protocolName,
-            agentState.protocolAbbreviation,
-            agentState.developerAbbreviation,
+            botState.protocolName,
+            botState.protocolAbbreviation,
+            botState.developerAbbreviation,
             'upper',
             upperThresholdPercent,
             percentOver.toString(),
@@ -248,9 +248,9 @@ const handleBlock = async (agentState, blockEvent) => {
             contract.address,
             type,
             severity,
-            agentState.protocolName,
-            agentState.protocolAbbreviation,
-            agentState.developerAbbreviation,
+            botState.protocolName,
+            botState.protocolAbbreviation,
+            botState.developerAbbreviation,
             'lower',
             lowerThresholdPercent,
             percentOver.toString(),

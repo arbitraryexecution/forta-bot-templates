@@ -7,11 +7,11 @@ const {
 
 const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 
-function createAlert(agentState, address, contractName, type, severity) {
+function createAlert(botState, address, contractName, type, severity) {
   return Finding.fromObject({
-    name: `${agentState.protocolName} Address Watch`,
+    name: `${botState.protocolName} Address Watch`,
     description: `Address ${address} (${contractName}) was involved in a transaction`,
-    alertId: `${agentState.developerAbbreviation}-${agentState.protocolAbbrev}-ADDRESS-WATCH`,
+    alertId: `${botState.developerAbbreviation}-${botState.protocolAbbrev}-ADDRESS-WATCH`,
     type: FindingType[type],
     severity: FindingSeverity[severity],
   });
@@ -84,7 +84,7 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  const agentState = {...config};
+  const botState = {...config};
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
@@ -92,20 +92,20 @@ const initialize = async (config) => {
   }
 
   // get list of addresses to watch
-  agentState.contractList = Object.values(config.contracts);
+  botState.contractList = Object.values(config.contracts);
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
   const txAddrs = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
 
   // check if an address in the watchlist was the initiator of the transaction
-  agentState.contractList.forEach((contract, index) => {
+  botState.contractList.forEach((contract, index) => {
     if (txAddrs.includes(contract.address.toLowerCase())) {
-      const params = Object.values(agentState.contracts)[index];
-      findings.push(createAlert(agentState, contract.address, params.name, params.watch.type, params.watch.severity));
+      const params = Object.values(botState.contracts)[index];
+      findings.push(createAlert(botState, contract.address, params.name, params.watch.type, params.watch.severity));
     }
   });
 

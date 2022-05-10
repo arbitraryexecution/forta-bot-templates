@@ -12,8 +12,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "governance",
-  name: "test-agent",
+  botType: "governance",
+  name: "test-bot",
   contracts: {
     contractName1: {
       address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
@@ -123,7 +123,7 @@ const iface = new ethers.utils.Interface(abi);
 // tests
 describe('monitor governance contracts for emitted events', () => {
   describe('handleTransaction', () => {
-    let agentState;
+    let botState;
     let mockTxEvent;
     let validEvent;
     let validContractAddress;
@@ -131,7 +131,7 @@ describe('monitor governance contracts for emitted events', () => {
     const mockContractName = 'mockContractName';
 
     beforeEach(async () => {
-      agentState = await initialize(config);
+      botState = await initialize(config);
 
       // grab the first entry from the 'contracts' key in the config file
       validContractAddress = config.contracts[firstContractName].address;
@@ -155,7 +155,7 @@ describe('monitor governance contracts for emitted events', () => {
     });
 
     it('returns empty findings if no monitored events were emitted in the transaction', async () => {
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
@@ -179,7 +179,7 @@ describe('monitor governance contracts for emitted events', () => {
         .format(ethers.utils.FormatTypes.minimal)
         .substring(6);
 
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       expect(findings).toStrictEqual([]);
     });
@@ -203,7 +203,7 @@ describe('monitor governance contracts for emitted events', () => {
         .format(ethers.utils.FormatTypes.minimal)
         .substring(6);
 
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       expect(findings).toStrictEqual([]);
     });
@@ -227,7 +227,7 @@ describe('monitor governance contracts for emitted events', () => {
         .format(ethers.utils.FormatTypes.minimal)
         .substring(6);
 
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       const proposal = {
         proposalId: '0',

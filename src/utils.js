@@ -2,16 +2,16 @@ const BigNumber = require('bignumber.js');
 const RollingMath = require('rolling-math');
 const { ethers } = require('forta-agent');
 
-function getAbi(agentName, abiFile) {
+function getAbi(botName, abiFile) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  const abiPath = `../abi/${agentName}`;
+  const abiPath = `../abi/${botName}`;
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }
 
-function getInternalAbi(agentType, abiFile) {
+function getInternalAbi(botType, abiFile) {
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  const abiPath = `./${agentType}/internal-abi`;
+  const abiPath = `./${botType}/internal-abi`;
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }

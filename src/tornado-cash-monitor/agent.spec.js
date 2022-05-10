@@ -16,8 +16,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "tornado-cash-monitor",
-  name: "test-agent",
+  botType: "tornado-cash-monitor",
+  name: "test-bot",
   observationIntervalInBlocks: 10,
   contracts: {
     contractName1: {
@@ -32,7 +32,7 @@ const config = {
 
 // tests
 describe('handleTransaction', () => {
-  let agentState;
+  let botState;
   let addressName;
   let testAddressInfo;
   let mockTrace;
@@ -48,10 +48,10 @@ describe('handleTransaction', () => {
     [addressName] = Object.keys(contracts);
     testAddressInfo = contracts[addressName];
 
-    agentState = await initialize(config);
+    botState = await initialize(config);
 
     // pull out the initialized interface to use for crafting test data
-    ({ iface } = agentState);
+    ({ iface } = botState);
 
     // initialize mock trace object with default values
     mockTrace = [
@@ -83,11 +83,11 @@ describe('handleTransaction', () => {
   });
 
   it('returns no findings if no deposit/withdraw function from a tornado cash proxy was called', async () => {
-    // run agent with empty mockTxEvent
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    // run bot with empty mockTxEvent
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     // expect the suspiciousAddresses object to be empty
-    expect(Object.keys(agentState.suspiciousAddresses).length).toBe(0);
+    expect(Object.keys(botState.suspiciousAddresses).length).toBe(0);
 
     // expect no findings
     expect(findings).toStrictEqual([]);
@@ -117,11 +117,11 @@ describe('handleTransaction', () => {
       [tornadoCashAddress]: true,
     };
 
-    // run the agent
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    // run the bot
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     // expect the suspiciousAddresses object to contain one entry
-    expect(Object.keys(agentState.suspiciousAddresses).length).toBe(1);
+    expect(Object.keys(botState.suspiciousAddresses).length).toBe(1);
 
     // expect no findings since there were no transactions involving a monitored address
     expect(findings).toStrictEqual([]);
@@ -153,11 +153,11 @@ describe('handleTransaction', () => {
       [tornadoCashAddress]: true,
     };
 
-    // run the agent
-    let findings = await handleTransaction(agentState, mockTxEvent);
+    // run the bot
+    let findings = await handleTransaction(botState, mockTxEvent);
 
     // expect the suspiciousAddresses object to contain one entry
-    expect(Object.keys(agentState.suspiciousAddresses).length).toBe(1);
+    expect(Object.keys(botState.suspiciousAddresses).length).toBe(1);
 
     // expect no findings since there have not been any transactions involving a monitored address
     expect(findings).toStrictEqual([]);
@@ -180,13 +180,13 @@ describe('handleTransaction', () => {
     // config file
     mockTxEvent.block.number = mockTxEvent.block.number + config.observationIntervalInBlocks + 1;
 
-    // run the agent
-    findings = await handleTransaction(agentState, mockTxEvent);
+    // run the bot
+    findings = await handleTransaction(botState, mockTxEvent);
 
     // expect the suspiciousAddresses object to contain no entries as the only entry should have
     // been removed since the current block number minus the block number the suspicious address
     // was added to the list at is greater than the observation interval
-    expect(Object.keys(agentState.suspiciousAddresses).length).toBe(0);
+    expect(Object.keys(botState.suspiciousAddresses).length).toBe(0);
 
     // expect no findings
     expect(findings).toStrictEqual([]);
@@ -218,11 +218,11 @@ describe('handleTransaction', () => {
       [tornadoCashAddress]: true,
     };
 
-    // run the agent
-    let findings = await handleTransaction(agentState, mockTxEvent);
+    // run the bot
+    let findings = await handleTransaction(botState, mockTxEvent);
 
     // expect the suspiciousAddresses object to contain one entry
-    expect(Object.keys(agentState.suspiciousAddresses).length).toBe(1);
+    expect(Object.keys(botState.suspiciousAddresses).length).toBe(1);
 
     // expect no findings since there have not been any transactions involving a monitored address
     expect(findings).toStrictEqual([]);
@@ -244,8 +244,8 @@ describe('handleTransaction', () => {
     // update the blockNumber
     mockTxEvent.block.number += 1;
 
-    // run the agent
-    findings = await handleTransaction(agentState, mockTxEvent);
+    // run the bot
+    findings = await handleTransaction(botState, mockTxEvent);
 
     const expectedFinding = [Finding.fromObject({
       name: `${config.protocolName} Tornado Cash Monitor`,

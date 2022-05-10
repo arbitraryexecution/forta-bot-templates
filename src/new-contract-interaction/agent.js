@@ -150,15 +150,15 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  agentState.provider = getEthersProvider();
-  agentState.contracts = Object.entries(agentState.contracts).map(([name, entry]) => {
+  botState.provider = getEthersProvider();
+  botState.contracts = Object.entries(botState.contracts).map(([name, entry]) => {
     const {
       thresholdBlockCount,
       thresholdTransactionCount,
@@ -174,16 +174,16 @@ const initialize = async (config) => {
     };
   });
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
 
   // get all addresses involved with this transaction
   const transactionAddresses = Object.keys(txEvent.addresses);
 
-  await Promise.all(agentState.contracts.map(async (contract) => {
+  await Promise.all(botState.contracts.map(async (contract) => {
     const {
       name,
       address,
@@ -210,7 +210,7 @@ const handleTransaction = async (agentState, txEvent) => {
 
       const results = await Promise.allSettled(
         filteredTransactionAddresses.map(async (transactionAddress) => {
-          const contractCode = await agentState.provider.getCode(transactionAddress);
+          const contractCode = await botState.provider.getCode(transactionAddress);
           return { transactionAddress, code: contractCode };
         }),
       );
@@ -226,7 +226,7 @@ const handleTransaction = async (agentState, txEvent) => {
       });
 
       await Promise.all(eoaAddresses.map(async (eoaAddress) => {
-        const eoaTransactionCount = await agentState.provider.getTransactionCount(eoaAddress);
+        const eoaTransactionCount = await botState.provider.getTransactionCount(eoaAddress);
 
         if (eoaTransactionCount < thresholdTransactionCount) {
           findings.push(createEOAInteractionAlert(
@@ -236,9 +236,9 @@ const handleTransaction = async (agentState, txEvent) => {
             eoaTransactionCount,
             findingType,
             findingSeverity,
-            agentState.protocolName,
-            agentState.protocolAbbreviation,
-            agentState.developerAbbreviation,
+            botState.protocolName,
+            botState.protocolAbbreviation,
+            botState.developerAbbreviation,
           ));
         }
       }));
@@ -246,7 +246,7 @@ const handleTransaction = async (agentState, txEvent) => {
       const blockOverride = txEvent.blockNumber - thresholdBlockCount;
       const blockResults = await Promise.allSettled(
         Object.keys(contractResults).map(async (contractResult) => {
-          const contractCode = await agentState.provider.getCode(contractResult, blockOverride);
+          const contractCode = await botState.provider.getCode(contractResult, blockOverride);
           return { transactionAddress: contractResult, code: contractCode };
         }),
       );
@@ -260,9 +260,9 @@ const handleTransaction = async (agentState, txEvent) => {
               result.value.transactionAddress,
               findingType,
               findingSeverity,
-              agentState.protocolName,
-              agentState.protocolAbbreviation,
-              agentState.developerAbbreviation,
+              botState.protocolName,
+              botState.protocolAbbreviation,
+              botState.developerAbbreviation,
             ));
           }
         }

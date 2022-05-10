@@ -2,10 +2,10 @@
   "developerAbbreviation": "",
   "protocolName": "",
   "protocolAbbreviation": "",
-  "agents": [
+  "bots": [
     {
-      "agentType": "account-balance",
-      "name": "agent_1",
+      "botType": "account-balance",
+      "name": "bot_1",
       "accountBalance": {
         "contractName1": {
           "address": "",
@@ -16,8 +16,8 @@
       "alertMinimumIntervalSeconds": 86400
     },
     {
-      "agentType": "address-watch",
-      "name": "agent_2",
+      "botType": "address-watch",
+      "name": "bot_2",
       "contracts": {
         "contractName1": {
           "name": "accountName1",
@@ -30,8 +30,8 @@
       }
     },
     {
-      "agentType": "admin-events",
-      "name": "agent_3",
+      "botType": "admin-events",
+      "name": "bot_3",
       "contracts": {
         "contractName1": {
           "address": "contractAddress1",
@@ -45,8 +45,8 @@
       }
     },
     {
-      "agentType": "contract-variable-monitor",
-      "name": "agent_4",
+      "botType": "contract-variable-monitor",
+      "name": "bot_4",
       "contracts": {
         "contractName1": {
           "address": "contractAddress1",
@@ -64,24 +64,24 @@
       }
     },
     {
-      "agentType": "gnosis-safe-multisig",
-      "name": "agent_5",
+      "botType": "gnosis-safe-multisig",
+      "name": "bot_5",
       "gnosisSafe": {
         "address": "contractAddress",
         "version": "gnosisSafeContractVersion"
       }
     },
     {
-      "agentType": "governance",
-      "name": "agent_6",
+      "botType": "governance",
+      "name": "bot_6",
       "governance": {
         "address": "",
         "abiFile": ""
       }
     },
     {
-      "agentType": "monitor-function-calls",
-      "name": "agent_7",
+      "botType": "monitor-function-calls",
+      "name": "bot_7",
       "contracts": {
         "contractName1": {
           "address": "contractAddress1",
@@ -97,8 +97,8 @@
       }
     },
     {
-      "agentType": "new-contract-interaction",
-      "name": "agent_8",
+      "botType": "new-contract-interaction",
+      "name": "bot_8",
       "contracts": {
         "contractName1": {
           "thresholdBlockCount": 7,
@@ -114,8 +114,8 @@
       }
     },
     {
-      "agentType": "tornado-cash-monitor",
-      "name": "agent_9",
+      "botType": "tornado-cash-monitor",
+      "name": "bot_9",
       "addressList": {
         "contractName1": {
           "address": "contractAddress1",
@@ -125,8 +125,8 @@
       }
     },
     {
-      "agentType": "transaction-failure-count",
-      "name": "agent_10",
+      "botType": "transaction-failure-count",
+      "name": "bot_10",
       "blockWindow": 25,
       "failedTransactions": {
         "contractName1": {

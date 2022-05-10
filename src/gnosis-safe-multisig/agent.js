@@ -46,7 +46,7 @@ const validateConfig = (config) => {
 
     // check that there is a corresponding file for the version indicated
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis-safe.json`);
+    const abi = utils.getInternalAbi(config.botType, `${version}/gnosis-safe.json`);
 
     if (!utils.isObject(abi) || utils.isEmptyObject(abi)) {
       errMsg = `gnosis-safe abi required`;
@@ -59,34 +59,34 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  agentState.provider = getEthersProvider();
+  botState.provider = getEthersProvider();
 
   // grab erc20 abi and create an interface
-  const erc20Abi = utils.getInternalAbi(config.agentType, "ERC20.json");
+  const erc20Abi = utils.getInternalAbi(config.botType, "ERC20.json");
   const erc20Interface = new ethers.utils.Interface(erc20Abi);
 
   // save the erc20 ABI and Transfer signature for later use
-  agentState.erc20Abi = erc20Abi;
+  botState.erc20Abi = erc20Abi;
   const ftype = ethers.utils.FormatTypes.full;
-  agentState.transferSignature = erc20Interface.getEvent('Transfer').format(ftype);
+  botState.transferSignature = erc20Interface.getEvent('Transfer').format(ftype);
 
   // gnosis-safe specific configuration values
-  agentState.gnosisSafe = config.contracts;
+  botState.gnosisSafe = config.contracts;
 
-  const safeEntries = Object.entries(agentState.gnosisSafe);
-  agentState.contracts = await Promise.all(safeEntries.map(async ([, entry]) => {
+  const safeEntries = Object.entries(botState.gnosisSafe);
+  botState.contracts = await Promise.all(safeEntries.map(async ([, entry]) => {
     const { version } = entry.gnosisSafe;
     const address = entry.address.toLowerCase();
 
     // get the current block number to retrieve all past Transfer events
-    const blockNumber = await agentState.provider.getBlockNumber();
+    const blockNumber = await botState.provider.getBlockNumber();
 
     // look up all Transfer events to this address
     const topics = erc20Interface.encodeFilterTopics('Transfer', [ null, address, ]);
@@ -96,7 +96,7 @@ const initialize = async (config) => {
       toBlock: blockNumber,
       topics,
     };
-    const rawLogs = await agentState.provider.getLogs(filter);
+    const rawLogs = await botState.provider.getLogs(filter);
     // extract the token addresses from the Transfer events
     let tokenAddresses = rawLogs.map((rawLog) => rawLog.address.toLowerCase());
 
@@ -105,12 +105,12 @@ const initialize = async (config) => {
 
     // create ethers contract objects for each token
     const tokenContracts = tokenAddresses.map((tokenAddress) => {
-      return new ethers.Contract(tokenAddress, erc20Abi, agentState.provider);
+      return new ethers.Contract(tokenAddress, erc20Abi, botState.provider);
     });
 
     // load the appropriate abi
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis-safe.json`);
+    const abi = utils.getInternalAbi(config.botType, `${version}/gnosis-safe.json`);
     const iface = new ethers.utils.Interface(abi);
     const names = Object.keys(iface.events); // filter out only the events from the abi
     const eventSignatures = names.map((iName) => iface.getEvent(iName).format(ftype));
@@ -128,16 +128,16 @@ const initialize = async (config) => {
     return contract;
   }));
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
 
   // if any transfers occurred to or from this safe, store the token address and create an ethers
   // contract object for interactions in the handleBlock function
-  const transferLogs = txEvent.filterLog(agentState.transferSignature);
-  agentState.contracts.forEach((contract) => {
+  const transferLogs = txEvent.filterLog(botState.transferSignature);
+  botState.contracts.forEach((contract) => {
     transferLogs.forEach((log) => {
       const addressLower = contract.address.toLowerCase();
       if (log.args.from.toLowerCase() !== addressLower && log.args.to.toLowerCase() !== addressLower) {
@@ -147,7 +147,7 @@ const handleTransaction = async (agentState, txEvent) => {
       const logAddressLower = log.address.toLowerCase();
       const tokenAddresses = contract.tokenAddresses;
       if ((tokenAddresses.indexOf(logAddressLower) === -1) && tokenAddresses.push(logAddressLower)) {
-        const tokenContract = new ethers.Contract(log.address, agentState.erc20Abi, agentState.provider);
+        const tokenContract = new ethers.Contract(log.address, botState.erc20Abi, botState.provider);
         contract.tokenContracts.push(tokenContract);
       }
     });
@@ -158,9 +158,9 @@ const handleTransaction = async (agentState, txEvent) => {
       const findingObject = versionUtils.getFindings(
         contract.version,
         log.name,
-        agentState.protocolName,
-        agentState.protocolAbbreviation,
-        agentState.developerAbbreviation,
+        botState.protocolName,
+        botState.protocolAbbreviation,
+        botState.developerAbbreviation,
         contract.address,
         log.args
       );
@@ -170,7 +170,7 @@ const handleTransaction = async (agentState, txEvent) => {
 
       findingObject.type = FindingType.Info;
       findingObject.severity = FindingSeverity.Info;
-      findingObject.protocol = agentState.protocolName;
+      findingObject.protocol = botState.protocolName;
       const finding = Finding.fromObject(findingObject);
       findings.push(finding);
     });
@@ -179,17 +179,17 @@ const handleTransaction = async (agentState, txEvent) => {
   return findings;
 };
 
-const handleBlock = async (agentState) => {
+const handleBlock = async (botState) => {
   const {
     developerAbbreviation,
     protocolAbbreviation,
     protocolName,
-  } = agentState;
+  } = botState;
 
   // find changes in eth balance and tokens for every gnosis safe address
-  let totalFindings = await Promise.all(agentState.contracts.map(async (contract) => {
+  let totalFindings = await Promise.all(botState.contracts.map(async (contract) => {
     const { address } = contract;
-    const ethBalance = await agentState.provider.getBalance(address);
+    const ethBalance = await botState.provider.getBalance(address);
     const ethBalanceBN = new BigNumber(ethBalance.toString());
 
     // created new token contract for every token transfer that's ever happened to this address

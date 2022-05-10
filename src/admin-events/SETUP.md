@@ -1,15 +1,15 @@
-# Admininstrative/Governance Events Agent Template
+# Admininstrative/Governance Events Bot Template
 
-This agent monitors blockchain transactions for specific events emitted from specific contract addresses.  Alert
-type and severity are specified per event per contract address.  An existing agent of this type may be modified
-to add/remove/update events and contracts in the agent configuration file.
+This bot monitors blockchain transactions for specific events emitted from specific contract addresses.  Alert
+type and severity are specified per event per contract address.  An existing bot of this type may be modified
+to add/remove/update events and contracts in the bot configuration file.
 
-## Agent Setup Walkthrough
+## Bot Setup Walkthrough
 
 1. `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor events
 for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
-monitoring by the agent).  The Object corresponding to each contract name requires an address key/value pair, abi
+monitoring by the bot).  The Object corresponding to each contract name requires an address key/value pair, abi
 file key/value pair, and an `events` key, `proxy` key, or both.  For the case of an `events` key, the corresponding
 value is an Object containing the names of events as keys. The value for each event name is an Object containing:
     * type (required) - Forta Finding Type
@@ -20,7 +20,7 @@ value is an Object containing the names of events as keys. The value for each ev
     `operator` is a standard operation such as: `>=, !==, <` (a full table on supported operators can be found in the
     [Expression Compatibility Table](#expression-compatibility-table)), and `value` is an address, string, or number.
 
-Note: If no expression is provided, the agent will create an alert whenever the specified event is emitted.
+Note: If no expression is provided, the bot will create an alert whenever the specified event is emitted.
 
 For example, to monitor the Uniswap GovernorBravo contract for emitted `NewAdmin` events, we would need the contract
 address, the ABI saved locally as a JSON formatted file, the exact event name corresponding to what is listed in the
@@ -60,12 +60,12 @@ the config would look like the following:
   }
 ```
 
-Note that any unused entries in the configuration file must be deleted for the agent to work.  The original version
+Note that any unused entries in the configuration file must be deleted for the bot to work.  The original version
 of the configuration file contains several placeholders to show the structure of the file, but these are not valid
-entries for running the agent.
+entries for running the bot.
 
 2. If a contract is a proxy for another contract, where events will be emitted as if they are coming from the proxy
-instead of from the underlying implementation contract, the entry in the `agent-config.json` file may look like the
+instead of from the underlying implementation contract, the entry in the `bot-config.json` file may look like the
 following:
 
 ```json
@@ -94,7 +94,7 @@ corresponding to the "NonFungibleTokenPositionDescriptor" entry.  What is critic
 to the `proxy` key must be identical to one of the contract name keys in the `adminEvents` Object.  It is possible for
 the proxy contract to emit its own events and events from the underlying implementation contract.  In those cases,
 there may be an `"events"` key with corresponding Object value for the proxy contract as well.  Both sets of events
-will be used by the agent when monitoring blockchain transactions.
+will be used by the bot when monitoring blockchain transactions.
 
 3. We can obtain the contract ABI from one of several locations.  The most accurate ABI will be the one
 corresponding to the original contract code that was compiled and deployed onto the blockchain.  This typically will
@@ -164,7 +164,7 @@ in the file:
 ```
 
 The name of the JSON formatted file containing the ABI needs to have the same path as the value provided for
-the `abiFile` key in the `agent-config.json` file.  This will allow the agent to load the ABI correctly and
+the `abiFile` key in the `bot-config.json` file.  This will allow the bot to load the ABI correctly and
 parse transaction logs for events.
 
 ## Appendix

@@ -33,9 +33,9 @@ function createAlert(
 }
 
 const initialize = async (config) => {
-  let agentState = {...config};
+  let botState = {...config};
 
-  agentState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
+  botState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
     contractName,
     contractAddress: entry.address.toLowerCase(),
     txFailureLimit: entry.transactionFailuresLimit,
@@ -44,14 +44,14 @@ const initialize = async (config) => {
     alertSeverity: entry.severity,
   }));
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
 
   // check to see if any of the contracts were involved in the failed transaction
-  const promises = agentState.contracts.map(async (contract) => {
+  const promises = botState.contracts.map(async (contract) => {
     const {
       contractName: name,
       contractAddress: address,
@@ -72,7 +72,7 @@ const handleTransaction = async (agentState, txEvent) => {
 
     // filter out occurrences older than blockWindow
     Object.entries(contract.failedTxs).forEach(([hash, blockNumber]) => {
-      if (blockNumber < txEvent.blockNumber - agentState.blockWindow) {
+      if (blockNumber < txEvent.blockNumber - botState.blockWindow) {
         delete contract.failedTxs[hash];
       }
     });
@@ -86,10 +86,10 @@ const handleTransaction = async (agentState, txEvent) => {
           address,
           failedTxHashes,
           limit,
-          agentState.blockWindow,
-          agentState.protocolName,
-          agentState.protocolAbbreviation,
-          agentState.developerAbbreviation,
+          botState.blockWindow,
+          botState.protocolName,
+          botState.protocolAbbreviation,
+          botState.developerAbbreviation,
           alertType,
           alertSeverity,
         ),

@@ -1,25 +1,25 @@
-const config = require("../agent-config.json");
-const { agentImports } = require("./agent");
+const config = require("../bot-config.json");
+const { botImports } = require("./agent");
 
 function panic(msg) {
   console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
   process.exit(1);
 }
 
-function agentName(agent) {
-  return `${agent.name}:${agent.agentType}`;
+function botName(bot) {
+  return `${bot.name}:${bot.botType}`;
 }
 
-function agentErr(agent, msg) {
-  return `${agentName(agent)} ${msg}`;
+function botErr(bot, msg) {
+  return `${botName(bot)} ${msg}`;
 }
 
-const validateConfig = async (agentMap) => {
+const validateConfig = async (botMap) => {
   const {
     developerAbbreviation,
     protocolName,
     protocolAbbreviation,
-    agents,
+    bots,
   } = config;
 
   if (developerAbbreviation === undefined) {
@@ -34,66 +34,66 @@ const validateConfig = async (agentMap) => {
     panic("protocolAbbreviation not defined!");
   }
 
-  if (agents === undefined) {
-    panic("agents not defined!");
+  if (bots === undefined) {
+    panic("bots not defined!");
   }
 
   let modProms = [];
-  for (let i = 0; i < agents.length; i++) {
-    const agent = agents[i];
+  for (let i = 0; i < bots.length; i++) {
+    const bot = bots[i];
 
-    if (agent.agentType === undefined) {
-      panic(`Agent ${i} has no type!`);
+    if (bot.botType === undefined) {
+      panic(`Bot ${i} has no type!`);
     }
 
-    if (agent.name === undefined) {
-      panic(`Agent ${i} has no name!`);
+    if (bot.name === undefined) {
+      panic(`Bot ${i} has no name!`);
     }
 
-    if (agent.contracts === undefined) {
-      panic(agentErr(agent, `has no contracts!`));
+    if (bot.contracts === undefined) {
+      panic(botErr(bot, `has no contracts!`));
     }
 
-    const modProm = agentMap.get(agent.agentType);
+    const modProm = botMap.get(bot.botType);
     if (modProm === undefined) {
-      panic(agentErr(agent, `module not found!`));
+      panic(botErr(bot, `module not found!`));
     }
     modProms.push(modProm);
   }
 
-  const agentMods = await Promise.all(modProms);
-  for (let i = 0; i < agentMods.length; i++) {
-    const agent = agents[i];
-    const mod = agentMods[i];
+  const botMods = await Promise.all(modProms);
+  for (let i = 0; i < botMods.length; i++) {
+    const bot = bots[i];
+    const mod = botMods[i];
 
-    console.log(`validating config for ${agentName(agent)}`);
+    console.log(`validating config for ${botName(bot)}`);
 
-    const agentConfig = {
-      ...agent,
-      protoName,
-      protoAbbrev,
-      devAbbrev,
+    const botConfig = {
+      protocolName,
+      protocolAbbreviation,
+      developerAbbreviation,
+      ...bot,
     };
 
     if (mod.validateConfig === undefined) {
       continue;
     }
 
-    const { ok, errMsg } = mod.validateConfig(agentConfig);
+    const { ok, errMsg } = mod.validateConfig(botConfig);
     if (!ok) {
-      panic(agentErr(agent, `in config\n  - ${errMsg}`));
+      panic(botErr(bot, `in config\n  - ${errMsg}`));
     }
   }
 };
 
 const main = async () => {
-  const agentMap = new Map();
-  for (let i = 0; i < agentImports.length; i++) {
-    const imp = agentImports[i];
-    agentMap.set(imp.name, imp.agent);
+  const botMap = new Map();
+  for (let i = 0; i < botImports.length; i++) {
+    const imp = botImports[i];
+    botMap.set(imp.name, imp.bot);
   }
 
-  await validateConfig(agentMap);
+  await validateConfig(botMap);
   console.log("Config validated successfully");
 };
 

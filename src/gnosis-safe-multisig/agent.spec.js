@@ -48,8 +48,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "gnosis-safe-multisig",
-  name: "test-agent",
+  botType: "gnosis-safe-multisig",
+  name: "test-bot",
   contracts: {
     contractName1: {
       address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
@@ -60,12 +60,12 @@ const config = {
   }
 };
 
-const erc20Abi = utils.getInternalAbi(config.agentType, "ERC20.json");
+const erc20Abi = utils.getInternalAbi(config.botType, "ERC20.json");
 erc20Interface = new ethers.utils.Interface(erc20Abi);
 
 describe('gnosis-safe multisig monitoring', () => {
   describe('handleBlock', () => {
-    let agentState;
+    let botState;
 
     const logsNoMatchEvent = [
       {
@@ -78,29 +78,29 @@ describe('gnosis-safe multisig monitoring', () => {
       // set an initial Ether balance for the contract
       mockProvider.getBalance = jest.fn().mockResolvedValue(ethers.BigNumber.from(0));
 
-      agentState = await initialize(config);
+      botState = await initialize(config);
     });
 
     it('returns empty findings if this is the first block seen', async () => {
       // invoke the block handler
-      const findings = await handleBlock(agentState);
+      const findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
     });
 
     it('returns empty findings if the Ether balance is unchanged', async () => {
       // invoke the block handler
-      let findings = await handleBlock(agentState);
+      let findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler with a non-matching log
       const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(2);
     });
@@ -114,19 +114,19 @@ describe('gnosis-safe multisig monitoring', () => {
         .mockResolvedValueOnce(newValue);
 
       // invoke the block handler
-      let findings = await handleBlock(agentState);
+      let findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
       const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
 
-      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = agentState;
+      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = botState;
       const protocolAddress = contracts[0].address; // use first contract to test
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
@@ -150,17 +150,17 @@ describe('gnosis-safe multisig monitoring', () => {
       mockContract.balanceOf = jest.fn().mockResolvedValue(ethers.BigNumber.from(0));
 
       // invoke the block handler
-      let findings = await handleBlock(agentState);
+      let findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
       const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(2);
     });
@@ -174,20 +174,20 @@ describe('gnosis-safe multisig monitoring', () => {
         .mockResolvedValueOnce(newValue);
 
       // invoke the block handler
-      let findings = await handleBlock(agentState);
+      let findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
       const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
 
       // create expected findings
-      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = agentState;
+      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = botState;
       const protocolAddress = contracts[0].address; // use first contract to test
 
       const expectedFindings = [Finding.fromObject({
@@ -217,12 +217,12 @@ describe('gnosis-safe multisig monitoring', () => {
         .mockResolvedValueOnce(ethers.BigNumber.from(0)); // new token, second call
 
       // invoke the block handler
-      let findings = await handleBlock(agentState);
+      let findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // get the address of the safe
-      const { contracts } = agentState;
+      const { contracts } = botState;
       const { address } = contracts[0]; // use first address to test
 
       // create the log with the Transfer event inside. From zero address to the safe
@@ -241,22 +241,22 @@ describe('gnosis-safe multisig monitoring', () => {
       let mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNewTransferToEvent, null);
 
       // invoke the transaction handler
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
 
       mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
 
       // invoke the transaction handler again, this time without a Transfer event
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a third time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(5);
     });
@@ -272,12 +272,12 @@ describe('gnosis-safe multisig monitoring', () => {
         .mockResolvedValueOnce(newValue); // new token, second call
 
       // invoke the block handler
-      let findings = await handleBlock(agentState);
+      let findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // get the address of the wallet
-      const { contracts } = agentState;
+      const { contracts } = botState;
       const { address } = contracts[0]; // use first address to test
 
       // create the log with the Transfer event inside
@@ -295,25 +295,25 @@ describe('gnosis-safe multisig monitoring', () => {
       let mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNewTransferToEvent, null);
 
       // invoke the transaction handler
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(3);
 
       mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
 
       // invoke the transaction handler again, this time without a Transfer event
-      findings = await handleTransaction(agentState, mockTxEvent);
+      findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a third time
-      findings = await handleBlock(agentState);
+      findings = await handleBlock(botState);
 
       // create expected findings
-      const { protocolName, protocolAbbreviation, developerAbbreviation } = agentState;
+      const { protocolName, protocolAbbreviation, developerAbbreviation } = botState;
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - Token Balance Changed`,
         description: `Token balance of ${address} changed by 1`,
@@ -334,13 +334,13 @@ describe('gnosis-safe multisig monitoring', () => {
   });
 
   describe('handleTransaction', () => {
-    let agentState;
+    let botState;
 
     // grab first safe to test
     const firstContractName = Object.keys(config.contracts)[0];
     const { version } = config.contracts[firstContractName].gnosisSafe;
     // eslint-disable-next-line import/no-dynamic-require,global-require
-    const abi = utils.getInternalAbi(config.agentType, `${version}/gnosis-safe.json`);
+    const abi = utils.getInternalAbi(config.botType, `${version}/gnosis-safe.json`);
     const iface = new ethers.utils.Interface(abi);
 
     const logsNoMatchEvent = [
@@ -370,30 +370,30 @@ describe('gnosis-safe multisig monitoring', () => {
       // set an initial Ether balance for the contract
       mockProvider.getBalance = jest.fn().mockResolvedValue(ethers.BigNumber.from(0));
 
-      agentState = await initialize(config);
+      botState = await initialize(config);
     });
 
     it('returns empty findings if the address does not match', async () => {
       // invoke the transaction handler with a non-matching log
       const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
     it('returns empty findings if the address matches but the event does not', async () => {
       // invoke the transaction handler with a non-matching log
       const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsAddressMatchNoEventMatch, null);
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
     it('returns findings if the address and event match', async () => {
       // invoke the transaction handler with a non-matching log
       const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsAddressAndEventMatch, null);
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       // create expected findings
-      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = agentState;
+      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = botState;
       const protocolAddress = contracts[0].address; // use first contract to test
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,
