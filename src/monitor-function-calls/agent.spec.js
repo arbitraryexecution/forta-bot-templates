@@ -23,8 +23,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "admin-events",
-  name: "test-agent",
+  botType: "admin-events",
+  name: "test-bot",
   contracts: {
     AggregationRouterV4: {
       address: "0x1111111254fb6c44bac0bed2854e76f90643097d",
@@ -76,7 +76,7 @@ const abiOverride = {
 
 describe('monitor functions that do not emit events', () => {
   describe('handleTransaction', () => {
-    let agentState;
+    let botState;
     let configContracts;
     let contractName;
     let validContractAddress;
@@ -134,7 +134,7 @@ describe('monitor functions that do not emit events', () => {
       ({ functionInConfig, functionNotInConfig } = testConfig);
 
       // initialize the handler
-      agentState = await initialize(config, abiOverride);
+      botState = await initialize(config, abiOverride);
 
       // initialize mock trace object with default values
       mockTrace = [
@@ -161,7 +161,7 @@ describe('monitor functions that do not emit events', () => {
     });
 
     it('returns empty findings if no monitored functions were invoked in the transaction', async () => {
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
@@ -179,7 +179,7 @@ describe('monitor functions that do not emit events', () => {
       // update mock transaction event with new mock trace
       mockTxEvent.traces = mockTrace;
 
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       expect(findings).toStrictEqual([]);
     });
@@ -201,7 +201,7 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.traces = mockTrace;
       mockTxEvent.transaction.to = validContractAddress;
 
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       expect(findings).toStrictEqual([]);
     });
@@ -224,7 +224,7 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.transaction.to = validContractAddress;
 
       // eliminate any expression from the configuration file
-      agentState.contracts.forEach((contract) => {
+      botState.contracts.forEach((contract) => {
         const { functionSignatures } = contract;
         functionSignatures.forEach((functionSignature) => {
           if (functionSignature.functionName === functionInConfig.name) {
@@ -238,7 +238,7 @@ describe('monitor functions that do not emit events', () => {
       });
 
       // run the handler
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       let argumentData = {};
       Object.keys(mockArgs).forEach((name) => {
@@ -270,7 +270,7 @@ describe('monitor functions that do not emit events', () => {
     it('returns a finding if a target contract invokes a monitored function when the expression condition is met', async () => {
       let expression;
       let expressionObject;
-      agentState.contracts.forEach((contract) => {
+      botState.contracts.forEach((contract) => {
         const { functionSignatures } = contract;
         functionSignatures.forEach((functionSignature) => {
           if (functionSignature.functionName === functionInConfig.name) {
@@ -300,7 +300,7 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.transaction.to = validContractAddress;
 
       // run the handler
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       // create the expected finding
 
@@ -334,7 +334,7 @@ describe('monitor functions that do not emit events', () => {
 
     it('returns no finding if a target contract invokes a monitored function when the expression condition is not met', async () => {
       let expressionObject;
-      agentState.contracts.forEach((contract) => {
+      botState.contracts.forEach((contract) => {
         const { functionSignatures } = contract;
         functionSignatures.forEach((functionSignature) => {
           if (functionSignature.functionName === functionInConfig.name) {
@@ -363,7 +363,7 @@ describe('monitor functions that do not emit events', () => {
       mockTxEvent.transaction.to = validContractAddress;
 
       // run the handler
-      const findings = await handleTransaction(agentState, mockTxEvent);
+      const findings = await handleTransaction(botState, mockTxEvent);
 
       // create the expected finding
       expect(findings).toStrictEqual([]);

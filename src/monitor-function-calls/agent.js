@@ -141,14 +141,14 @@ const validateConfig = (config, abiOverride = null) => {
 };
 
 const initialize = async (config, abiOverride = null) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  agentState.contracts = Object.keys(config.contracts).map((name) => {
+  botState.contracts = Object.keys(config.contracts).map((name) => {
     const { address, abiFile, functions } = config.contracts[name];
     let abi;
     if (abiOverride != null) {
@@ -188,13 +188,13 @@ const initialize = async (config, abiOverride = null) => {
     return contract;
   });
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
 
-  agentState.contracts.forEach((contract) => {
+  botState.contracts.forEach((contract) => {
     const {
       name,
       address,
@@ -234,9 +234,9 @@ const handleTransaction = async (agentState, txEvent) => {
           functionType,
           functionSeverity,
           parsedFunction.args,
-          agentState.protocolName,
-          agentState.protocolAbbreviation,
-          agentState.developerAbbreviation,
+          botState.protocolName,
+          botState.protocolAbbreviation,
+          botState.developerAbbreviation,
           expression,
         ));
       });

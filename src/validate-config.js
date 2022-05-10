@@ -69,10 +69,10 @@ const validateConfig = async (botMap) => {
     console.log(`validating config for ${botName(bot)}`);
 
     const botConfig = {
+      protocolName,
+      protocolAbbreviation,
+      developerAbbreviation,
       ...bot,
-      protoName,
-      protoAbbrev,
-      devAbbrev,
     };
 
     if (mod.validateConfig === undefined) {

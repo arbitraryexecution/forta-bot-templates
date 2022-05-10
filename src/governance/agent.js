@@ -239,7 +239,7 @@ const validateConfig = (config) => {
 
     // load the ABI from the specified file
     // the call to getAbi will fail if the file does not exist
-    const abi = getInternalAbi(config.agentType, abiFile);
+    const abi = getInternalAbi(config.botType, abiFile);
 
     // extract all of the event names from the ABI
     const events = getObjectsFromAbi(abi, 'event');
@@ -259,17 +259,17 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  agentState.contracts = Object.entries(config.contracts).map(([name, entry]) => {
+  botState.contracts = Object.entries(config.contracts).map(([name, entry]) => {
     const { governance: { abiFile }, address } = entry;
 
-    const abi = getInternalAbi(config.agentType, abiFile);
+    const abi = getInternalAbi(config.botType, abiFile);
     const iface = new ethers.utils.Interface(abi);
     const names = Object.keys(iface.events);
     const ftype = ethers.utils.FormatTypes.full;
@@ -282,13 +282,13 @@ const initialize = async (config) => {
     return contract;
   });
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
 
-  agentState.contracts.forEach((contract) => {
+  botState.contracts.forEach((contract) => {
     const { address, eventSignatures } = contract;
     const logs = txEvent.filterLog(eventSignatures, address);
 
@@ -300,7 +300,7 @@ const handleTransaction = async (agentState, txEvent) => {
           return proposalCreatedFinding(
             proposal,
             address,
-            agentState,
+            botState,
           );
         case 'VoteCast':
           const voteInfo = {
@@ -310,15 +310,15 @@ const handleTransaction = async (agentState, txEvent) => {
             weight: log.args.weight,
             reason: log.args.reason,
           };
-          return voteCastFinding(voteInfo, address, agentState.config);
+          return voteCastFinding(voteInfo, address, botState.config);
         case 'ProposalCanceled':
-          return proposalCanceledFinding(log.args.proposalId.toString(), address, agentState);
+          return proposalCanceledFinding(log.args.proposalId.toString(), address, botState);
         case 'ProposalExecuted':
-          return proposalExecutedFinding(log.args.proposalId.toString(), address, agentState);
+          return proposalExecutedFinding(log.args.proposalId.toString(), address, botState);
         case 'QuorumNumeratorUpdated':
           return quorumNumeratorUpdatedFinding(
             address,
-            agentState,
+            botState,
             log.args.oldQuorumNumerator.toString(),
             log.args.newQuorumNumerator.toString(),
           );
@@ -326,34 +326,34 @@ const handleTransaction = async (agentState, txEvent) => {
           return proposalQueuedFinding(
             log.args.proposalId.toString(),
             address,
-            agentState,
+            botState,
             log.args.eta.toString(),
           );
         case 'TimelockChange':
           return timelockChangeFinding(
             address,
-            agentState,
+            botState,
             log.args.oldTimelock,
             log.args.newTimelock,
           );
         case 'VotingDelaySet':
           return votingDelaySetFinding(
             address,
-            agentState,
+            botState,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
           );
         case 'VotingPeriodSet':
           return votingPeriodSetFinding(
             address,
-            agentState,
+            botState,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
           );
         case 'ProposalThresholdSet':
           return proposalThresholdSetFinding(
             address,
-            agentState,
+            botState,
             log.args.oldProposalThreshold.toString(),
             log.args.newProposalThreshold.toString(),
           );

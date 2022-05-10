@@ -47,7 +47,7 @@ async function generateAllBots(_config) {
 }
 
 async function initialize() {
-  const botConfigs = await generateAllAgents(config);
+  const botConfigs = await generateAllBots(config);
 
   const botStateProms = botConfigs.map((bot) => {
     const botMod = botMap.get(bot.botType);

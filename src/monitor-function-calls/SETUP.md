@@ -1,15 +1,15 @@
-# Function Calls Agent Template
+# Function Calls Bot Template
 
-This agent monitors blockchain transactions for specific function calls from specific contract
+This bot monitors blockchain transactions for specific function calls from specific contract
 addresses, with the option to check the value of an argument against a specified value. Alert type
 and severity are specified per function per contract address.
 
-## Agent Setup Walkthrough
+## Bot Setup Walkthrough
 
 1. `contracts` (required) - The Object value for this key corresponds to contracts that we want to
 monitor function calls for. Each key in the Object is a contract name that we can specify, where
 that name is simply a string that we use as a label when referring to the contract (the string can
-be any valid string that we choose, it will not affect the monitoring by the agent). The Object
+be any valid string that we choose, it will not affect the monitoring by the bot). The Object
 corresponding to each contract name requires an address key/value pair, abi file key/value pair, and
 a `functions` key.  The corresponding value for the `functions` key is an Object containing the
 names of functions as keys. The value for each function name is an Object containing:
@@ -23,7 +23,7 @@ names of functions as keys. The value for each function name is an Object contai
     [Expression Compatibility Table](#expression-compatibility-table)), and `value` is an address,
     string, or number.
 
-Note: If no expression is provided, the agent will create an alert whenever the specified function is
+Note: If no expression is provided, the bot will create an alert whenever the specified function is
 called.
 
 For example, to monitor if `createPool` was called in the Uniswap V3 Factory contract to create a
@@ -47,9 +47,9 @@ file, a type, a severity, and an expression that must be satisfied to create an 
   }
 ```
 
-Note that any unused entries in the configuration file must be deleted for the agent to work.  The
+Note that any unused entries in the configuration file must be deleted for the bot to work.  The
 original version of the configuration file contains several placeholders to show the structure of
-the file, but these are not valid entries for running the agent.
+the file, but these are not valid entries for running the bot.
 
 2. We can obtain the contract ABI from one of several locations.  The most accurate ABI will be the one corresponding
 to the original contract code that was compiled and deployed onto the blockchain.  This typically will come from the
@@ -140,7 +140,7 @@ in the file:
 ```
 
 The name of the JSON formatted file containing the ABI needs to have the same path as the value provided for
-the `abiFile` key in the `agent-config.json` file.  This will allow the agent to load the ABI correctly and
+the `abiFile` key in the `bot-config.json` file.  This will allow the bot to load the ABI correctly and
 parse transaction logs for function calls.
 
 ## Appendix

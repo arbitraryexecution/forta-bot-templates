@@ -50,8 +50,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "admin-events",
-  name: "test-agent",
+  botType: "admin-events",
+  name: "test-bot",
   contracts: {
     contractName1: {
       newContractEOA: {
@@ -92,11 +92,11 @@ describe('mocked APIs should work properly', () => {
 });
 
 describe('new contract interaction monitoring', () => {
-  let agentState;
+  let botState;
 
   // pass in mockEthers as the provider for handleTransaction() to use
   beforeAll(async () => {
-    agentState = await initialize(config);
+    botState = await initialize(config);
   });
 
   // reset function call count after each test
@@ -118,8 +118,8 @@ describe('new contract interaction monitoring', () => {
         block: { number: 10 },
       });
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       // check assertions
       expect(findings).toStrictEqual([]);
@@ -144,8 +144,8 @@ describe('new contract interaction monitoring', () => {
         throw new Error('FAILED');
       });
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       // check assertions
       expect(findings).toStrictEqual([]);
@@ -172,8 +172,8 @@ describe('new contract interaction monitoring', () => {
         mockGetCodeResponseContract,
       );
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       expect(findings).toStrictEqual([]);
     });
@@ -192,8 +192,8 @@ describe('new contract interaction monitoring', () => {
         block: { number: 10 },
       });
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       // check assertions
       expect(findings).toStrictEqual([]);
@@ -221,11 +221,11 @@ describe('new contract interaction monitoring', () => {
         mockGetCodeResponseNewContract,
       );
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       const expectedFindings = [];
-      agentState.contracts.forEach((contract) => {
+      botState.contracts.forEach((contract) => {
         const { name, address, findingType, findingSeverity } = contract;
 
         expectedFindings.push(createContractInteractionAlert(
@@ -234,9 +234,9 @@ describe('new contract interaction monitoring', () => {
           transactionAddress,
           findingType,
           findingSeverity,
-          agentState.protocolName,
-          agentState.protocolAbbreviation,
-          agentState.developerAbbreviation,
+          botState.protocolName,
+          botState.protocolAbbreviation,
+          botState.developerAbbreviation,
         ));
       });
 
@@ -260,8 +260,8 @@ describe('new contract interaction monitoring', () => {
       mockEthersProvider.getCode.mockResolvedValue(mockGetCodeResponseEOA);
       mockEthersProvider.getTransactionCount.mockResolvedValue(10);
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       // check assertions
       expect(findings).toStrictEqual([]);
@@ -288,12 +288,12 @@ describe('new contract interaction monitoring', () => {
         transactionCount,
       );
 
-      // run forta agent
-      const findings = await handleTransaction(agentState, txEvent);
+      // run forta bot
+      const findings = await handleTransaction(botState, txEvent);
 
       // check assertions
       const expectedFindings = [];
-      agentState.contracts.forEach((contract) => {
+      botState.contracts.forEach((contract) => {
         const { name, address, findingType, findingSeverity } = contract;
 
         expectedFindings.push(createEOAInteractionAlert(
@@ -303,9 +303,9 @@ describe('new contract interaction monitoring', () => {
           transactionCount,
           findingType,
           findingSeverity,
-          agentState.protocolName,
-          agentState.protocolAbbreviation,
-          agentState.developerAbbreviation,
+          botState.protocolName,
+          botState.protocolAbbreviation,
+          botState.developerAbbreviation,
         ));
       });
 

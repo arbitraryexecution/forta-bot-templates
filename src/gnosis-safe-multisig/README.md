@@ -1,6 +1,6 @@
-# Gnosis-Safe MultiSig Wallet Agent Template
+# Gnosis-Safe MultiSig Wallet Bot Template
 
-This agent monitors a Gnosis-Safe multi-signature contract address for events emitted and any
+This bot monitors a Gnosis-Safe multi-signature contract address for events emitted and any
 changes in Ether or token balances.
 
-## [Agent Setup Walkthrough](SETUP.md)
+## [Bot Setup Walkthrough](SETUP.md)

@@ -1,9 +1,9 @@
-# Gnosis-Safe MultiSig Wallet Agent Template
+# Gnosis-Safe MultiSig Wallet Bot Template
 
-This agent monitors a Gnosis-Safe multi-signature contract address for events emitted and any
+This bot monitors a Gnosis-Safe multi-signature contract address for events emitted and any
 changes in Ether or token balances.  All alert types and severities are set to Info by default.
 
-## Agent Setup Walkthrough
+## Bot Setup Walkthrough
 
 1. `gnosisSafe` (required) - The Object value for this key corresponds to the contract that we want
 to monitor for emitted events and balance changes.  There is a key for the contract address and
@@ -12,7 +12,7 @@ supported versions are `v1.0.0`, `v1.1.1`, `v1.2.0`, and `v1.3.0`, where JSON fi
 ABIs for those versions are located in the `./abi` directory and in their respective subdirectories.
 
 For example, to monitor the Synthetix protocolDAO multisig contract for emitted events and balance
-changes, the following content would be present in the `agent-config.json` file:
+changes, the following content would be present in the `bot-config.json` file:
 
 ```json
 {
@@ -30,6 +30,6 @@ changes, the following content would be present in the `agent-config.json` file:
 }
 ```
 
-Note that any unused entries in the configuration file must be deleted for the agent to work.  The
+Note that any unused entries in the configuration file must be deleted for the bot to work.  The
 original version of the configuration file contains several placeholders to show the structure of
-the file, but these are not valid entries for running the agent.
+the file, but these are not valid entries for running the bot.

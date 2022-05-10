@@ -94,18 +94,18 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  const abi = getInternalAbi(config.agentType, "TornadoProxy.json");
-  agentState.iface = new ethers.utils.Interface(abi);
+  const abi = getInternalAbi(config.botType, "TornadoProxy.json");
+  botState.iface = new ethers.utils.Interface(abi);
 
   const addressNames = Object.keys(config.contracts);
-  agentState.addressesToMonitor = [];
+  botState.addressesToMonitor = [];
   addressNames.forEach((addressName) => {
     const info = {
       name: addressName,
@@ -114,26 +114,26 @@ const initialize = async (config) => {
       severity: config.contracts[addressName].tornado.severity,
     };
 
-    agentState.addressesToMonitor.push(info);
+    botState.addressesToMonitor.push(info);
   });
 
-  agentState.observationIntervalInBlocks = config.observationIntervalInBlocks;
+  botState.observationIntervalInBlocks = config.observationIntervalInBlocks;
 
   // create an object to hold addresses that have been identified as having interacted with a
   // Tornado Cash Proxy
-  agentState.suspiciousAddresses = {};
+  botState.suspiciousAddresses = {};
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
+const handleTransaction = async (botState, txEvent) => {
   const findings = [];
 
   // check to see if the given transaction includes deposit/withdraw calls from a tornado cash
   // proxy
   let addressesOfInterest = TORNADO_CASH_ADDRESSES.map((address) => {
     const filterResult = txEvent.filterFunction(
-      agentState.iface.format(ethers.utils.FormatTypes.full),
+      botState.iface.format(ethers.utils.FormatTypes.full),
       address,
     );
 
@@ -152,15 +152,15 @@ const handleTransaction = async (agentState, txEvent) => {
   // an address is already present in suspiciousAddresses then simply restart its block timer
   addressesOfInterest.forEach((address) => {
     // eslint-disable-next-line no-param-reassign
-    agentState.suspiciousAddresses[address] = { blockAdded: txEvent.blockNumber, };
+    botState.suspiciousAddresses[address] = { blockAdded: txEvent.blockNumber, };
   });
 
   // iterate over the list of suspiciousAddresses and check to see if any address can be removed
   const addressesToRemove = [];
-  Object.keys(agentState.suspiciousAddresses).forEach((address) => {
+  Object.keys(botState.suspiciousAddresses).forEach((address) => {
     const currBlock = txEvent.blockNumber;
-    const { blockAdded } = agentState.suspiciousAddresses[address];
-    if ((currBlock - blockAdded) > agentState.observationIntervalInBlocks) {
+    const { blockAdded } = botState.suspiciousAddresses[address];
+    if ((currBlock - blockAdded) > botState.observationIntervalInBlocks) {
       // block is older than observationIntervalInBlocks and can be removed from
       // suspicousAddresses
       addressesToRemove.push(address);
@@ -168,12 +168,12 @@ const handleTransaction = async (agentState, txEvent) => {
   });
 
   // eslint-disable-next-line no-param-reassign
-  addressesToRemove.forEach((address) => delete agentState.suspiciousAddresses[address]);
+  addressesToRemove.forEach((address) => delete botState.suspiciousAddresses[address]);
 
   // now check to see if the higher level list of addresses in txEvent contains at least one
   // address from suspiciousAddresses and one address from the addressesToMonitor
-  Object.keys(agentState.suspiciousAddresses).forEach((address) => {
-    agentState.addressesToMonitor.forEach((addressInfo) => {
+  Object.keys(botState.suspiciousAddresses).forEach((address) => {
+    botState.addressesToMonitor.forEach((addressInfo) => {
       const { address: monitoredAddress } = addressInfo;
       if (txEvent.addresses[address] !== undefined && txEvent.addresses[monitoredAddress] !== undefined) {
 
@@ -181,9 +181,9 @@ const handleTransaction = async (agentState, txEvent) => {
           monitoredAddress,
           addressInfo.name,
           address,
-          agentState.developerAbbreviation,
-          agentState.protocolName,
-          agentState.protocolAbbreviation,
+          botState.developerAbbreviation,
+          botState.protocolName,
+          botState.protocolAbbreviation,
           FindingType[addressInfo.type],
           FindingSeverity[addressInfo.severity],
         ));
