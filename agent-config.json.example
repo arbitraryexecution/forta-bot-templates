@@ -1,0 +1,141 @@
+{
+  "developerAbbreviation": "",
+  "protocolName": "",
+  "protocolAbbreviation": "",
+  "agents": [
+    {
+      "agentType": "account-balance",
+      "name": "agent_1",
+      "accountBalance": {
+        "contractName1": {
+          "address": "",
+          "thresholdEth": 0,
+          "alert": { "type": "Type", "severity": "Severity" }
+        }
+      },
+      "alertMinimumIntervalSeconds": 86400
+    },
+    {
+      "agentType": "address-watch",
+      "name": "agent_2",
+      "contracts": {
+        "contractName1": {
+          "name": "accountName1",
+          "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+          "watch" : {
+            "type": "Info",
+            "severity": "Info"
+          }
+        }
+      }
+    },
+    {
+      "agentType": "admin-events",
+      "name": "agent_3",
+      "contracts": {
+        "contractName1": {
+          "address": "contractAddress1",
+          "abiFile": "filename1.json",
+          "events": {
+            "address": "contractAddress1",
+            "type": "Type",
+            "severity": "Severity"
+          }
+        }
+      }
+    },
+    {
+      "agentType": "contract-variable-monitor",
+      "name": "agent_4",
+      "contracts": {
+        "contractName1": {
+          "address": "contractAddress1",
+          "abiFile": "filename1.json",
+          "variables": {
+            "variableName1": {
+              "type": "Type",
+              "severity": "Severity",
+              "upperThresholdPercent": 0,
+              "lowerThresholdPercent": 0,
+              "numDataPoints": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "agentType": "gnosis-safe-multisig",
+      "name": "agent_5",
+      "gnosisSafe": {
+        "address": "contractAddress",
+        "version": "gnosisSafeContractVersion"
+      }
+    },
+    {
+      "agentType": "governance",
+      "name": "agent_6",
+      "governance": {
+        "address": "",
+        "abiFile": ""
+      }
+    },
+    {
+      "agentType": "monitor-function-calls",
+      "name": "agent_7",
+      "contracts": {
+        "contractName1": {
+          "address": "contractAddress1",
+          "abiFile": "contractAbiFileName1.json",
+          "functions": {
+            "FunctionName1": {
+              "expression": "amount > 6000",
+              "type": "Type",
+              "severity": "Severity"
+            }
+          }
+        }
+      }
+    },
+    {
+      "agentType": "new-contract-interaction",
+      "name": "agent_8",
+      "contracts": {
+        "contractName1": {
+          "thresholdBlockCount": 7,
+          "thresholdTransactionCount": 7,
+          "address": "contractAddress1",
+          "filteredAddresses": [
+            "filteredAddress1",
+          "filteredAddress2"
+          ],
+          "findingType": "Type",
+          "findingSeverity": "Severity"
+        }
+      }
+    },
+    {
+      "agentType": "tornado-cash-monitor",
+      "name": "agent_9",
+      "addressList": {
+        "contractName1": {
+          "address": "contractAddress1",
+          "type": "type",
+          "severity": "severity"
+        }
+      }
+    },
+    {
+      "agentType": "transaction-failure-count",
+      "name": "agent_10",
+      "blockWindow": 25,
+      "failedTransactions": {
+        "contractName1": {
+          "address": "contractAddress2",
+          "transactionFailuresLimit": 10,
+          "type": "Type",
+          "severity": "Severity"
+        }
+      }
+    },
+  ]
+}
