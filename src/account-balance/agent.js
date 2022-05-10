@@ -108,12 +108,12 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let agentState = {...config};
+  let botState = {...config};
 
-  agentState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
+  botState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
 
-  agentState.provider = getEthersProvider();
-  agentState.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
+  botState.provider = getEthersProvider();
+  botState.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
     accountName,
     accountAddress: entry.address,
     accountThreshold: entry.thresholdEth,
@@ -123,17 +123,17 @@ const initialize = async (config) => {
     alertSeverity: entry.alert.severity,
   }));
 
-  return agentState;
+  return botState;
 };
 
 // upon the mining of a new block, check the specified accounts to make sure the balance of
 // each account has not fallen below the specified threshold
-const handleBlock = async (agentState, blockEvent) => {
+const handleBlock = async (botState, blockEvent) => {
   const findings = [];
 
   const {
     accounts, provider, alertMinimumIntervalSeconds,
-  } = agentState;
+  } = botState;
 
   if (!provider) {
     throw new Error('handleBlock called before initialization');
@@ -161,9 +161,9 @@ const handleBlock = async (agentState, blockEvent) => {
           accountBalance,
           accountThreshold,
           account.numAlertsSinceLastFinding,
-          agentState.protocolName,
-          agentState.developerAbbreviation,
-          agentState.protocolAbbreviation,
+          botState.protocolName,
+          botState.developerAbbreviation,
+          botState.protocolAbbreviation,
           account.alertType,
           account.alertSeverity,
         ));

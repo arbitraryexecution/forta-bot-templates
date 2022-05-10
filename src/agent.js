@@ -1,26 +1,26 @@
-const agentImports = [
-  {name: 'account-balance',           agent: require('./account-balance/agent')},
-  {name: 'address-watch',             agent: require('./address-watch/agent')},
-  {name: 'admin-events',              agent: require('./admin-events/agent')},
-  {name: 'contract-variable-monitor', agent: require('./contract-variable-monitor/agent')},
-  {name: 'gnosis-safe-multisig',      agent: require('./gnosis-safe-multisig/agent')},
-  {name: 'governance',                agent: require('./governance/agent')},
-  {name: 'monitor-function-calls',    agent: require('./monitor-function-calls/agent')},
-  {name: 'new-contract-interaction',  agent: require('./new-contract-interaction/agent')},
-  {name: 'tornado-cash-monitor',      agent: require('./tornado-cash-monitor/agent')},
-  {name: 'transaction-failure-count', agent: require('./transaction-failure-count/agent')}
+const botImports = [
+  {name: 'account-balance',           bot: require('./account-balance/agent')},
+  {name: 'address-watch',             bot: require('./address-watch/agent')},
+  {name: 'admin-events',              bot: require('./admin-events/agent')},
+  {name: 'contract-variable-monitor', bot: require('./contract-variable-monitor/agent')},
+  {name: 'gnosis-safe-multisig',      bot: require('./gnosis-safe-multisig/agent')},
+  {name: 'governance',                bot: require('./governance/agent')},
+  {name: 'monitor-function-calls',    bot: require('./monitor-function-calls/agent')},
+  {name: 'new-contract-interaction',  bot: require('./new-contract-interaction/agent')},
+  {name: 'tornado-cash-monitor',      bot: require('./tornado-cash-monitor/agent')},
+  {name: 'transaction-failure-count', bot: require('./transaction-failure-count/agent')}
 ];
 
-let agentStates = [];
-const agentMap = new Map();
-const config = require('../agent-config.json');
+let botStates = [];
+const botMap = new Map();
+const config = require('../bot-config.json');
 
-async function generateAllAgents(_config) {
+async function generateAllBots(_config) {
   let modProms = [];
   let modNames = [];
-  for (let i = 0; i < agentImports.length; i++) {
-    const imp = agentImports[i];
-    modProms.push(imp.agent);
+  for (let i = 0; i < botImports.length; i++) {
+    const imp = botImports[i];
+    modProms.push(imp.bot);
     modNames.push(imp.name);
   }
 
@@ -28,48 +28,48 @@ async function generateAllAgents(_config) {
     for (let i = 0; i < data.length; i++) {
       const module = data[i];
       const name = modNames[i];
-      agentMap.set(name, module);
+      botMap.set(name, module);
     }
   });
 
-  let agentConfigs = [];
-  for (let i = 0; i < _config.agents.length; i++) {
-    const _agent = _config.agents[i];
+  let botConfigs = [];
+  for (let i = 0; i < _config.bots.length; i++) {
+    const _bot = _config.bots[i];
 
-    let agent = {..._agent};
-    agent.developerAbbreviation = _config.developerAbbreviation;
-    agent.protocolAbbreviation = _config.protocolAbbreviation;
-    agent.protocolName = _config.protocolName;
-    agentConfigs.push(agent);
+    let bot = {..._bot};
+    bot.developerAbbreviation = _config.developerAbbreviation;
+    bot.protocolAbbreviation = _config.protocolAbbreviation;
+    bot.protocolName = _config.protocolName;
+    botConfigs.push(bot);
   }
 
-  return agentConfigs;
+  return botConfigs;
 }
 
 async function initialize() {
-  const agentConfigs = await generateAllAgents(config);
+  const botConfigs = await generateAllAgents(config);
 
-  const agentStateProms = agentConfigs.map((agent) => {
-    const agentMod = agentMap.get(agent.agentType);
-    if (agentMod["initialize"] === undefined) {
-      const agentState = {...agent};
-      return new Promise(() => {agentState});
+  const botStateProms = botConfigs.map((bot) => {
+    const botMod = botMap.get(bot.botType);
+    if (botMod["initialize"] === undefined) {
+      const botState = {...bot};
+      return new Promise(() => {botState});
     }
 
-    return agentMod.initialize(agent);
+    return botMod.initialize(bot);
   });
-  agentStates = await Promise.all(agentStateProms);
+  botStates = await Promise.all(botStateProms);
 }
 
-function handleAllTransactions(_agentMap, _agentStates) {
+function handleAllTransactions(_botMap, _botStates) {
   return async function handleTransaction(txEvent) {
-    const findProms = _agentStates.map((agent) => {
-      const agentMod = _agentMap.get(agent.agentType);
-      if (agentMod["handleTransaction"] === undefined) {
+    const findProms = _botStates.map((bot) => {
+      const botMod = _botMap.get(bot.botType);
+      if (botMod["handleTransaction"] === undefined) {
         return;
       }
 
-      return agentMod.handleTransaction(agent, txEvent);
+      return botMod.handleTransaction(bot, txEvent);
     });
 
     let findings = [];
@@ -82,15 +82,15 @@ function handleAllTransactions(_agentMap, _agentStates) {
   }
 }
 
-function handleAllBlocks(_agentMap, _agentStates) {
+function handleAllBlocks(_botMap, _botStates) {
   return async function handleBlock(blockEvent) {
-    const findProms = _agentStates.map((agent) => {
-      const agentMod = _agentMap.get(agent.agentType);
-      if (agentMod["handleBlock"] === undefined) {
+    const findProms = _botStates.map((bot) => {
+      const botMod = _botMap.get(bot.botType);
+      if (botMod["handleBlock"] === undefined) {
         return;
       }
 
-      return agentMod.handleBlock(agent, blockEvent);
+      return botMod.handleBlock(bot, blockEvent);
     });
 
     let findings = [];
@@ -105,9 +105,9 @@ function handleAllBlocks(_agentMap, _agentStates) {
 
 module.exports = {
   initialize,
-  agentImports,
+  botImports,
   handleAllTransactions,
-  handleTransaction: handleAllTransactions(agentMap, agentStates),
+  handleTransaction: handleAllTransactions(botMap, botStates),
   handleAllBlocks,
-  handleBlock: handleAllBlocks(agentMap, agentStates),
+  handleBlock: handleAllBlocks(botMap, botStates),
 };

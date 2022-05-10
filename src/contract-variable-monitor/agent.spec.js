@@ -36,8 +36,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "admin-events",
-  name: "test-agent",
+  botType: "admin-events",
+  name: "test-bot",
   contracts: {
     UniswapV3Pool: {
       address: "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
@@ -75,7 +75,7 @@ const abiOverride = {
 
 describe('monitor contract variables', () => {
   describe('handleBlock', () => {
-    let agentState;
+    let botState;
     let configContracts;
     let contractName;
     let validContractAddress;
@@ -128,11 +128,11 @@ describe('monitor contract variables', () => {
       ({ functionInConfig, functionNotInConfig } = testConfig);
 
       // initialize the handler
-      agentState = await initialize(config, abiOverride);
+      botState = await initialize(config, abiOverride);
     });
 
     it('invokes the function specified by the variable name in the config and does not invoke any other functions in the contract ABI', async () => {
-      agentState.variableInfoList.forEach((variableInfo) => {
+      botState.variableInfoList.forEach((variableInfo) => {
         // add new mocked functions to the mockContract corresponding to the variable names for
         // getter functions found in the config file, the value is not important for this test
         mockContract[variableInfo.name] = jest.fn().mockResolvedValue(10);
@@ -149,18 +149,18 @@ describe('monitor contract variables', () => {
       // only calls the functions specified in the config
       mockContract[functionNotInConfig.name] = jest.fn();
 
-      await handleBlock(agentState);
+      await handleBlock(botState);
 
-      // make sure the agent called the getter function specified by a variable name in the config
+      // make sure the bot called the getter function specified by a variable name in the config
       expect(mockContract[functionInConfig.name]).toHaveBeenCalledTimes(1);
 
-      // make sure the agent did not call a function that was not specified by a variable name
+      // make sure the bot did not call a function that was not specified by a variable name
       // in the config
       expect(mockContract[functionNotInConfig.name]).toHaveBeenCalledTimes(0);
     });
 
     it('does not invoke the checkThreshold function when not enough data points have been seen yet', async () => {
-      agentState.variableInfoList.forEach((variableInfo) => {
+      botState.variableInfoList.forEach((variableInfo) => {
         // add new mocked functions to the mockContract corresponding to the variable names for
         // getter functions found in the config file, the value is not important for this test
         mockContract[variableInfo.name] = jest.fn().mockResolvedValue(10);
@@ -173,12 +173,12 @@ describe('monitor contract variables', () => {
         }
       });
 
-      await handleBlock(agentState);
+      await handleBlock(botState);
 
-      // make sure the agent called the getter function specified by a variable name in the config
+      // make sure the bot called the getter function specified by a variable name in the config
       expect(mockContract[functionInConfig.name]).toHaveBeenCalledTimes(1);
 
-      // make sure the agent did not attempt to check if a percent change occurred  since we have
+      // make sure the bot did not attempt to check if a percent change occurred  since we have
       // not seen enough blocks yet
       expect(checkThresholdSpy).toHaveBeenCalledTimes(0);
     });
@@ -187,8 +187,8 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      agentState.variableInfoList = [agentState.variableInfoList[0]];
-      const [variableInfo] = agentState.variableInfoList;
+      botState.variableInfoList = [botState.variableInfoList[0]];
+      const [variableInfo] = botState.variableInfoList;
 
       // set the minNumElements to be 1
       variableInfo.minNumElements = 1;
@@ -201,27 +201,27 @@ describe('monitor contract variables', () => {
       // functions found in the config file
       mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(10);
 
-      // run the agent once
-      await handleBlock(agentState);
+      // run the bot once
+      await handleBlock(botState);
 
-      // make sure the agent called the getter function specified by a variable name in the config
+      // make sure the bot called the getter function specified by a variable name in the config
       expect(mockContract[functionInConfig.name]).toHaveBeenCalledTimes(1);
 
-      // make sure the agent did not attempt to check if a percent change occurred since we have
+      // make sure the bot did not attempt to check if a percent change occurred since we have
       // not seen enough blocks yet
       expect(checkThresholdSpy).toHaveBeenCalledTimes(0);
 
       // update the value returned by the target getter function so that checkThreshold will be
-      // called on the next agent invocation
+      // called on the next bot invocation
       mockContract[functionInConfig.name] = jest.fn().mockResolvedValue(11);
 
-      // run the agent again now that we have seen the minimum number of data points
-      await handleBlock(agentState);
+      // run the bot again now that we have seen the minimum number of data points
+      await handleBlock(botState);
 
-      // make sure the agent called the getter function specified by a variable name in the config
+      // make sure the bot called the getter function specified by a variable name in the config
       expect(mockContract[functionInConfig.name]).toHaveBeenCalledTimes(1);
 
-      // now the agent should have run checkThreshold since we have seen enough data points
+      // now the bot should have run checkThreshold since we have seen enough data points
       expect(checkThresholdSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -231,8 +231,8 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      agentState.variableInfoList = [agentState.variableInfoList[0]];
-      const [variableInfo] = agentState.variableInfoList;
+      botState.variableInfoList = [botState.variableInfoList[0]];
+      const [variableInfo] = botState.variableInfoList;
 
       // set the minNumElements to be 1
       variableInfo.minNumElements = 1;
@@ -247,8 +247,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(initialGetterValue);
 
-      // run the agent once
-      await handleBlock(agentState);
+      // run the bot once
+      await handleBlock(botState);
 
       // update the value returned by the target getter function to be greater than the
       // upperThresholdPercent change
@@ -260,8 +260,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(newValue);
 
-      // run the agent again now that we have seen the minimum number of data points
-      const findings = await handleBlock(agentState);
+      // run the bot again now that we have seen the minimum number of data points
+      const findings = await handleBlock(botState);
       const expectedFinding = [
         Finding.fromObject({
           name: `${config.protocolName} Contract Variable`,
@@ -292,8 +292,8 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      agentState.variableInfoList = [agentState.variableInfoList[0]];
-      const [variableInfo] = agentState.variableInfoList;
+      botState.variableInfoList = [botState.variableInfoList[0]];
+      const [variableInfo] = botState.variableInfoList;
 
       // set the minNumElements to be 1
       variableInfo.minNumElements = 1;
@@ -308,8 +308,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(initialGetterValue);
 
-      // run the agent once
-      await handleBlock(agentState);
+      // run the bot once
+      await handleBlock(botState);
 
       // update the value returned by the target getter function to be greater than the
       // upperThresholdPercent change
@@ -318,8 +318,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(newValue);
 
-      // run the agent again now that we have seen the minimum number of data points
-      const findings = await handleBlock(agentState);
+      // run the bot again now that we have seen the minimum number of data points
+      const findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
     });
 
@@ -329,8 +329,8 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      agentState.variableInfoList = [agentState.variableInfoList[0]];
-      const [variableInfo] = agentState.variableInfoList;
+      botState.variableInfoList = [botState.variableInfoList[0]];
+      const [variableInfo] = botState.variableInfoList;
 
       // set the minNumElements to be 1
       variableInfo.minNumElements = 1;
@@ -345,8 +345,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(initialGetterValue);
 
-      // run the agent once
-      await handleBlock(agentState);
+      // run the bot once
+      await handleBlock(botState);
 
       // update the value returned by the target getter function to be greater than the
       // lowerThresholdPercent change
@@ -358,8 +358,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(newValue);
 
-      // run the agent again now that we have seen the minimum number of data points
-      const findings = await handleBlock(agentState);
+      // run the bot again now that we have seen the minimum number of data points
+      const findings = await handleBlock(botState);
       const expectedFinding = [
         Finding.fromObject({
           name: `${config.protocolName} Contract Variable`,
@@ -390,8 +390,8 @@ describe('monitor contract variables', () => {
       /* eslint-disable no-param-reassign */
       // make sure there is only one variable in the list so we can accurately test the number of
       // function calls made
-      agentState.variableInfoList = [agentState.variableInfoList[0]];
-      const [variableInfo] = agentState.variableInfoList;
+      botState.variableInfoList = [botState.variableInfoList[0]];
+      const [variableInfo] = botState.variableInfoList;
 
       // set the minNumElements to be 1
       variableInfo.minNumElements = 1;
@@ -406,8 +406,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(initialGetterValue);
 
-      // run the agent once
-      await handleBlock(agentState);
+      // run the bot once
+      await handleBlock(botState);
 
       // update the value returned by the target getter function to be greater than the
       // lowerThresholdPercent change
@@ -416,8 +416,8 @@ describe('monitor contract variables', () => {
         .fn()
         .mockResolvedValue(newValue);
 
-      // run the agent again now that we have seen the minimum number of data points
-      const findings = await handleBlock(agentState);
+      // run the bot again now that we have seen the minimum number of data points
+      const findings = await handleBlock(botState);
       expect(findings).toStrictEqual([]);
     });
   });

@@ -19,8 +19,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "admin-events",
-  name: "test-agent",
+  botType: "admin-events",
+  name: "test-bot",
   contracts: {
     GovernorBravo: {
       address: "0x408ED6354d4973f66138C91495F2f2FCbd8724C3",
@@ -103,7 +103,7 @@ const abiOverride = {
 };
 
 describe('handleTransaction', () => {
-  let agentState;
+  let botState;
   let developerAbbreviation;
   let protocolAbbreviation;
   let protocolName;
@@ -119,7 +119,7 @@ describe('handleTransaction', () => {
 
   beforeEach(async () => {
     // initialize the handler
-    agentState = await initialize(config, abiOverride);
+    botState = await initialize(config, abiOverride);
 
     // grab the first entry from the 'contracts' key in the configuration file
     const { contracts: configContracts } = config;
@@ -178,7 +178,7 @@ describe('handleTransaction', () => {
   });
 
   it('returns empty findings if no monitored events were emitted in the transaction', async () => {
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    const findings = await handleTransaction(botState, mockTxEvent);
     expect(findings).toStrictEqual([]);
   });
 
@@ -193,7 +193,7 @@ describe('handleTransaction', () => {
     defaultLog.topics = mockTopics;
     defaultLog.data = data;
 
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     expect(findings).toStrictEqual([]);
   });
@@ -208,7 +208,7 @@ describe('handleTransaction', () => {
     defaultLog.topics = mockTopics;
     defaultLog.data = data;
 
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     expect(findings).toStrictEqual([]);
   });
@@ -224,7 +224,7 @@ describe('handleTransaction', () => {
     defaultLog.data = data;
 
     // eliminate any expression
-    const { eventInfo } = agentState.contracts[0];
+    const { eventInfo } = botState.contracts[0];
     delete eventInfo[0].expression;
     delete eventInfo[0].expressionObject;
 
@@ -234,7 +234,7 @@ describe('handleTransaction', () => {
     });
     expectedMetaData = utils.extractEventArgs(expectedMetaData);
 
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     // create the expected finding
     const testFindings = [Finding.fromObject({
@@ -259,8 +259,8 @@ describe('handleTransaction', () => {
     // get the expression object information from the config
     // in the beforeEach block, the first event from the first `contracts` element is assigned to
     // `eventInConfig` therefore, we will retrieve the corresponding expression from the
-    // `agentState` object to enforce the proper condition for this test to emit a finding
-    const { eventInfo } = agentState.contracts[0];
+    // `botState` object to enforce the proper condition for this test to emit a finding
+    const { eventInfo } = botState.contracts[0];
     const { expressionObject, expression } = eventInfo[0];
     const { variableName: argName, operator, value: operand } = expressionObject;
 
@@ -285,7 +285,7 @@ describe('handleTransaction', () => {
     });
     expectedMetaData = utils.extractEventArgs(expectedMetaData);
 
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     // create the expected finding
     const testFindings = [Finding.fromObject({
@@ -309,7 +309,7 @@ describe('handleTransaction', () => {
 
   it('returns no finding if a target contract emits a monitored event and the expression condition is not met', async () => {
     // get the expression object information from the config
-    const { eventInfo } = agentState.contracts[0];
+    const { eventInfo } = botState.contracts[0];
     const { expressionObject } = eventInfo[0];
     const { variableName: argName, operator, value: operand } = expressionObject;
 
@@ -328,7 +328,7 @@ describe('handleTransaction', () => {
     defaultLog.topics = mockTopics;
     defaultLog.data = data;
 
-    const findings = await handleTransaction(agentState, mockTxEvent);
+    const findings = await handleTransaction(botState, mockTxEvent);
 
     expect(findings).toStrictEqual([]);
   });

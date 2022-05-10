@@ -204,17 +204,17 @@ const validateConfig = (config, abiOverride = null) => {
 };
 
 const initialize = async (config, abiOverride = null) => {
-  let agentState = {...config};
+  let botState = {...config};
 
   const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  agentState.adminEvents = config.contracts;
+  botState.adminEvents = config.contracts;
 
   // load the contract addresses, abis, and ethers interfaces
-  agentState.contracts = Object.entries(agentState.adminEvents).map(([name, entry]) => {
+  botState.contracts = Object.entries(botState.adminEvents).map(([name, entry]) => {
     let abi;
     if (abiOverride != null) {
       abi = abiOverride[entry.abiFile];
@@ -227,20 +227,20 @@ const initialize = async (config, abiOverride = null) => {
     return contract;
   });
 
-  agentState.contracts.forEach((contract) => {
-    const entry = agentState.adminEvents[contract.name];
-    const { eventInfo } = getEvents(entry, contract, agentState.adminEvents, agentState.contracts);
+  botState.contracts.forEach((contract) => {
+    const entry = botState.adminEvents[contract.name];
+    const { eventInfo } = getEvents(entry, contract, botState.adminEvents, botState.contracts);
     contract.eventInfo = eventInfo;
   });
 
-  return agentState;
+  return botState;
 };
 
-const handleTransaction = async (agentState, txEvent) => {
-  if (!agentState.contracts) throw new Error('handleTransaction called before initialization');
+const handleTransaction = async (botState, txEvent) => {
+  if (!botState.contracts) throw new Error('handleTransaction called before initialization');
 
   const findings = [];
-  agentState.contracts.forEach((contract) => {
+  botState.contracts.forEach((contract) => {
     contract.eventInfo.forEach((ev) => {
       const parsedLogs = txEvent.filterLog(ev.signature, contract.address);
 
@@ -261,9 +261,9 @@ const handleTransaction = async (agentState, txEvent) => {
           ev.type,
           ev.severity,
           parsedLog.args,
-          agentState.protocolName,
-          agentState.protocolAbbreviation,
-          agentState.developerAbbreviation,
+          botState.protocolName,
+          botState.protocolAbbreviation,
+          botState.developerAbbreviation,
           ev.expression,
         ));
       });

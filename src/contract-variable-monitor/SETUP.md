@@ -1,17 +1,17 @@
-# Contract Variable Monitor Agent Template
+# Contract Variable Monitor Bot Template
 
-This agent monitors contract variables that contain numeric values for specified contract addresses.
+This bot monitors contract variables that contain numeric values for specified contract addresses.
 Upper and lower percent change thresholds, number of data points to collect before checking for percent changes,
 and alert type and severity are specified per variable per contract address.
 
-## Agent Setup Walkthrough
+## Bot Setup Walkthrough
 
-The following steps will take you from a completely blank template to a functional agent.
+The following steps will take you from a completely blank template to a functional bot.
 
 1.  `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor variable
 values for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
-monitoring by the agent). The Object corresponding to each contract name requires an `address` key/value pair,
+monitoring by the bot). The Object corresponding to each contract name requires an `address` key/value pair,
 `abiFile` key/value pair, and a `variables` key. For the `variables` key, the corresponding value is an Object
 containing the names of contract variables as keys. Note that each respective variable key must return
 a numeric value from a contract. The value for each variable name is an Object containing:
@@ -22,7 +22,7 @@ a numeric value from a contract. The value for each variable name is an Object c
     * lowerThresholdPercent (optional) - Number as a change percentage that will trigger a finding if the monitored
       contract variable is lower than. Note if upperThresholdPercent is not defined then this value is required.
     * numDataPoints (required) - Number of data points that need to be seen before calculating change
-      percent. Note that if too high of a number is selected the agent may fail due to high memory usage.
+      percent. Note that if too high of a number is selected the bot may fail due to high memory usage.
 
 For example, to monitor a UniswapV3Pool contract's liquidity, we would need the contract address, the
 ABI saved locally as a JSON formatted file, the variable name (in this case liquidity) which will have
@@ -49,9 +49,9 @@ would look like for this example:
   }
 ```
 
-Note: Any unused entries in the configuration file must be deleted for the agent to work.  The original version
+Note: Any unused entries in the configuration file must be deleted for the bot to work.  The original version
 of the configuration file contains several placeholders to show the structure of the file, but these are not valid
-entries for running the agent.
+entries for running the bot.
 
 Note: If a contract is proxied by another contract, make sure that the value for the `address` key is the
 address of the proxy contract.
@@ -116,5 +116,5 @@ in the file:
 ```
 
 The name of the JSON formatted file containing the ABI needs to have the same path as the value provided for
-the `abiFile` key in the `agent-config.json` file.  This will allow the agent to load the ABI correctly
+the `abiFile` key in the `bot-config.json` file.  This will allow the bot to load the ABI correctly
 and call the requested getter functions corresponding to the variables listed in the config.

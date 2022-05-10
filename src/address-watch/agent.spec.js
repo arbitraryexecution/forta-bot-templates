@@ -15,8 +15,8 @@ const config = {
   developerAbbreviation: "DEVTEST",
   protocolName: "PROTOTEST",
   protocolAbbreviation: "PT",
-  agentType: "address-watch",
-  name: "test-agent",
+  botType: "address-watch",
+  name: "test-bot",
   contracts: {
     contractName1: {
       name: "accountName1",
@@ -30,9 +30,9 @@ const config = {
 };
 
 describe('handleTransaction', () => {
-  let agentState;
+  let botState;
   beforeEach(async () => {
-    agentState = await initialize(config);
+    botState = await initialize(config);
   });
 
   it('returns empty findings if no address match is found', async () => {
@@ -42,8 +42,8 @@ describe('handleTransaction', () => {
     });
     txEvent.addresses[ethers.constants.AddressZero] = true;
 
-    // run agent with txEvent
-    const findings = await handleTransaction(agentState, txEvent);
+    // run bot with txEvent
+    const findings = await handleTransaction(botState, txEvent);
 
     // assertions
     expect(findings).toStrictEqual([]);
@@ -59,15 +59,15 @@ describe('handleTransaction', () => {
     });
     txEvent.addresses[testAddr] = true;
 
-    // run agent with txEvent
-    const findings = await handleTransaction(agentState, txEvent);
+    // run bot with txEvent
+    const findings = await handleTransaction(botState, txEvent);
 
     // assertions
     expect(findings).toStrictEqual([
       Finding.fromObject({
-        name: `${agentState.protocolName} Address Watch`,
+        name: `${botState.protocolName} Address Watch`,
         description: `Address ${testAddr} (${params.name}) was involved in a transaction`,
-        alertId: `${agentState.developerAbbreviation}-${agentState.protocolAbbrev}-ADDRESS-WATCH`,
+        alertId: `${botState.developerAbbreviation}-${botState.protocolAbbrev}-ADDRESS-WATCH`,
         type: FindingType[params.watch.type],
         severity: FindingSeverity[params.watch.severity],
       }),
