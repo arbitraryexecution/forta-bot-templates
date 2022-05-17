@@ -14,7 +14,6 @@ WORKDIR /app
 # else if using unobfuscated code:
 LABEL "network.forta.settings.agent-logs.enable"="true"
 COPY ./src ./src
-COPY ./abi ./abi
 COPY bot-config.json ./
 COPY package*.json ./
 RUN npm ci --production
