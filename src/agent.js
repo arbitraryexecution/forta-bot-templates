@@ -68,7 +68,7 @@ function handleAllTransactions(_botMap, _botStates) {
     const findProms = _botStates.map((bot) => {
       const botMod = _botMap.get(bot.botType);
       if (botMod["handleTransaction"] === undefined) {
-        return;
+        return [];
       }
       return botMod.handleTransaction(bot, txEvent);
     });
@@ -76,7 +76,9 @@ function handleAllTransactions(_botMap, _botStates) {
     let findings = [];
     let findArrs = await Promise.all(findProms);
     for (let i = 0; i < findArrs.length; i++) {
-      findings.push(...findArrs[i]);
+      if (findArrs[i].length > 0) {
+        findings.push(...findArrs[i]);
+      }
     }
     return findings;
   }
@@ -87,17 +89,17 @@ function handleAllBlocks(_botMap, _botStates) {
     let findProms = _botStates.map((bot) => {
       const botMod = _botMap.get(bot.botType);
       if (botMod["handleBlock"] === undefined) {
-        return;
+        return [];
       }
       return botMod.handleBlock(bot, blockEvent);
     });
 
-    findProms = findProms.filter((prom) => prom !== undefined);
-
     let findings = [];
     let findArrs = await Promise.all(findProms);
     for (let i = 0; i < findArrs.length; i++) {
-      findings.push(...findArrs[i]);
+      if (findArrs[i].length > 0) {
+        findings.push(...findArrs[i]);
+      }
     }
 
     return findings;
