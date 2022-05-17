@@ -84,7 +84,7 @@ function handleAllTransactions(_botMap, _botStates) {
 
 function handleAllBlocks(_botMap, _botStates) {
   return async function handleBlock(blockEvent) {
-    const findProms = _botStates.map((bot) => {
+    let findProms = _botStates.map((bot) => {
       const botMod = _botMap.get(bot.botType);
       if (botMod["handleBlock"] === undefined) {
         return;
