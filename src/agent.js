@@ -72,14 +72,7 @@ function handleAllTransactions(_botMap, _botStates) {
       }
       return botMod.handleTransaction(bot, txEvent);
     });
-
-    let findings = [];
-    let findArrs = await Promise.all(findProms);
-    for (let i = 0; i < findArrs.length; i++) {
-      if (findArrs[i].length > 0) {
-        findings.push(...findArrs[i]);
-      }
-    }
+    const findings = (await Promise.all(findProms)).flat();
     return findings;
   }
 }
@@ -93,15 +86,7 @@ function handleAllBlocks(_botMap, _botStates) {
       }
       return botMod.handleBlock(bot, blockEvent);
     });
-
-    let findings = [];
-    let findArrs = await Promise.all(findProms);
-    for (let i = 0; i < findArrs.length; i++) {
-      if (findArrs[i].length > 0) {
-        findings.push(...findArrs[i]);
-      }
-    }
-
+    const findings = (await Promise.all(findProms)).flat();
     return findings;
   }
 }
