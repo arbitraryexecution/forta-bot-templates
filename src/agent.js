@@ -58,7 +58,9 @@ async function initialize() {
 
     return botMod.initialize(bot);
   });
-  botStates = await Promise.all(botStateProms);
+
+  const results = await Promise.all(botStateProms);
+  results.forEach((result) => botStates.push(result));
 }
 
 function handleAllTransactions(_botMap, _botStates) {
@@ -68,7 +70,6 @@ function handleAllTransactions(_botMap, _botStates) {
       if (botMod["handleTransaction"] === undefined) {
         return;
       }
-
       return botMod.handleTransaction(bot, txEvent);
     });
 
@@ -77,7 +78,6 @@ function handleAllTransactions(_botMap, _botStates) {
     for (let i = 0; i < findArrs.length; i++) {
       findings.push(...findArrs[i]);
     }
-
     return findings;
   }
 }
@@ -89,9 +89,10 @@ function handleAllBlocks(_botMap, _botStates) {
       if (botMod["handleBlock"] === undefined) {
         return;
       }
-
       return botMod.handleBlock(bot, blockEvent);
     });
+
+    findProms = findProms.filter((prom) => prom !== undefined);
 
     let findings = [];
     let findArrs = await Promise.all(findProms);
@@ -104,10 +105,10 @@ function handleAllBlocks(_botMap, _botStates) {
 }
 
 module.exports = {
-  initialize,
   botImports,
-  handleAllTransactions,
-  handleTransaction: handleAllTransactions(botMap, botStates),
   handleAllBlocks,
   handleBlock: handleAllBlocks(botMap, botStates),
+  handleAllTransactions,
+  handleTransaction: handleAllTransactions(botMap, botStates),
+  initialize,
 };
