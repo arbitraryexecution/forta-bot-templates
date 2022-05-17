@@ -70,12 +70,12 @@ const validateConfig = (config) => {
     return { ok, errMsg };
   }
 
-  if (!isObject(config.accountBalance) || isEmptyObject(config.accountBalance)) {
-    errMsg = `accountBalance key required`;
+  if (!isObject(config.contracts) || isEmptyObject(config.contracts)) {
+    errMsg = `contracts key required`;
     return { ok, errMsg };
   }
 
-  for (const account of Object.values(config.accountBalance)) {
+  for (const account of Object.values(config.contracts)) {
     const { address, thresholdEth, alert: { type, severity } } = account;
 
     if (!isAddress(address)) {
@@ -113,7 +113,7 @@ const initialize = async (config) => {
   botState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
 
   botState.provider = getEthersProvider();
-  botState.accounts = Object.entries(config.accountBalance).map(([accountName, entry]) => ({
+  botState.accounts = Object.entries(config.contracts).map(([accountName, entry]) => ({
     accountName,
     accountAddress: entry.address,
     accountThreshold: entry.thresholdEth,
@@ -140,6 +140,7 @@ const handleBlock = async (botState, blockEvent) => {
   }
 
   const blockTimestamp = new BigNumber(blockEvent.block.timestamp);
+
   await Promise.all(accounts.map(async (account) => {
     const {
       accountName, accountAddress, accountThreshold,
