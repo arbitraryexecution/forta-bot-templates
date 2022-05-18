@@ -1,0 +1,19 @@
+{
+  "developerAbbreviation": "hr",
+  "protocolName": "hr",
+  "protocolAbbreviation": "hr",
+  "bots": [
+    {
+      "botType": "account-balance",
+      "name": "bot_1",
+      "contracts": {
+        "contractName1": {
+          "address": "0x8195D3496305D2DbE43B21d51e6cC77B6C9C8364",
+          "thresholdEth": 100,
+          "alert": { "type": "Info", "severity": "Info" }
+        }
+      },
+      "alertMinimumIntervalSeconds": 86400
+    }
+  ]
+}

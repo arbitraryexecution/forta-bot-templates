@@ -1,0 +1,23 @@
+{
+  "developerAbbreviation": "hr",
+  "protocolName": "hr",
+  "protocolAbbreviation": "hr",
+  "bots": [
+    {
+      "botType": "admin-events",
+      "name": "bot_3",
+      "contracts": {
+        "USDC": {
+          "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "abiFile": "USDC.json",
+          "events": {
+            "Transfer": {
+              "type": "Info",
+              "severity": "Info"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
