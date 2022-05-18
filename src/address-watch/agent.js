@@ -93,7 +93,8 @@ const initialize = async (config) => {
 
 const handleTransaction = async (botState, txEvent) => {
   const findings = [];
-  const addresses = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
+  let addresses = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
+  addresses = addresses.filter((address) => address !== 'undefined');
 
   const { contracts } = botState;
 

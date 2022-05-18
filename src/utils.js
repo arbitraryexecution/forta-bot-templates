@@ -161,8 +161,6 @@ function checkLogAgainstExpression(expressionObject, log) {
   return comparisonFunction(argValue, operator, operand);
 }
 
-
-
 // get a list of variable getter information objects for each variable name listed for a given
 // contract in the config
 function getVariableInfo(contractConfig, currentContract) {
@@ -281,7 +279,7 @@ function isEmptyObject(obj) {
 }
 
 function isFilledString(str) {
-  return typeof str == 'string' && str != "";
+  return typeof str === 'string' && str != '';
 }
 
 module.exports = {

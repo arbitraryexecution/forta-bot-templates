@@ -3,7 +3,6 @@ const {
 } = require('forta-agent');
 
 const {
-  getObjectsFromAbi,
   getEventFromConfig,
   getExpressionOperand,
   createMockEventLogs,
@@ -12,94 +11,94 @@ const utils = require('../utils');
 
 const {
   initialize,
-  handleTransaction
-} = require("./agent");
+  handleTransaction,
+} = require('./agent');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "admin-events",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'admin-events',
+  name: 'test-bot',
   contracts: {
     GovernorBravo: {
-      address: "0x408ED6354d4973f66138C91495F2f2FCbd8724C3",
-      abiFile: "test-abi",
+      address: '0x408ED6354d4973f66138C91495F2f2FCbd8724C3',
+      abiFile: 'test-abi',
       events: {
         ProposalCreated: {
-          expression: "proposer !== 0x9B68c14e936104e9a7a24c712BEecdc220002984",
-          type: "Info",
-          severity: "Info"
-        }
-      }
-    }
-  }
+          expression: 'proposer !== 0x9B68c14e936104e9a7a24c712BEecdc220002984',
+          type: 'Info',
+          severity: 'Info',
+        },
+      },
+    },
+  },
 };
 
 const abiOverride = {
-  "test-abi": [
+  'test-abi': [
     {
       anonymous: false,
       inputs: [
         {
           indexed: false,
-          internalType: "uint256",
-          name: "id",
-          type: "uint256"
+          internalType: 'uint256',
+          name: 'id',
+          type: 'uint256',
         },
         {
           indexed: false,
-          internalType: "address",
-          name: "proposer",
-          type: "address"
+          internalType: 'address',
+          name: 'proposer',
+          type: 'address',
         },
         {
           indexed: false,
-          internalType: "address[]",
-          name: "targets",
-          type: "address[]"
+          internalType: 'address[]',
+          name: 'targets',
+          type: 'address[]',
         },
         {
           indexed: false,
-          internalType: "uint256[]",
-          name: "values",
-          type: "uint256[]"
+          internalType: 'uint256[]',
+          name: 'values',
+          type: 'uint256[]',
         },
         {
           indexed: false,
-          internalType: "string[]",
-          name: "signatures",
-          type: "string[]"
+          internalType: 'string[]',
+          name: 'signatures',
+          type: 'string[]',
         },
         {
           indexed: false,
-          internalType: "bytes[]",
-          name: "calldatas",
-          type: "bytes[]"
+          internalType: 'bytes[]',
+          name: 'calldatas',
+          type: 'bytes[]',
         },
         {
           indexed: false,
-          internalType: "uint256",
-          name: "startBlock",
-          type: "uint256"
+          internalType: 'uint256',
+          name: 'startBlock',
+          type: 'uint256',
         },
         {
           indexed: false,
-          internalType: "uint256",
-          name: "endBlock",
-          type: "uint256"
+          internalType: 'uint256',
+          name: 'endBlock',
+          type: 'uint256',
         },
         {
           indexed: false,
-          internalType: "string",
-          name: "description",
-          type: "string"
-        }
+          internalType: 'string',
+          name: 'description',
+          type: 'string',
+        },
       ],
-      name: "ProposalCreated",
-      type: "event"
-    }
-  ]
+      name: 'ProposalCreated',
+      type: 'event',
+    },
+  ],
 };
 
 describe('handleTransaction', () => {
@@ -171,7 +170,7 @@ describe('handleTransaction', () => {
         {
           address: '',
           topics: [],
-          data: `0x`,
+          data: '0x',
         },
       ],
     });
@@ -185,7 +184,7 @@ describe('handleTransaction', () => {
   it('returns empty findings if contract address does not match', async () => {
     // encode event data
     // valid event name with valid name, signature, topic, and args
-    const { mockArgs, mockTopics, data } = createMockEventLogs(eventInConfig, iface);
+    const { mockTopics, data } = createMockEventLogs(eventInConfig, iface);
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
@@ -200,7 +199,7 @@ describe('handleTransaction', () => {
 
   it('returns empty findings if contract address matches but no monitored function was invoked', async () => {
     // encode event data - valid event with valid arguments
-    const { mockArgs, mockTopics, data } = createMockEventLogs(eventNotInConfig, iface);
+    const { mockTopics, data } = createMockEventLogs(eventNotInConfig, iface);
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
@@ -250,6 +249,7 @@ describe('handleTransaction', () => {
         eventName: eventInConfig.name,
         ...expectedMetaData,
       },
+      addresses: [],
     })];
 
     expect(findings).toStrictEqual(testFindings);
@@ -302,6 +302,7 @@ describe('handleTransaction', () => {
         eventName: eventInConfig.name,
         ...expectedMetaData,
       },
+      addresses: [],
     })];
 
     expect(findings).toStrictEqual(testFindings);
@@ -318,7 +319,7 @@ describe('handleTransaction', () => {
     const overrideValue = getExpressionOperand(operator, operand, false);
 
     // encode event data with argument override value
-    const { mockArgs, mockTopics, data } = createMockEventLogs(
+    const { mockTopics, data } = createMockEventLogs(
       eventInConfig, iface, { name: argName, value: overrideValue },
     );
 

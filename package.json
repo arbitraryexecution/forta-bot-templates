@@ -1,7 +1,7 @@
 {
   "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-bigagent",
   "version": "0.0.1",
-  "description": "Forta Agent template for monitoring emitted events from a bunch of agents",
+  "description": "Forta Bot template for monitoring a large combination of conditions",
   "scripts": {
     "start": "npm run start:dev",
     "start:dev": "nodemon --watch src --watch forta.config.json --watch agent-config.json -e js,json --exec 'forta-agent run'",

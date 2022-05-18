@@ -39,29 +39,29 @@ const {
 const {
   initialize,
   handleBlock,
-  handleTransaction
+  handleTransaction,
 } = require('./agent');
 
 const utils = require('../utils');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "gnosis-safe-multisig",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'gnosis-safe-multisig',
+  name: 'test-bot',
   contracts: {
     contractName1: {
-      address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+      address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
       gnosisSafe: {
-        version: "v1.0.0"
-      }
-    }
-  }
+        version: 'v1.0.0',
+      },
+    },
+  },
 };
 
-const erc20Abi = utils.getInternalAbi(config.botType, "ERC20.json");
-erc20Interface = new ethers.utils.Interface(erc20Abi);
+const erc20Abi = utils.getInternalAbi(config.botType, 'ERC20.json');
+const erc20Interface = new ethers.utils.Interface(erc20Abi);
 
 describe('gnosis-safe multisig monitoring', () => {
   describe('handleBlock', () => {
@@ -95,7 +95,16 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler with a non-matching log
-      const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsNoMatchEvent,
+        null,
+      );
       findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -119,14 +128,25 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockProvider.getBalance).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
-      const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsNoMatchEvent,
+        null,
+      );
       findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
       // invoke the block handler a second time
       findings = await handleBlock(botState);
 
-      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = botState;
+      const {
+        protocolName, protocolAbbreviation, developerAbbreviation, contracts,
+      } = botState;
       const protocolAddress = contracts[0].address; // use first contract to test
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - Ether Balance Changed`,
@@ -139,6 +159,7 @@ describe('gnosis-safe multisig monitoring', () => {
           previousBalance: '0',
           newBalance: '1',
         },
+        addresses: [],
       })];
 
       expect(findings).toStrictEqual(expectedFindings);
@@ -155,7 +176,16 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
-      const mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNoMatchEvent, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        [],
+        null,
+        logsNoMatchEvent,
+        null,
+      );
       findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -179,7 +209,16 @@ describe('gnosis-safe multisig monitoring', () => {
       expect(mockContract.balanceOf).toHaveBeenCalledTimes(1);
 
       // invoke the transaction handler
-      const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsNoMatchEvent,
+        null,
+      );
       findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
 
@@ -187,7 +226,9 @@ describe('gnosis-safe multisig monitoring', () => {
       findings = await handleBlock(botState);
 
       // create expected findings
-      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = botState;
+      const {
+        protocolName, protocolAbbreviation, developerAbbreviation, contracts,
+      } = botState;
       const protocolAddress = contracts[0].address; // use first contract to test
 
       const expectedFindings = [Finding.fromObject({
@@ -202,6 +243,7 @@ describe('gnosis-safe multisig monitoring', () => {
           previousBalance: oldValue.toString(),
           newBalance: newValue.toString(),
         },
+        addresses: [],
       })];
 
       expect(findings).toStrictEqual(expectedFindings);
@@ -238,7 +280,16 @@ describe('gnosis-safe multisig monitoring', () => {
           data: ethers.constants.HashZero,
         },
       ];
-      let mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNewTransferToEvent, null);
+      let mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsNewTransferToEvent,
+        null,
+      );
 
       // invoke the transaction handler
       findings = await handleTransaction(botState, mockTxEvent);
@@ -292,7 +343,16 @@ describe('gnosis-safe multisig monitoring', () => {
           data: ethers.constants.HashZero,
         },
       ];
-      let mockTxEvent = new TransactionEvent(null, null, null, [], [], null, logsNewTransferToEvent, null);
+      let mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        [],
+        null,
+        logsNewTransferToEvent,
+        null,
+      );
 
       // invoke the transaction handler
       findings = await handleTransaction(botState, mockTxEvent);
@@ -326,6 +386,7 @@ describe('gnosis-safe multisig monitoring', () => {
           previousBalance: oldValue.toString(),
           newBalance: newValue.toString(),
         },
+        addresses: [],
       })];
 
       expect(findings).toStrictEqual(expectedFindings);
@@ -375,25 +436,54 @@ describe('gnosis-safe multisig monitoring', () => {
 
     it('returns empty findings if the address does not match', async () => {
       // invoke the transaction handler with a non-matching log
-      const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsNoMatchEvent, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsNoMatchEvent,
+        null,
+      );
       const findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
     it('returns empty findings if the address matches but the event does not', async () => {
       // invoke the transaction handler with a non-matching log
-      const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsAddressMatchNoEventMatch, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsAddressMatchNoEventMatch,
+        null,
+      );
       const findings = await handleTransaction(botState, mockTxEvent);
       expect(findings).toStrictEqual([]);
     });
 
     it('returns findings if the address and event match', async () => {
       // invoke the transaction handler with a non-matching log
-      const mockTxEvent = new TransactionEvent(null, null, null, [], {}, null, logsAddressAndEventMatch, null);
+      const mockTxEvent = new TransactionEvent(
+        null,
+        null,
+        null,
+        [],
+        {},
+        null,
+        logsAddressAndEventMatch,
+        null,
+      );
       const findings = await handleTransaction(botState, mockTxEvent);
 
       // create expected findings
-      const { protocolName, protocolAbbreviation, developerAbbreviation, contracts } = botState;
+      const {
+        protocolName, protocolAbbreviation, developerAbbreviation, contracts,
+      } = botState;
       const protocolAddress = contracts[0].address; // use first contract to test
       const expectedFindings = [Finding.fromObject({
         name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,
@@ -406,6 +496,7 @@ describe('gnosis-safe multisig monitoring', () => {
           address: protocolAddress,
           owner: ethers.constants.AddressZero,
         },
+        addresses: [],
       })];
       expect(findings).toStrictEqual(expectedFindings);
     });

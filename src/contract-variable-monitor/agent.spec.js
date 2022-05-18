@@ -17,12 +17,11 @@ const {
   Finding,
   FindingType,
   FindingSeverity,
-  ethers,
 } = require('forta-agent');
 
 const {
   initialize,
-  handleBlock
+  handleBlock,
 } = require('./agent');
 
 const {
@@ -33,44 +32,44 @@ const utils = require('../utils');
 const checkThresholdSpy = jest.spyOn(utils, 'checkThreshold');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "admin-events",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'admin-events',
+  name: 'test-bot',
   contracts: {
     UniswapV3Pool: {
-      address: "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
-      abiFile: "test-abi",
+      address: '0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8',
+      abiFile: 'test-abi',
       variables: {
         liquidity: {
-          type: "Info",
-          severity: "Low",
+          type: 'Info',
+          severity: 'Low',
           upperThresholdPercent: 15,
           lowerThresholdPercent: 5,
-          numDataPoints: 3
-        }
-      }
-    }
-  }
+          numDataPoints: 3,
+        },
+      },
+    },
+  },
 };
 
 const abiOverride = {
-  "test-abi": [
+  'test-abi': [
     {
       inputs: [],
-      name: "liquidity",
+      name: 'liquidity',
       outputs: [
         {
-          internalType: "uint128",
-          name: "",
-          type: "uint128"
-        }
+          internalType: 'uint128',
+          name: '',
+          type: 'uint128',
+        },
       ],
-      stateMutability: "view",
-      type: "function"
-    }
-  ]
+      stateMutability: 'view',
+      type: 'function',
+    },
+  ],
 };
 
 describe('monitor contract variables', () => {
@@ -252,10 +251,8 @@ describe('monitor contract variables', () => {
 
       // update the value returned by the target getter function to be greater than the
       // upperThresholdPercent change
-      const newValue =
-        (newThresholdLimit / 100) * initialGetterValue + initialGetterValue + 1;
-      const percentChange =
-        ((newValue - initialGetterValue) / initialGetterValue) * 100;
+      const newValue = (newThresholdLimit / 100) * initialGetterValue + initialGetterValue + 1;
+      const percentChange = ((newValue - initialGetterValue) / initialGetterValue) * 100;
       mockContract[functionInConfig.name] = jest
         .fn()
         .mockResolvedValue(newValue);
@@ -266,8 +263,8 @@ describe('monitor contract variables', () => {
         Finding.fromObject({
           name: `${config.protocolName} Contract Variable`,
           description:
-            `The ${functionInConfig.name} variable value in the ${contractName} contract` +
-            ` had a change in value over the upper threshold limit of ${newThresholdLimit} percent`,
+            `The ${functionInConfig.name} variable value in the ${contractName} contract`
+            + ` had a change in value over the upper threshold limit of ${newThresholdLimit} percent`,
           alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-CONTRACT-VARIABLE`,
           type: FindingType[testConfig.findingType],
           severity: FindingSeverity[testConfig.findingSeverity],
@@ -350,10 +347,8 @@ describe('monitor contract variables', () => {
 
       // update the value returned by the target getter function to be greater than the
       // lowerThresholdPercent change
-      const newValue =
-        initialGetterValue - (newThresholdLimit / 100) * initialGetterValue - 1;
-      const percentChange =
-        ((initialGetterValue - newValue) / initialGetterValue) * 100;
+      const newValue = initialGetterValue - (newThresholdLimit / 100) * initialGetterValue - 1;
+      const percentChange = ((initialGetterValue - newValue) / initialGetterValue) * 100;
       mockContract[functionInConfig.name] = jest
         .fn()
         .mockResolvedValue(newValue);
@@ -364,8 +359,8 @@ describe('monitor contract variables', () => {
         Finding.fromObject({
           name: `${config.protocolName} Contract Variable`,
           description:
-            `The ${functionInConfig.name} variable value in the ${contractName} contract` +
-            ` had a change in value over the lower threshold limit of ${newThresholdLimit} percent`,
+            `The ${functionInConfig.name} variable value in the ${contractName} contract`
+            + ` had a change in value over the lower threshold limit of ${newThresholdLimit} percent`,
           alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-CONTRACT-VARIABLE`,
           type: FindingType[testConfig.findingType],
           severity: FindingSeverity[testConfig.findingSeverity],

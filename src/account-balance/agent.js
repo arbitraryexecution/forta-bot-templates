@@ -6,7 +6,7 @@ const {
   isFilledString,
   isAddress,
   isObject,
-  isEmptyObject
+  isEmptyObject,
 } = require('../utils');
 
 function createAlert(
@@ -22,7 +22,7 @@ function createAlert(
   alertSeverity,
 ) {
   const threshold = ethers.utils.parseEther(thresholdEth.toString());
-  const name = protocolName ? `${protocolName} Account Balance` : `Account Balance`;
+  const name = protocolName ? `${protocolName} Account Balance` : 'Account Balance';
 
   let alertId;
   if (protocolAbbreviation) {
@@ -55,31 +55,34 @@ function createAlert(
 
 const validateConfig = (config) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!isFilledString(config.developerAbbreviation)) {
-    errMsg = `developerAbbreviation required`;
+    errMsg = 'developerAbbreviation required';
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-    errMsg = `protocolName required`;
+    errMsg = 'protocolName required';
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-    errMsg = `protocolAbbreviation required`;
+    errMsg = 'protocolAbbreviation required';
     return { ok, errMsg };
   }
 
   if (!isObject(config.contracts) || isEmptyObject(config.contracts)) {
-    errMsg = `contracts key required`;
+    errMsg = 'contracts key required';
     return { ok, errMsg };
   }
 
-  for (const account of Object.values(config.contracts)) {
+  let account;
+  const accounts = Object.values(config.contracts);
+  for (let i = 0; i < accounts.length; i += 1) {
+    account = accounts[i];
     const { address, thresholdEth, alert: { type, severity } } = account;
 
     if (!isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -92,13 +95,13 @@ const validateConfig = (config) => {
 
     // check type, this will fail if 'type' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
-      errMsg = `invalid finding type!`;
+      errMsg = 'invalid finding type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
-      errMsg = `invalid finding severity!`;
+      errMsg = 'invalid finding severity!';
       return { ok, errMsg };
     }
   }
@@ -108,7 +111,7 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   botState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
 
@@ -150,10 +153,10 @@ const handleBlock = async (botState, blockEvent) => {
     // If balance < threshold add an alert to the findings
     const exponent = ethers.BigNumber.from(10).pow(18);
     if (accountBalance.lt(ethers.BigNumber.from(accountThreshold).mul(exponent))) {
-
       // if less than the specified number of hours has elapsed, just increment the counter for
       // the number of alerts that would have been generated
       if (blockTimestamp.minus(account.startTime) < alertMinimumIntervalSeconds) {
+        /* eslint-disable no-param-reassign */
         account.numAlertsSinceLastFinding += 1;
       } else {
         findings.push(createAlert(
@@ -172,6 +175,7 @@ const handleBlock = async (botState, blockEvent) => {
         // restart the alert counter and update the start time
         account.numAlertsSinceLastFinding = 0;
         account.startTime = new BigNumber(blockTimestamp.toString());
+        /* eslint-enable no-param-reassign */
       }
     }
   }));

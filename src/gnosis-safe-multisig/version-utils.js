@@ -1,5 +1,12 @@
-function getFindings(version, eventName, protocolName, protocolAbbreviation, developerAbbreviation, address, args) {
-
+function getFindings(
+  version,
+  eventName,
+  protocolName,
+  protocolAbbreviation,
+  developerAbbreviation,
+  address,
+  args,
+) {
   const addedOwnerObject = {
     name: `${protocolName} DAO Treasury MultiSig - AddedOwner`,
     description: `Owner added to Gnosis-Safe MultiSig wallet: ${args.owner}`,

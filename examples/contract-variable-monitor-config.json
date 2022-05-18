@@ -4,16 +4,19 @@
   "protocolAbbreviation": "USDC",
   "bots": [
     {
-      "botType": "admin-events",
+      "botType": "contract-variable-monitor",
       "name": "bot_3",
       "contracts": {
         "USDC": {
           "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "abiFile": "USDC.json",
-          "events": {
-            "Transfer": {
+          "variables": {
+            "totalSupply": {
               "type": "Info",
-              "severity": "Info"
+              "severity": "Info",
+              "upperThresholdPercent": 0,
+              "lowerThresholdPercent": 0,
+              "numDataPoints": 1
             }
           }
         }

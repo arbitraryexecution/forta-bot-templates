@@ -5,14 +5,14 @@ const {
   isObject,
   isEmptyObject,
   isFilledString,
-  isAddress
+  isAddress,
 } = require('../utils');
 const {
   getObjectsFromAbi,
 } = require('../test-utils');
 
 // alert for when a new governance proposal is created
-function proposalCreatedFinding(proposal, address, config) {
+function proposalCreatedFinding(proposal, address, config, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Created`,
     description: `Governance Proposal ${proposal.proposalId} was just created`,
@@ -24,10 +24,11 @@ function proposalCreatedFinding(proposal, address, config) {
       address,
       ...proposal,
     },
+    addresses,
   });
 }
 
-function voteCastFinding(voteInfo, address, config) {
+function voteCastFinding(voteInfo, address, config, addresses) {
   let description = `Vote cast with weight ${voteInfo.weight.toString()}`;
   switch (voteInfo.support) {
     case 0:
@@ -57,10 +58,11 @@ function voteCastFinding(voteInfo, address, config) {
       weight: voteInfo.weight.toString(),
       reason: voteInfo.reason,
     },
+    addresses,
   });
 }
 
-function proposalCanceledFinding(proposalId, address, config) {
+function proposalCanceledFinding(proposalId, address, config, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Canceled`,
     description: `Governance proposal ${proposalId} has been canceled`,
@@ -73,10 +75,11 @@ function proposalCanceledFinding(proposalId, address, config) {
       proposalId,
       state: 'canceled',
     },
+    addresses,
   });
 }
 
-function proposalExecutedFinding(proposalId, address, config) {
+function proposalExecutedFinding(proposalId, address, config, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Executed`,
     description: `Governance proposal ${proposalId} has been executed`,
@@ -89,10 +92,11 @@ function proposalExecutedFinding(proposalId, address, config) {
       proposalId,
       state: 'executed',
     },
+    addresses,
   });
 }
 
-function proposalQueuedFinding(proposalId, address, config, eta) {
+function proposalQueuedFinding(proposalId, address, config, eta, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Queued`,
     description: `Governance Proposal ${proposalId} has been queued`,
@@ -106,10 +110,11 @@ function proposalQueuedFinding(proposalId, address, config, eta) {
       proposalId,
       state: 'queued',
     },
+    addresses,
   });
 }
 
-function quorumNumeratorUpdatedFinding(address, config, oldNum, newNum) {
+function quorumNumeratorUpdatedFinding(address, config, oldNum, newNum, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Quorum Numerator Updated`,
     description: `Quorum numerator updated from ${oldNum} to ${newNum}`,
@@ -122,10 +127,11 @@ function quorumNumeratorUpdatedFinding(address, config, oldNum, newNum) {
       oldNumerator: oldNum,
       newNumerator: newNum,
     },
+    addresses,
   });
 }
 
-function timelockChangeFinding(address, config, oldAddress, newAddress) {
+function timelockChangeFinding(address, config, oldAddress, newAddress, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Timelock Address Change`,
     description: `Timelock address changed from ${oldAddress} to ${newAddress}`,
@@ -138,10 +144,11 @@ function timelockChangeFinding(address, config, oldAddress, newAddress) {
       oldTimelockAddress: oldAddress,
       newTimelockAddress: newAddress,
     },
+    addresses,
   });
 }
 
-function votingDelaySetFinding(address, config, oldDelay, newDelay) {
+function votingDelaySetFinding(address, config, oldDelay, newDelay, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Voting Delay Set`,
     description: `Voting delay change from ${oldDelay} to ${newDelay}`,
@@ -154,10 +161,11 @@ function votingDelaySetFinding(address, config, oldDelay, newDelay) {
       oldVotingDelay: oldDelay,
       newVotingDelay: newDelay,
     },
+    addresses,
   });
 }
 
-function votingPeriodSetFinding(address, config, oldPeriod, newPeriod) {
+function votingPeriodSetFinding(address, config, oldPeriod, newPeriod, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Voting Period Set`,
     description: `Voting period change from ${oldPeriod} to ${newPeriod}`,
@@ -170,10 +178,11 @@ function votingPeriodSetFinding(address, config, oldPeriod, newPeriod) {
       oldVotingPeriod: oldPeriod,
       newVotingPeriod: newPeriod,
     },
+    addresses,
   });
 }
 
-function proposalThresholdSetFinding(address, config, oldThresh, newThresh) {
+function proposalThresholdSetFinding(address, config, oldThresh, newThresh, addresses) {
   return Finding.fromObject({
     name: `${config.protocolName} Governance Proposal Threshold Set`,
     description: `Proposal threshold change from ${oldThresh} to ${newThresh}`,
@@ -186,12 +195,13 @@ function proposalThresholdSetFinding(address, config, oldThresh, newThresh) {
       oldThreshold: oldThresh,
       newThreshold: newThresh,
     },
+    addresses,
   });
 }
 
 const validateConfig = (config) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   const MINIMUM_EVENT_LIST = [
     'ProposalCreated',
@@ -201,25 +211,29 @@ const validateConfig = (config) => {
   ];
 
   if (!isFilledString(config.developerAbbreviation)) {
-      errMsg = `developerAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'developerAbbreviation required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-      errMsg = `protocolName required`;
-      return { ok, errMsg };
+    errMsg = 'protocolName required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-      errMsg = `protocolAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'protocolAbbreviation required';
+    return { ok, errMsg };
   }
 
-  for (const [name, entry] of Object.entries(config.contracts)) {
+  let name;
+  let entry;
+  const entries = Object.entries(config.contracts);
+  for (let j = 0; j < entries.length; j += 1) {
+    [name, entry] = entries[j];
     if (!isObject(entry) || isEmptyObject(entry)) {
-      errMsg = `contract keys in contracts required`;
+      errMsg = 'contract keys in contracts required';
       return { ok, errMsg };
     }
 
-    const { governance: { abiFile }, address } = entry;
+    const { governance: { abiFile, address } } = entry;
 
     if (address === undefined) {
       errMsg = `No address found in configuration file for '${name}'`;
@@ -233,7 +247,7 @@ const validateConfig = (config) => {
 
     // check that the address is a valid address
     if (!isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -245,7 +259,7 @@ const validateConfig = (config) => {
     const events = getObjectsFromAbi(abi, 'event');
 
     // verify that at least the minimum list of supported events are present
-    for (let i = 0; i < MINIMUM_EVENT_LIST.length; i++) {
+    for (let i = 0; i < MINIMUM_EVENT_LIST.length; i += 1) {
       const eventName = MINIMUM_EVENT_LIST[i];
       if (Object.keys(events).indexOf(eventName) === -1) {
         errMsg = `ABI does not contain minimum supported event: ${eventName}`;
@@ -255,19 +269,19 @@ const validateConfig = (config) => {
   }
 
   ok = true;
-  return {ok, errMsg};
+  return { ok, errMsg };
 };
 
 const initialize = async (config) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  botState.contracts = Object.entries(config.contracts).map(([name, entry]) => {
-    const { governance: { abiFile }, address } = entry;
+  botState.contracts = Object.entries(config.contracts).map(([, entry]) => {
+    const { governance: { abiFile, address } } = entry;
 
     const abi = getInternalAbi(config.botType, abiFile);
     const iface = new ethers.utils.Interface(abi);
@@ -292,35 +306,52 @@ const handleTransaction = async (botState, txEvent) => {
     const { address, eventSignatures } = contract;
     const logs = txEvent.filterLog(eventSignatures, address);
 
+    let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+    addresses = addresses.filter((addr) => addr !== 'undefined');
+
     // iterate over all logs to determine what governance actions were taken
+    let proposal;
+    let voteInfo;
     let results = logs.map((log) => {
       switch (log.name) {
         case 'ProposalCreated':
-          const proposal = createProposalFromLog(log);
+          proposal = createProposalFromLog(log);
           return proposalCreatedFinding(
             proposal,
             address,
             botState,
+            addresses,
           );
         case 'VoteCast':
-          const voteInfo = {
+          voteInfo = {
             voter: log.args.voter,
             proposalId: log.args.proposalId.toString(),
             support: log.args.support,
             weight: log.args.weight,
             reason: log.args.reason,
           };
-          return voteCastFinding(voteInfo, address, botState.config);
+          return voteCastFinding(voteInfo, address, botState, addresses);
         case 'ProposalCanceled':
-          return proposalCanceledFinding(log.args.proposalId.toString(), address, botState);
+          return proposalCanceledFinding(
+            log.args.proposalId.toString(),
+            address,
+            botState,
+            addresses,
+          );
         case 'ProposalExecuted':
-          return proposalExecutedFinding(log.args.proposalId.toString(), address, botState);
+          return proposalExecutedFinding(
+            log.args.proposalId.toString(),
+            address,
+            botState,
+            addresses,
+          );
         case 'QuorumNumeratorUpdated':
           return quorumNumeratorUpdatedFinding(
             address,
             botState,
             log.args.oldQuorumNumerator.toString(),
             log.args.newQuorumNumerator.toString(),
+            addresses,
           );
         case 'ProposalQueued':
           return proposalQueuedFinding(
@@ -328,6 +359,7 @@ const handleTransaction = async (botState, txEvent) => {
             address,
             botState,
             log.args.eta.toString(),
+            addresses,
           );
         case 'TimelockChange':
           return timelockChangeFinding(
@@ -335,6 +367,7 @@ const handleTransaction = async (botState, txEvent) => {
             botState,
             log.args.oldTimelock,
             log.args.newTimelock,
+            addresses,
           );
         case 'VotingDelaySet':
           return votingDelaySetFinding(
@@ -342,6 +375,7 @@ const handleTransaction = async (botState, txEvent) => {
             botState,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
+            addresses,
           );
         case 'VotingPeriodSet':
           return votingPeriodSetFinding(
@@ -349,6 +383,7 @@ const handleTransaction = async (botState, txEvent) => {
             botState,
             log.args.oldVotingDelay.toString(),
             log.args.newVotingDelay.toString(),
+            addresses,
           );
         case 'ProposalThresholdSet':
           return proposalThresholdSetFinding(
@@ -356,6 +391,7 @@ const handleTransaction = async (botState, txEvent) => {
             botState,
             log.args.oldProposalThreshold.toString(),
             log.args.newProposalThreshold.toString(),
+            addresses,
           );
         default:
           return undefined;

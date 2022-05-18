@@ -1,15 +1,15 @@
 {
-  "developerAbbreviation": "hr",
-  "protocolName": "hr",
-  "protocolAbbreviation": "hr",
+  "developerAbbreviation": "AE",
+  "protocolName": "Coinbase1",
+  "protocolAbbreviation": "CB1",
   "bots": [
     {
       "botType": "account-balance",
       "name": "bot_1",
       "contracts": {
         "contractName1": {
-          "address": "0x8195D3496305D2DbE43B21d51e6cC77B6C9C8364",
-          "thresholdEth": 100,
+          "address": "0x71660c4005BA85c37ccec55d0C4493E66Fe775d3",
+          "thresholdEth": 100000,
           "alert": { "type": "Info", "severity": "Info" }
         }
       },
