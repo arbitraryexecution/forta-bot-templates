@@ -1,6 +1,6 @@
 const BigNumber = require('bignumber.js');
 const {
-  ethers, getEthersProvider, Finding, FindingSeverity, FindingType,
+  getEthersProvider, Finding, FindingSeverity, FindingType,
 } = require('forta-agent');
 const {
   isFilledString,
@@ -86,7 +86,8 @@ const validateConfig = (config) => {
     }
 
     try {
-      new BigNumber(thresholdEth);
+      // eslint-disable-next-line no-unused-vars
+      const value = new BigNumber(thresholdEth);
     } catch (error) {
       errMsg = `Cannot convert value in thresholdEth to BigNumber: ${thresholdEth}`;
       return { ok, errMsg };
