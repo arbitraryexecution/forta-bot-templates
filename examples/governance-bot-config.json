@@ -1,0 +1,19 @@
+{
+  "developerAbbreviation": "AE",
+  "protocolName": "Compound",
+  "protocolAbbreviation": "COMP",
+  "bots": [
+    {
+      "botType": "governance",
+      "name": "bot_6",
+      "contracts": {
+        "CompoundGovernorBravo": {
+          "governance": {
+            "address": "0xc0Da02939E1441F497fd74F78cE7Decb17B66529",
+            "abiFile": "GovernorCompatibilityBravo.json"
+          }
+        }
+      }
+    }
+  ]
+}

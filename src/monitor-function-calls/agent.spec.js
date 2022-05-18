@@ -8,7 +8,7 @@ const {
 
 const {
   initialize,
-  handleTransaction
+  handleTransaction,
 } = require('./agent');
 
 const {
@@ -20,58 +20,58 @@ const {
 const utils = require('../utils');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "admin-events",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'admin-events',
+  name: 'test-bot',
   contracts: {
     AggregationRouterV4: {
-      address: "0x1111111254fb6c44bac0bed2854e76f90643097d",
-      abiFile: "test-abi",
+      address: '0x1111111254fb6c44bac0bed2854e76f90643097d',
+      abiFile: 'test-abi',
       functions: {
         uniswapV3Swap: {
-          expression: "amount > 6000",
-          type: "Info",
-          severity: "Info"
-        }
-      }
-    }
-  }
+          expression: 'amount > 6000',
+          type: 'Info',
+          severity: 'Info',
+        },
+      },
+    },
+  },
 };
 
 const abiOverride = {
-  "test-abi": [
+  'test-abi': [
     {
       inputs: [
         {
-          internalType: "uint256",
-          name: "amount",
-          type: "uint256"
+          internalType: 'uint256',
+          name: 'amount',
+          type: 'uint256',
         },
         {
-          internalType: "uint256",
-          name: "minReturn",
-          type: "uint256"
+          internalType: 'uint256',
+          name: 'minReturn',
+          type: 'uint256',
         },
         {
-          internalType: "uint256[]",
-          name: "pools",
-          type: "uint256[]"
-        }
+          internalType: 'uint256[]',
+          name: 'pools',
+          type: 'uint256[]',
+        },
       ],
-      name: "uniswapV3Swap",
+      name: 'uniswapV3Swap',
       outputs: [
         {
-          internalType: "uint256",
-          name: "returnAmount",
-          type: "uint256"
-        }
+          internalType: 'uint256',
+          name: 'returnAmount',
+          type: 'uint256',
+        },
       ],
-      stateMutability: "payable",
-      type: "function"
-    }
-  ]
+      stateMutability: 'payable',
+      type: 'function',
+    },
+  ],
 };
 
 describe('monitor functions that do not emit events', () => {

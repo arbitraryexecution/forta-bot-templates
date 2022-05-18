@@ -79,9 +79,13 @@
     {
       "botType": "governance",
       "name": "bot_6",
-      "governance": {
-        "address": "",
-        "abiFile": ""
+      "contracts": {
+        "contractName1": {
+          "governance": {
+            "address": "contractAddress1",
+            "abiFile": "contractAbiFileName1.json"
+          }
+        }
       }
     },
     {
@@ -111,7 +115,7 @@
           "address": "contractAddress1",
           "filteredAddresses": [
             "filteredAddress1",
-          "filteredAddress2"
+            "filteredAddress2"
           ],
           "findingType": "Info",
           "findingSeverity": "Info"

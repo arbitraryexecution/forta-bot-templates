@@ -6,7 +6,7 @@ const {
   isFilledString,
   isObject,
   isEmptyObject,
-  isAddress
+  isAddress,
 } = require('../utils');
 
 // helper function to create alert for contract interaction
@@ -69,28 +69,31 @@ function createEOAInteractionAlert(
 
 const validateConfig = (config) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!isFilledString(config.developerAbbreviation)) {
-    errMsg = `developerAbbreviation required`;
+    errMsg = 'developerAbbreviation required';
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-    errMsg = `protocolName required`;
+    errMsg = 'protocolName required';
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-    errMsg = `protocolAbbreviation required`;
+    errMsg = 'protocolAbbreviation required';
     return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!isObject(contracts) || isEmptyObject(contracts)) {
-    errMsg = `contracts key required`;
+    errMsg = 'contracts key required';
     return { ok, errMsg };
   }
 
-  for (const contract of Object.values(contracts)) {
+  let contract;
+  const values = Object.values(contracts);
+  for (let i = 0; i < values.length; i += 1) {
+    contract = values[i];
     const {
       thresholdBlockCount,
       thresholdTransactionCount,
@@ -101,46 +104,46 @@ const validateConfig = (config) => {
     } = contract.newContractEOA;
 
     // make sure value for thresholdBlockCount in config is a number
-    if (typeof thresholdBlockCount != 'number') {
-      errMsg = `invalid thresholdBlockCount`;
+    if (typeof thresholdBlockCount !== 'number') {
+      errMsg = 'invalid thresholdBlockCount';
       return { ok, errMsg };
     }
 
     // make sure value for thresholdTransactionCount in config is a number
-    if (typeof thresholdTransactionCount != 'number') {
-      errMsg = `invalid thresholdTransactionCount`;
+    if (typeof thresholdTransactionCount !== 'number') {
+      errMsg = 'invalid thresholdTransactionCount';
       return { ok, errMsg };
     }
 
     // check that the address is a valid address
     if (!isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
     // check that filteredAddresses is an array
     if (!Array.isArray(filteredAddresses)) {
-      errMsg = `invalid filteredAddresses`;
+      errMsg = 'invalid filteredAddresses';
       return { ok, errMsg };
     }
 
     // check that all entries in filteredAddresses are valid addresses
-    for (const entry of filteredAddresses) {
-      if (!isAddress(address)) {
-        errMsg = `invalid filteredAddress`;
+    for (let j = 0; j < filteredAddresses.length; j += 1) {
+      if (!isAddress(filteredAddresses[j])) {
+        errMsg = 'invalid filteredAddress';
         return { ok, errMsg };
       }
     }
 
     // check type, this will fail if 'type' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingType, findingType)) {
-      errMsg = `invalid finding type!`;
+      errMsg = 'invalid finding type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity)) {
-      errMsg = `invalid finding severity!`;
+      errMsg = 'invalid finding severity!';
       return { ok, errMsg };
     }
   }
@@ -150,7 +153,7 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
@@ -158,21 +161,8 @@ const initialize = async (config) => {
   }
 
   botState.provider = getEthersProvider();
-  botState.contracts = Object.entries(botState.contracts).map(([name, entry]) => {
-    const {
-      thresholdBlockCount,
-      thresholdTransactionCount,
-      address,
-      filteredAddresses,
-      findingType,
-      findingSeverity,
-    } = entry.newContractEOA;
-
-    return {
-      name,
-      ...entry.newContractEOA,
-    };
-  });
+  const entries = Object.entries(botState.contracts);
+  botState.contracts = entries.map(([name, entry]) => ({ name, ...entry.newContractEOA }));
 
   return botState;
 };
@@ -201,7 +191,7 @@ const handleTransaction = async (botState, txEvent) => {
     // filter transaction addresses to remove specified addresses
 
     const filteredTransactionAddresses = transactionAddresses
-            .filter((item) => !exclusions.includes(item));
+      .filter((item) => !exclusions.includes(item));
 
     // watch for recently created contracts interacting with configured contract address
     if (txEvent.transaction.to === address) {
