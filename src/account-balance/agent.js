@@ -1,6 +1,6 @@
 const BigNumber = require('bignumber.js');
 const {
-  ethers, getEthersProvider, Finding, FindingSeverity, FindingType,
+  getEthersProvider, Finding, FindingSeverity, FindingType,
 } = require('forta-agent');
 const {
   isFilledString,
@@ -12,8 +12,8 @@ const {
 function createAlert(
   accountName,
   accountAddress,
-  accountBalance,
-  thresholdEth,
+  accountBalanceBN,
+  thresholdBN,
   numAlerts,
   protocolName,
   developerAbbreviation,
@@ -21,7 +21,6 @@ function createAlert(
   alertType,
   alertSeverity,
 ) {
-  const threshold = ethers.utils.parseEther(thresholdEth.toString());
   const name = protocolName ? `${protocolName} Account Balance` : 'Account Balance';
 
   let alertId;
@@ -33,15 +32,15 @@ function createAlert(
 
   const findingObject = {
     name,
-    description: `The ${accountName} account has a balance below ${thresholdEth} ETH`,
+    description: `The ${accountName} account has a balance below ${thresholdBN.toString()} wei`,
     alertId,
     severity: FindingSeverity[alertSeverity],
     type: FindingType[alertType],
     metadata: {
       accountName,
       accountAddress,
-      accountBalance: accountBalance.toString(),
-      threshold: threshold.toString(),
+      accountBalance: accountBalanceBN.toString(),
+      threshold: thresholdBN.toString(),
       numAlertsSinceLastFinding: numAlerts.toString(),
     },
   };
@@ -87,9 +86,10 @@ const validateConfig = (config) => {
     }
 
     try {
-      ethers.BigNumber.from(thresholdEth);
+      // eslint-disable-next-line no-unused-vars
+      const value = new BigNumber(thresholdEth);
     } catch (error) {
-      errMsg = `Cannot convert value in thresholdEth to ethers.BigNumber: ${thresholdEth}`;
+      errMsg = `Cannot convert value in thresholdEth to BigNumber: ${thresholdEth}`;
       return { ok, errMsg };
     }
 
@@ -115,16 +115,21 @@ const initialize = async (config) => {
 
   botState.alertMinimumIntervalSeconds = config.alertMinimumIntervalSeconds;
 
+  const multiplier = new BigNumber(10).pow(18);
+
   botState.provider = getEthersProvider();
-  botState.accounts = Object.entries(config.contracts).map(([accountName, entry]) => ({
-    accountName,
-    accountAddress: entry.address,
-    accountThreshold: entry.thresholdEth,
-    startTime: 0,
-    numAlertsSinceLastFinding: 0,
-    alertType: entry.alert.type,
-    alertSeverity: entry.alert.severity,
-  }));
+  botState.accounts = Object.entries(config.contracts).map(([accountName, entry]) => {
+    const accountThresholdBN = new BigNumber(entry.thresholdEth).times(multiplier);
+    return {
+      accountName,
+      accountAddress: entry.address,
+      accountThresholdBN,
+      startTime: 0,
+      numAlertsSinceLastFinding: 0,
+      alertType: entry.alert.type,
+      alertSeverity: entry.alert.severity,
+    };
+  });
 
   return botState;
 };
@@ -146,13 +151,14 @@ const handleBlock = async (botState, blockEvent) => {
 
   await Promise.all(accounts.map(async (account) => {
     const {
-      accountName, accountAddress, accountThreshold,
+      accountName, accountAddress, accountThresholdBN,
     } = account;
     const accountBalance = await provider.getBalance(accountAddress);
 
+    const accountBalanceBN = new BigNumber(accountBalance.toString());
+
     // If balance < threshold add an alert to the findings
-    const exponent = ethers.BigNumber.from(10).pow(18);
-    if (accountBalance.lt(ethers.BigNumber.from(accountThreshold).mul(exponent))) {
+    if (accountBalanceBN.lt(accountThresholdBN)) {
       // if less than the specified number of hours has elapsed, just increment the counter for
       // the number of alerts that would have been generated
       if (blockTimestamp.minus(account.startTime) < alertMinimumIntervalSeconds) {
@@ -162,8 +168,8 @@ const handleBlock = async (botState, blockEvent) => {
         findings.push(createAlert(
           accountName,
           accountAddress,
-          accountBalance,
-          accountThreshold,
+          accountBalanceBN.toString(),
+          accountThresholdBN.toString(),
           account.numAlertsSinceLastFinding,
           botState.protocolName,
           botState.developerAbbreviation,
