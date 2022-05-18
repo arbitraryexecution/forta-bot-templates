@@ -11,7 +11,7 @@ and should let you know if there's any issues that might pop up during your run
 
 ## Bot Templates
 
-### [Event Monitor](admin-events/SETUP.md)
+### [Event Monitor](monitor-events/SETUP.md)
 
 This bot monitors blockchain transactions for specific events emitted from specific contract
 addresses. Optionally, an expression can be provided for checking the value of an event argument

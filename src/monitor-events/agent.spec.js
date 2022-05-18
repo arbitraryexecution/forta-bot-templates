@@ -18,7 +18,7 @@ const config = {
   developerAbbreviation: 'DEVTEST',
   protocolName: 'PROTOTEST',
   protocolAbbreviation: 'PT',
-  botType: 'admin-events',
+  botType: 'monitor-events',
   name: 'test-bot',
   contracts: {
     GovernorBravo: {
@@ -237,9 +237,9 @@ describe('handleTransaction', () => {
 
     // create the expected finding
     const testFindings = [Finding.fromObject({
-      alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+      alertId: `${developerAbbreviation}-${protocolAbbreviation}-MONITOR-EVENT`,
       description: `The ${eventInConfig.name} event was emitted by the ${contractName} contract`,
-      name: `${protocolName} Admin Event`,
+      name: `${protocolName} Monitor Event`,
       protocol: protocolName,
       severity: FindingSeverity[findingSeverity],
       type: FindingType[findingType],
@@ -289,10 +289,10 @@ describe('handleTransaction', () => {
 
     // create the expected finding
     const testFindings = [Finding.fromObject({
-      alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+      alertId: `${developerAbbreviation}-${protocolAbbreviation}-MONITOR-EVENT`,
       description: `The ${eventInConfig.name} event was emitted by the ${contractName}`
         + ` contract with condition met: ${expression}`,
-      name: `${protocolName} Admin Event`,
+      name: `${protocolName} Monitor Event`,
       protocol: protocolName,
       severity: FindingSeverity[findingSeverity],
       type: FindingType[findingType],

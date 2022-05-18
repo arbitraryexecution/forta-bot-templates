@@ -35,7 +35,7 @@ const config = {
   developerAbbreviation: 'DEVTEST',
   protocolName: 'PROTOTEST',
   protocolAbbreviation: 'PT',
-  botType: 'admin-events',
+  botType: 'contract-variable-monitor',
   name: 'test-bot',
   contracts: {
     UniswapV3Pool: {
