@@ -44,33 +44,34 @@ function createAlert(
 
 const validateConfig = (config, abiOverride = null) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!utils.isFilledString(config.developerAbbreviation)) {
-      errMsg = `developerAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'developerAbbreviation required';
+    return { ok, errMsg };
   }
   if (!utils.isFilledString(config.protocolName)) {
-      errMsg = `protocolName required`;
-      return { ok, errMsg };
+    errMsg = 'protocolName required';
+    return { ok, errMsg };
   }
   if (!utils.isFilledString(config.protocolAbbreviation)) {
-      errMsg = `protocolAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'protocolAbbreviation required';
+    return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!utils.isObject(contracts) || utils.isEmptyObject(contracts)) {
-    errMsg = `contracts key required`;
+    errMsg = 'contracts key required';
     return { ok, errMsg };
   }
 
-  for (const entry of Object.values(contracts)) {
-    const { address, abiFile, variables } = entry;
+  const values = Object.values(contracts);
+  for (let i = 0; i < values.length; i += 1) {
+    const { address, abiFile, variables } = values[i];
 
     // check that the address is a valid address
     if (!utils.isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -88,21 +89,24 @@ const validateConfig = (config, abiOverride = null) => {
 
     // for all of the variable names specified, verify that their corresponding getter function
     // exists in the ABI
-    for (const variableName of Object.keys(variables)) {
-      if (Object.keys(functionObjects).indexOf(variableName) == -1) {
-        errMsg = `invalid event`;
+    let variableName;
+    const variableNames = Object.keys(variables);
+    for (let j = 0; j < variableNames.length; j += 1) {
+      variableName = variableNames[j];
+      if (Object.keys(functionObjects).indexOf(variableName) === -1) {
+        errMsg = 'invalid event';
         return { ok, errMsg };
       }
 
       // assert that the output array length for the getter function is one
-      if (functionObjects[variableName].outputs.length != 1) {
-        errMsg = `invalid variable`;
+      if (functionObjects[variableName].outputs.length !== 1) {
+        errMsg = 'invalid variable';
         return { ok, errMsg };
       }
 
       // assert that the type of the output for the getter function is a (u)int type
-      if (functionObjects[variableName].outputs[0].type.match(/^u?int/) == null) {
-        errMsg = `invalid getter function type`;
+      if (functionObjects[variableName].outputs[0].type.match(/^u?int/) === null) {
+        errMsg = 'invalid getter function type';
         return { ok, errMsg };
       }
 
@@ -117,13 +121,13 @@ const validateConfig = (config, abiOverride = null) => {
 
       // check type, this will fail if 'type' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
-        errMsg = `invalid finding type!`;
+        errMsg = 'invalid finding type!';
         return { ok, errMsg };
       }
 
       // check severity, this will fail if 'severity' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
-        errMsg = `invalid finding severity!`;
+        errMsg = 'invalid finding severity!';
         return { ok, errMsg };
       }
 
@@ -135,20 +139,20 @@ const validateConfig = (config, abiOverride = null) => {
       }
 
       // if upperThresholdPercent is defined, make sure the value is a number
-      if (upperThresholdPercent !== undefined && typeof upperThresholdPercent != 'number') {
-        errMsg = `invalid upperThresholdPercent`;
+      if (upperThresholdPercent !== undefined && typeof upperThresholdPercent !== 'number') {
+        errMsg = 'invalid upperThresholdPercent';
         return { ok, errMsg };
       }
 
       // if lowerThresholdPercent is defined, make sure the value is a number
-      if (lowerThresholdPercent !== undefined && typeof lowerThresholdPercent != 'number') {
-        errMsg = `invalid lowerThresholdPercent`;
+      if (lowerThresholdPercent !== undefined && typeof lowerThresholdPercent !== 'number') {
+        errMsg = 'invalid lowerThresholdPercent';
         return { ok, errMsg };
       }
 
       // make sure value for numDataPoints in config is a number
-      if (typeof numDataPoints != 'number') {
-        errMsg = `invalid numDataPoints`;
+      if (typeof numDataPoints !== 'number') {
+        errMsg = 'invalid numDataPoints';
         return { ok, errMsg };
       }
     }
@@ -159,7 +163,7 @@ const validateConfig = (config, abiOverride = null) => {
 };
 
 const initialize = async (config, abiOverride = null) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
@@ -181,7 +185,7 @@ const initialize = async (config, abiOverride = null) => {
     }
 
     const contract = new ethers.Contract(entry.address, abi, provider);
-    return { name, contract, };
+    return { name, contract };
   });
 
   contractList.forEach((contractEntry) => {
@@ -193,7 +197,9 @@ const initialize = async (config, abiOverride = null) => {
   return botState;
 };
 
-const handleBlock = async (botState, blockEvent) => {
+// this function does not use any values stored on the blockEvent
+// it uses each blockEvent to trigger the handler
+const handleBlock = async (botState) => {
   // for each item present in variableInfoList, attempt to invoke the getter method
   // corresponding to the item's name and make sure it is within the specified threshold percent
   const variablePromises = botState.variableInfoList.map(async (variableInfo) => {

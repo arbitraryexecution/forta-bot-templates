@@ -8,31 +8,33 @@ const versionUtils = require('./version-utils');
 
 const validateConfig = (config) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!utils.isFilledString(config.developerAbbreviation)) {
-    errMsg = `developerAbbreviation required`;
+    errMsg = 'developerAbbreviation required';
     return { ok, errMsg };
   }
   if (!utils.isFilledString(config.protocolName)) {
-    errMsg = `protocolName required`;
+    errMsg = 'protocolName required';
     return { ok, errMsg };
   }
   if (!utils.isFilledString(config.protocolAbbreviation)) {
-    errMsg = `protocolAbbreviation required`;
+    errMsg = 'protocolAbbreviation required';
     return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!utils.isObject(contracts) || utils.isEmptyObject(contracts)) {
-    errMsg = `contracts key required`;
+    errMsg = 'contracts key required';
     return { ok, errMsg };
   }
 
   const gnosisSafe = Object.values(contracts);
-  for (const safe of gnosisSafe) {
+  let safe;
+  for (let i = 0; i < gnosisSafe.length; i += 1) {
+    safe = gnosisSafe[i];
     if (!utils.isObject(safe) || utils.isEmptyObject(safe)) {
-      errMsg = `gnosisSafe key required`;
+      errMsg = 'gnosisSafe key required';
       return { ok, errMsg };
     }
 
@@ -40,7 +42,7 @@ const validateConfig = (config) => {
 
     // check that the address is a valid address
     if (!utils.isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -49,7 +51,7 @@ const validateConfig = (config) => {
     const abi = utils.getInternalAbi(config.botType, `${version}/gnosis-safe.json`);
 
     if (!utils.isObject(abi) || utils.isEmptyObject(abi)) {
-      errMsg = `gnosis-safe abi required`;
+      errMsg = 'gnosis-safe abi required';
       return { ok, errMsg };
     }
   }
@@ -59,7 +61,7 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
@@ -69,7 +71,7 @@ const initialize = async (config) => {
   botState.provider = getEthersProvider();
 
   // grab erc20 abi and create an interface
-  const erc20Abi = utils.getInternalAbi(config.botType, "ERC20.json");
+  const erc20Abi = utils.getInternalAbi(config.botType, 'ERC20.json');
   const erc20Interface = new ethers.utils.Interface(erc20Abi);
 
   // save the erc20 ABI and Transfer signature for later use
@@ -89,7 +91,7 @@ const initialize = async (config) => {
     const blockNumber = await botState.provider.getBlockNumber();
 
     // look up all Transfer events to this address
-    const topics = erc20Interface.encodeFilterTopics('Transfer', [ null, address, ]);
+    const topics = erc20Interface.encodeFilterTopics('Transfer', [null, address]);
 
     const filter = {
       fromBlock: 0,
@@ -104,9 +106,8 @@ const initialize = async (config) => {
     tokenAddresses = [...new Set(tokenAddresses)];
 
     // create ethers contract objects for each token
-    const tokenContracts = tokenAddresses.map((tokenAddress) => {
-      return new ethers.Contract(tokenAddress, erc20Abi, botState.provider);
-    });
+    // eslint-disable-next-line max-len
+    const tokenContracts = tokenAddresses.map((tokenAddress) => new ethers.Contract(tokenAddress, erc20Abi, botState.provider));
 
     // load the appropriate abi
     // eslint-disable-next-line import/no-dynamic-require,global-require
@@ -140,13 +141,16 @@ const handleTransaction = async (botState, txEvent) => {
   botState.contracts.forEach((contract) => {
     transferLogs.forEach((log) => {
       const addressLower = contract.address.toLowerCase();
+      // eslint-disable-next-line max-len
       if (log.args.from.toLowerCase() !== addressLower && log.args.to.toLowerCase() !== addressLower) {
         return;
       }
 
       const logAddressLower = log.address.toLowerCase();
-      const tokenAddresses = contract.tokenAddresses;
+      const { tokenAddresses } = contract;
+      // eslint-disable-next-line max-len
       if ((tokenAddresses.indexOf(logAddressLower) === -1) && tokenAddresses.push(logAddressLower)) {
+        // eslint-disable-next-line max-len
         const tokenContract = new ethers.Contract(log.address, botState.erc20Abi, botState.provider);
         contract.tokenContracts.push(tokenContract);
       }
@@ -162,15 +166,19 @@ const handleTransaction = async (botState, txEvent) => {
         botState.protocolAbbreviation,
         botState.developerAbbreviation,
         contract.address,
-        log.args
+        log.args,
       );
       if (!findingObject) {
         return;
       }
 
+      let addresses = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
+      addresses = addresses.filter((address) => address !== 'undefined');
+
       findingObject.type = FindingType.Info;
       findingObject.severity = FindingSeverity.Info;
       findingObject.protocol = botState.protocolName;
+      findingObject.addresses = addresses;
       const finding = Finding.fromObject(findingObject);
       findings.push(finding);
     });
@@ -187,7 +195,7 @@ const handleBlock = async (botState) => {
   } = botState;
 
   // find changes in eth balance and tokens for every gnosis safe address
-  let totalFindings = await Promise.all(botState.contracts.map(async (contract) => {
+  const totalFindings = await Promise.all(botState.contracts.map(async (contract) => {
     const { address } = contract;
     const ethBalance = await botState.provider.getBalance(address);
     const ethBalanceBN = new BigNumber(ethBalance.toString());
@@ -250,10 +258,12 @@ const handleBlock = async (botState) => {
     });
 
     // update the stored balances
+    /* eslint-disable no-param-reassign */
     contract.previousBalances.Ether = ethBalanceBN;
     Object.entries(tokenBalances).forEach(([key, value]) => {
       contract.previousBalances[key] = value;
     });
+    /* eslint-enable no-param-reassign */
 
     return findings;
   }));

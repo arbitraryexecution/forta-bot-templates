@@ -1,5 +1,5 @@
 const {
-  Finding, FindingSeverity, FindingType,
+  Finding, FindingSeverity, FindingType, getTransactionReceipt,
 } = require('forta-agent');
 
 // formats provided data into a Forta alert
@@ -14,6 +14,7 @@ function createAlert(
   developerAbbreviation,
   alertType,
   alertSeverity,
+  addresses,
 ) {
   return Finding.fromObject({
     name: `${protocolName} Transaction Failure Count`,
@@ -29,13 +30,16 @@ function createAlert(
       txFailureThreshold: threshold,
       failedTxs,
     },
+    addresses,
   });
 }
 
 const initialize = async (config) => {
-  let botState = {...config};
+  const botState = { ...config };
 
-  botState.contracts = Object.entries(config.failedTransactions).map(([contractName, entry]) => ({
+  const { failedTransactions } = config.contracts;
+
+  botState.contracts = Object.entries(failedTransactions).map(([contractName, entry]) => ({
     contractName,
     contractAddress: entry.address.toLowerCase(),
     txFailureLimit: entry.transactionFailuresLimit,
@@ -77,6 +81,9 @@ const handleTransaction = async (botState, txEvent) => {
       }
     });
 
+    let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+    addresses = addresses.filter((addr) => addr !== 'undefined');
+
     // create finding if there are too many failed txs
     const failedTxHashes = Object.keys(contract.failedTxs);
     if (failedTxHashes.length >= limit) {
@@ -92,6 +99,7 @@ const handleTransaction = async (botState, txEvent) => {
           botState.developerAbbreviation,
           alertType,
           alertSeverity,
+          addresses,
         ),
       );
 

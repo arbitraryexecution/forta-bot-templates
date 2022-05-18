@@ -1,5 +1,5 @@
-const config = require("../bot-config.json");
-const { botImports } = require("./agent");
+const config = require('../bot-config.json');
+const { botImports } = require('./agent');
 
 function panic(msg) {
   console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
@@ -23,23 +23,23 @@ const validateConfig = async (botMap) => {
   } = config;
 
   if (developerAbbreviation === undefined) {
-    panic("developerAbbreviation not defined!");
+    panic('developerAbbreviation not defined!');
   }
 
   if (protocolName === undefined) {
-    panic("protocolName not defined!");
+    panic('protocolName not defined!');
   }
 
   if (protocolAbbreviation === undefined) {
-    panic("protocolAbbreviation not defined!");
+    panic('protocolAbbreviation not defined!');
   }
 
   if (bots === undefined) {
-    panic("bots not defined!");
+    panic('bots not defined!');
   }
 
-  let modProms = [];
-  for (let i = 0; i < bots.length; i++) {
+  const modProms = [];
+  for (let i = 0; i < bots.length; i += 1) {
     const bot = bots[i];
 
     if (bot.botType === undefined) {
@@ -51,18 +51,18 @@ const validateConfig = async (botMap) => {
     }
 
     if (bot.contracts === undefined) {
-      panic(botErr(bot, `has no contracts!`));
+      panic(botErr(bot, 'has no contracts!'));
     }
 
     const modProm = botMap.get(bot.botType);
     if (modProm === undefined) {
-      panic(botErr(bot, `module not found!`));
+      panic(botErr(bot, 'module not found!'));
     }
     modProms.push(modProm);
   }
 
   const botMods = await Promise.all(modProms);
-  for (let i = 0; i < botMods.length; i++) {
+  for (let i = 0; i < botMods.length; i += 1) {
     const bot = bots[i];
     const mod = botMods[i];
 
@@ -76,6 +76,7 @@ const validateConfig = async (botMap) => {
     };
 
     if (mod.validateConfig === undefined) {
+      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -88,13 +89,13 @@ const validateConfig = async (botMap) => {
 
 const main = async () => {
   const botMap = new Map();
-  for (let i = 0; i < botImports.length; i++) {
+  for (let i = 0; i < botImports.length; i += 1) {
     const imp = botImports[i];
     botMap.set(imp.name, imp.bot);
   }
 
   await validateConfig(botMap);
-  console.log("Config validated successfully");
+  console.log('Config validated successfully');
 };
 
 main();

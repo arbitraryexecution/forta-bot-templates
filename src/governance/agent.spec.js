@@ -2,26 +2,25 @@ const { Finding, createTransactionEvent, ethers } = require('forta-agent');
 
 const {
   initialize,
-  handleTransaction
+  handleTransaction,
 } = require('./agent');
 
-const utils = require('../utils');
 const { createMockEventLogs, getObjectsFromAbi } = require('../test-utils');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "governance",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'governance',
+  name: 'test-bot',
   contracts: {
     contractName1: {
-      address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
       governance: {
-        abiFile: "Governor"
-      }
-    }
-  }
+        abiFile: 'Governor',
+        address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+      },
+    },
+  },
 };
 const firstContractName = Object.keys(config.contracts)[0];
 
@@ -31,75 +30,75 @@ const abi = [
     inputs: [
       {
         indexed: false,
-        internalType: "uint256",
-        name: "proposalId",
-        type: "uint256"
+        internalType: 'uint256',
+        name: 'proposalId',
+        type: 'uint256',
       },
       {
         indexed: false,
-        internalType: "address",
-        name: "proposer",
-        type: "address"
+        internalType: 'address',
+        name: 'proposer',
+        type: 'address',
       },
       {
         indexed: false,
-        internalType: "address[]",
-        name: "targets",
-        type: "address[]"
+        internalType: 'address[]',
+        name: 'targets',
+        type: 'address[]',
       },
       {
         indexed: false,
-        internalType: "uint256[]",
-        name: "values",
-        type: "uint256[]"
+        internalType: 'uint256[]',
+        name: 'values',
+        type: 'uint256[]',
       },
       {
         indexed: false,
-        internalType: "string[]",
-        name: "signatures",
-        type: "string[]"
+        internalType: 'string[]',
+        name: 'signatures',
+        type: 'string[]',
       },
       {
         indexed: false,
-        internalType: "bytes[]",
-        name: "calldatas",
-        type: "bytes[]"
+        internalType: 'bytes[]',
+        name: 'calldatas',
+        type: 'bytes[]',
       },
       {
         indexed: false,
-        internalType: "uint256",
-        name: "startBlock",
-        type: "uint256"
+        internalType: 'uint256',
+        name: 'startBlock',
+        type: 'uint256',
       },
       {
         indexed: false,
-        internalType: "uint256",
-        name: "endBlock",
-        type: "uint256"
+        internalType: 'uint256',
+        name: 'endBlock',
+        type: 'uint256',
       },
       {
         indexed: false,
-        internalType: "string",
-        name: "description",
-        type: "string"
-      }
+        internalType: 'string',
+        name: 'description',
+        type: 'string',
+      },
     ],
-    name: "ProposalCreated",
-    type: "event"
+    name: 'ProposalCreated',
+    type: 'event',
   },
   {
     anonymous: false,
     inputs: [
       {
         indexed: false,
-        internalType: "uint256",
-        name: "proposalId",
-        type: "uint256"
-      }
+        internalType: 'uint256',
+        name: 'proposalId',
+        type: 'uint256',
+      },
     ],
-    name: "ProposalCanceled",
-    type: "event"
-  }
+    name: 'ProposalCanceled',
+    type: 'event',
+  },
 ];
 
 const invalidEvent = {
@@ -134,7 +133,7 @@ describe('monitor governance contracts for emitted events', () => {
       botState = await initialize(config);
 
       // grab the first entry from the 'contracts' key in the config file
-      validContractAddress = config.contracts[firstContractName].address;
+      validContractAddress = config.contracts[firstContractName].governance.address;
 
       const eventsInAbi = getObjectsFromAbi(abi, 'event');
       validEvent = eventsInAbi[validEventName];
@@ -251,6 +250,7 @@ describe('monitor governance contracts for emitted events', () => {
           address: validContractAddress,
           ...proposal,
         },
+        addresses: [],
       });
 
       expect(findings).toStrictEqual([expectedFinding]);

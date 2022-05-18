@@ -10,9 +10,9 @@ const {
   isFilledString,
   isAddress,
   isObject,
-  isEmptyObject
+  isEmptyObject,
 } = require('../utils');
-const { getObjectsFromAbi } = require("../test-utils");
+const { getObjectsFromAbi } = require('../test-utils');
 
 // get the Array of events for a given contract
 function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
@@ -92,6 +92,7 @@ function createAlert(
   protocolAbbreviation,
   developerAbbreviation,
   expression,
+  addresses,
 ) {
   const eventArgs = extractEventArgs(args);
   const finding = Finding.fromObject({
@@ -101,6 +102,7 @@ function createAlert(
     type: FindingType[eventType],
     severity: FindingSeverity[eventSeverity],
     protocol: protocolName,
+    addresses,
     metadata: {
       contractName,
       contractAddress,
@@ -118,33 +120,36 @@ function createAlert(
 
 const validateConfig = (config, abiOverride = null) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!isFilledString(config.developerAbbreviation)) {
-    errMsg = `developerAbbreviation required`;
+    errMsg = 'developerAbbreviation required';
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-    errMsg = `protocolName required`;
+    errMsg = 'protocolName required';
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-    errMsg = `protocolAbbreviation required`;
+    errMsg = 'protocolAbbreviation required';
     return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!isObject(contracts) || isEmptyObject(contracts)) {
-    errMsg = `contracts key required`;
+    errMsg = 'contracts key required';
     return { ok, errMsg };
   }
 
-  for (const [name, entry] of Object.entries(contracts)) {
+  let entry;
+  const entries = Object.entries(contracts);
+  for (let i = 0; i < entries.length; i += 1) {
+    [, entry] = entries[i];
     const { address, abiFile, events } = entry;
 
     // check that the address is a valid address
     if (!isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -160,14 +165,16 @@ const validateConfig = (config, abiOverride = null) => {
     const eventObjects = getObjectsFromAbi(abi, 'event');
 
     // for all of the events specified, verify that they exist in the ABI
-    for (const eventName of Object.keys(events)) {
-      if (Object.keys(eventObjects).indexOf(eventName) == -1) {
-        errMsg = `invalid event`;
+    let eventName;
+    const eventNames = Object.keys(events);
+    for (let j = 0; j < eventNames.length; j += 1) {
+      eventName = eventNames[j];
+      if (Object.keys(eventObjects).indexOf(eventName) === -1) {
+        errMsg = 'invalid event';
         return { ok, errMsg };
       }
 
-      const entry = events[eventName];
-      const { expression, type, severity } = entry;
+      const { expression, type, severity } = events[eventName];
 
       // the expression key can be left out, but if it's present, verify the expression
       if (expression !== undefined) {
@@ -179,21 +186,21 @@ const validateConfig = (config, abiOverride = null) => {
         const argumentNames = inputs.map((inputEntry) => inputEntry.name);
 
         // verify that the argument name is present in the event Object
-        if (argumentNames.indexOf(expressionObject.variableName) == -1) {
-          errMsg = `invalid argument`;
+        if (argumentNames.indexOf(expressionObject.variableName) === -1) {
+          errMsg = 'invalid argument';
           return { ok, errMsg };
         }
       }
 
       // check type, this will fail if 'type' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
-        errMsg = `invalid finding type!`;
+        errMsg = 'invalid finding type!';
         return { ok, errMsg };
       }
 
       // check severity, this will fail if 'severity' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
-        errMsg = `invalid finding severity!`;
+        errMsg = 'invalid finding severity!';
         return { ok, errMsg };
       }
     }
@@ -204,7 +211,7 @@ const validateConfig = (config, abiOverride = null) => {
 };
 
 const initialize = async (config, abiOverride = null) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {
@@ -223,13 +230,14 @@ const initialize = async (config, abiOverride = null) => {
     }
     const iface = new ethers.utils.Interface(abi);
 
-    const contract = { name, address: entry.address, iface, };
+    const contract = { name, address: entry.address, iface };
     return contract;
   });
 
   botState.contracts.forEach((contract) => {
     const entry = botState.adminEvents[contract.name];
     const { eventInfo } = getEvents(entry, contract, botState.adminEvents, botState.contracts);
+    // eslint-disable-next-line no-param-reassign
     contract.eventInfo = eventInfo;
   });
 
@@ -247,12 +255,15 @@ const handleTransaction = async (botState, txEvent) => {
       // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
       // configuration file for each Event log, respectively
       parsedLogs.forEach((parsedLog) => {
-          // if there is an expression to check, verify the condition before creating an alert
+        // if there is an expression to check, verify the condition before creating an alert
         if (ev.expression !== undefined) {
           if (!checkLogAgainstExpression(ev.expressionObject, parsedLog)) {
             return;
           }
         }
+
+        let addresses = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
+        addresses = addresses.filter((address) => address !== 'undefined');
 
         findings.push(createAlert(
           ev.name,
@@ -265,6 +276,7 @@ const handleTransaction = async (botState, txEvent) => {
           botState.protocolAbbreviation,
           botState.developerAbbreviation,
           ev.expression,
+          addresses,
         ));
       });
     });

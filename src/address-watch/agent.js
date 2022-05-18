@@ -1,42 +1,47 @@
+const { Finding, FindingSeverity, FindingType } = require('forta-agent');
 const {
   isFilledString,
   isAddress,
   isObject,
-  isEmptyObject
+  isEmptyObject,
 } = require('../utils');
 
-const { Finding, FindingSeverity, FindingType } = require('forta-agent');
-
-function createAlert(botState, address, contractName, type, severity) {
+function createAlert(botState, address, contractName, type, severity, addresses) {
   return Finding.fromObject({
     name: `${botState.protocolName} Address Watch`,
     description: `Address ${address} (${contractName}) was involved in a transaction`,
-    alertId: `${botState.developerAbbreviation}-${botState.protocolAbbrev}-ADDRESS-WATCH`,
+    alertId: `${botState.developerAbbreviation}-${botState.protocolAbbreviation}-ADDRESS-WATCH`,
     type: FindingType[type],
     severity: FindingSeverity[severity],
+    addresses,
   });
 }
 
 const validateConfig = (config) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!isFilledString(config.developerAbbreviation)) {
-      errMsg = `developerAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'developerAbbreviation required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-      errMsg = `protocolName required`;
-      return { ok, errMsg };
+    errMsg = 'protocolName required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-      errMsg = `protocolAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'protocolAbbreviation required';
+    return { ok, errMsg };
   }
 
-  for (const [name, entry] of Object.entries(config.contracts)) {
+  let name;
+  let entry;
+  const entries = Object.entries(config.contracts);
+  for (let i = 0; i < entries.length; i += 1) {
+    [name, entry] = entries[i];
+
     if (!isObject(entry) || isEmptyObject(entry)) {
-      errMsg = `contract keys in contracts required`;
+      errMsg = 'contract keys in contracts required';
       return { ok, errMsg };
     }
 
@@ -47,17 +52,7 @@ const validateConfig = (config) => {
 
     // check that the address is a valid address
     if (!isAddress(entry.address)) {
-      errMsg = `invalid address`;
-      return { ok, errMsg };
-    }
-
-    if (entry.name === undefined) {
-      errMsg = `No name field in configuration file for '${name}'`;
-      return { ok, errMsg };
-    }
-
-    if (!isFilledString(entry.name)) {
-      errMsg = `Name field needs to be filled in configuration file for '${name}'`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -68,13 +63,13 @@ const validateConfig = (config) => {
 
     // check type, this will fail if 'type' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingType, entry.watch.type)) {
-      errMsg = `invalid finding type!`;
+      errMsg = 'invalid finding type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingSeverity, entry.watch.severity)) {
-      errMsg = `invalid finding severity!`;
+      errMsg = 'invalid finding severity!';
       return { ok, errMsg };
     }
   }
@@ -84,28 +79,36 @@ const validateConfig = (config) => {
 };
 
 const initialize = async (config) => {
-  const botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  // get list of addresses to watch
-  botState.contractList = Object.values(config.contracts);
+  botState.contracts = config.contracts;
 
   return botState;
 };
 
 const handleTransaction = async (botState, txEvent) => {
   const findings = [];
-  const txAddrs = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
+  let addresses = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
+  addresses = addresses.filter((address) => address !== 'undefined');
+
+  const { contracts } = botState;
 
   // check if an address in the watchlist was the initiator of the transaction
-  botState.contractList.forEach((contract, index) => {
-    if (txAddrs.includes(contract.address.toLowerCase())) {
-      const params = Object.values(botState.contracts)[index];
-      findings.push(createAlert(botState, contract.address, params.name, params.watch.type, params.watch.severity));
+  Object.entries(contracts).forEach(([name, contract]) => {
+    const {
+      address,
+      watch: {
+        type,
+        severity,
+      },
+    } = contract;
+    if (addresses.includes(address.toLowerCase())) {
+      findings.push(createAlert(botState, address, name, type, severity, addresses));
     }
   });
 

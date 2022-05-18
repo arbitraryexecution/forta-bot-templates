@@ -9,10 +9,7 @@ jest.mock('forta-agent', () => ({
 }));
 
 const {
-  FindingType,
-  FindingSeverity,
   TransactionEvent,
-  ethers,
 } = require('forta-agent');
 
 const {
@@ -47,26 +44,26 @@ function createTransactionEvent(txObject) {
 }
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "admin-events",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'admin-events',
+  name: 'test-bot',
   contracts: {
     contractName1: {
       newContractEOA: {
         thresholdBlockCount: 7,
         thresholdTransactionCount: 7,
-        address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+        address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
         filteredAddresses: [
-          "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13E",
-          "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13F"
+          '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13E',
+          '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13F',
         ],
-        findingType: "Info",
-        findingSeverity: "Info"
-      }
-    }
-  }
+        findingType: 'Info',
+        findingSeverity: 'Info',
+      },
+    },
+  },
 };
 
 // grab first contract to test
@@ -226,7 +223,12 @@ describe('new contract interaction monitoring', () => {
 
       const expectedFindings = [];
       botState.contracts.forEach((contract) => {
-        const { name, address, findingType, findingSeverity } = contract;
+        const {
+          name, address, findingType, findingSeverity,
+        } = contract;
+
+        let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+        addresses = addresses.filter((addr) => addr !== 'undefined');
 
         expectedFindings.push(createContractInteractionAlert(
           name,
@@ -237,6 +239,7 @@ describe('new contract interaction monitoring', () => {
           botState.protocolName,
           botState.protocolAbbreviation,
           botState.developerAbbreviation,
+          addresses,
         ));
       });
 
@@ -294,7 +297,12 @@ describe('new contract interaction monitoring', () => {
       // check assertions
       const expectedFindings = [];
       botState.contracts.forEach((contract) => {
-        const { name, address, findingType, findingSeverity } = contract;
+        const {
+          name, address, findingType, findingSeverity,
+        } = contract;
+
+        let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+        addresses = addresses.filter((addr) => addr !== 'undefined');
 
         expectedFindings.push(createEOAInteractionAlert(
           name,
@@ -306,6 +314,7 @@ describe('new contract interaction monitoring', () => {
           botState.protocolName,
           botState.protocolAbbreviation,
           botState.developerAbbreviation,
+          addresses,
         ));
       });
 

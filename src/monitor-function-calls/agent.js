@@ -10,9 +10,9 @@ const {
   isFilledString,
   isAddress,
   isObject,
-  isEmptyObject
+  isEmptyObject,
 } = require('../utils');
-const { getObjectsFromAbi } = require("../test-utils");
+const { getObjectsFromAbi } = require('../test-utils');
 
 // helper function to create alerts
 function createAlert(
@@ -53,33 +53,34 @@ function createAlert(
 
 const validateConfig = (config, abiOverride = null) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!isFilledString(config.developerAbbreviation)) {
-      errMsg = `developerAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'developerAbbreviation required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-      errMsg = `protocolName required`;
-      return { ok, errMsg };
+    errMsg = 'protocolName required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-      errMsg = `protocolAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'protocolAbbreviation required';
+    return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!isObject(contracts) || isEmptyObject(contracts)) {
-    errMsg = `contracts key required`;
+    errMsg = 'contracts key required';
     return { ok, errMsg };
   }
 
-  for (const entry of Object.values(contracts)) {
-    const { address, abiFile, functions } = entry;
+  const values = Object.values(contracts);
+  for (let i = 0; i < values.length; i += 1) {
+    const { address, abiFile, functions } = values[i];
 
     // check that the address is a valid address
     if (!isAddress(address)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
@@ -96,10 +97,12 @@ const validateConfig = (config, abiOverride = null) => {
     const functionObjects = getObjectsFromAbi(abi, 'function');
 
     // for all of the functions specified, verify that they exist in the ABI
-    for (const functionName of Object.keys(functions)) {
-
-      if (Object.keys(functionObjects).indexOf(functionName) == -1) {
-        errMsg = `invalid function`;
+    let functionName;
+    const functionNames = Object.keys(functions);
+    for (let j = 0; j < functionNames.length; j += 1) {
+      functionName = functionNames[j];
+      if (Object.keys(functionObjects).indexOf(functionName) === -1) {
+        errMsg = 'invalid function';
         return { ok, errMsg };
       }
 
@@ -116,21 +119,21 @@ const validateConfig = (config, abiOverride = null) => {
         const argumentNames = inputs.map((inputEntry) => inputEntry.name);
 
         // verify that the argument name is present in the function Object
-        if (argumentNames.indexOf(expressionObject.variableName) == -1) {
-          errMsg = `invalid argument`;
+        if (argumentNames.indexOf(expressionObject.variableName) === -1) {
+          errMsg = 'invalid argument';
           return { ok, errMsg };
         }
       }
 
       // check type, this will fail if 'type' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
-        errMsg = `invalid finding type!`;
+        errMsg = 'invalid finding type!';
         return { ok, errMsg };
       }
 
       // check severity, this will fail if 'severity' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
-        errMsg = `invalid finding severity!`;
+        errMsg = 'invalid finding severity!';
         return { ok, errMsg };
       }
     }
@@ -141,7 +144,7 @@ const validateConfig = (config, abiOverride = null) => {
 };
 
 const initialize = async (config, abiOverride = null) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config, abiOverride);
   if (!ok) {

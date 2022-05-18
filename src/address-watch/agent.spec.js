@@ -8,25 +8,24 @@ const {
 
 const {
   initialize,
-  handleTransaction
+  handleTransaction,
 } = require('./agent');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "address-watch",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'address-watch',
+  name: 'test-bot',
   contracts: {
     contractName1: {
-      name: "accountName1",
-      address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
-      watch : {
-        type: "Info",
-        severity: "Info"
-      }
-    }
-  }
+      address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+      watch: {
+        type: 'Info',
+        severity: 'Info',
+      },
+    },
+  },
 };
 
 describe('handleTransaction', () => {
@@ -50,8 +49,16 @@ describe('handleTransaction', () => {
   });
 
   it('returns a finding if a transaction participant is on the watch list', async () => {
-    const testAddr = Object.values(config.contracts)[0].address;
-    const params = Object.values(config.contracts)[0];
+    const { contracts } = config;
+    const [[name, contract]] = Object.entries(contracts);
+
+    const {
+      address: testAddr,
+      watch: {
+        type,
+        severity,
+      },
+    } = contract;
 
     // build txEvent
     const txEvent = createTransactionEvent({
@@ -66,10 +73,11 @@ describe('handleTransaction', () => {
     expect(findings).toStrictEqual([
       Finding.fromObject({
         name: `${botState.protocolName} Address Watch`,
-        description: `Address ${testAddr} (${params.name}) was involved in a transaction`,
-        alertId: `${botState.developerAbbreviation}-${botState.protocolAbbrev}-ADDRESS-WATCH`,
-        type: FindingType[params.watch.type],
-        severity: FindingSeverity[params.watch.severity],
+        description: `Address ${testAddr} (${name}) was involved in a transaction`,
+        alertId: `${botState.developerAbbreviation}-${botState.protocolAbbreviation}-ADDRESS-WATCH`,
+        type: FindingType[type],
+        severity: FindingSeverity[severity],
+        addresses: Object.keys(txEvent.addresses).map((address) => address.toLowerCase()),
       }),
     ]);
   });

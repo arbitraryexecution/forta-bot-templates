@@ -9,25 +9,25 @@ const {
 const {
   initialize,
   handleTransaction,
-  TORNADO_CASH_ADDRESSES
+  TORNADO_CASH_ADDRESSES,
 } = require('./agent');
 
 const config = {
-  developerAbbreviation: "DEVTEST",
-  protocolName: "PROTOTEST",
-  protocolAbbreviation: "PT",
-  botType: "tornado-cash-monitor",
-  name: "test-bot",
+  developerAbbreviation: 'DEVTEST',
+  protocolName: 'PROTOTEST',
+  protocolAbbreviation: 'PT',
+  botType: 'tornado-cash-monitor',
+  name: 'test-bot',
   observationIntervalInBlocks: 10,
   contracts: {
     contractName1: {
-      address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+      address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
       tornado: {
-        type: "Info",
-        severity: "Info"
-      }
-    }
-  }
+        type: 'Info',
+        severity: 'Info',
+      },
+    },
+  },
 };
 
 // tests
@@ -38,10 +38,9 @@ describe('handleTransaction', () => {
   let mockTrace;
   let mockTxEvent;
   let iface;
-  const tornadoCashAddress = TORNADO_CASH_ADDRESSES[0];
+  const tornadoCashAddress = TORNADO_CASH_ADDRESSES[0].toLowerCase();
 
   beforeEach(async () => {
-
     // set up test configuration parameters that won't change with each test
     // grab the first entry from the 'addressList' key in the configuration file
     const { contracts } = config;

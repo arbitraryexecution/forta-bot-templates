@@ -1,0 +1,22 @@
+{
+  "developerAbbreviation": "AE",
+  "protocolName": "Uniswap",
+  "protocolAbbreviation": "UNI",
+  "bots": [
+    {
+      "botType": "transaction-failure-count",
+      "name": "bot_10",
+      "contracts": {
+        "failedTransactions": {
+          "1Inch": {
+            "address": "0x1111111254fb6c44bAC0beD2854e76F90643097d",
+            "transactionFailuresLimit": 0,
+            "type": "Info",
+            "severity": "Info"
+          }
+        }
+      },
+      "blockWindow": 25
+    }
+  ]
+}

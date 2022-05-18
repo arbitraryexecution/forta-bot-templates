@@ -10,7 +10,7 @@
         "contractName1": {
           "address": "",
           "thresholdEth": 0,
-          "alert": { "type": "Type", "severity": "Severity" }
+          "alert": { "type": "Info", "severity": "Info" }
         }
       },
       "alertMinimumIntervalSeconds": 86400
@@ -20,7 +20,6 @@
       "name": "bot_2",
       "contracts": {
         "contractName1": {
-          "name": "accountName1",
           "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
           "watch" : {
             "type": "Info",
@@ -37,9 +36,11 @@
           "address": "contractAddress1",
           "abiFile": "filename1.json",
           "events": {
-            "address": "contractAddress1",
-            "type": "Type",
-            "severity": "Severity"
+            "eventName": {
+              "expression": "amount > 2000",
+              "type": "Info",
+              "severity": "Info"
+            }
           }
         }
       }
@@ -53,8 +54,8 @@
           "abiFile": "filename1.json",
           "variables": {
             "variableName1": {
-              "type": "Type",
-              "severity": "Severity",
+              "type": "Info",
+              "severity": "Info",
               "upperThresholdPercent": 0,
               "lowerThresholdPercent": 0,
               "numDataPoints": 10
@@ -66,17 +67,25 @@
     {
       "botType": "gnosis-safe-multisig",
       "name": "bot_5",
-      "gnosisSafe": {
-        "address": "contractAddress",
-        "version": "gnosisSafeContractVersion"
+      "contracts": {
+        "contractName1": {
+          "address": "contractAddress1",
+          "gnosisSafe": {
+            "version": "v1.1.1"
+          }
+        }
       }
     },
     {
       "botType": "governance",
       "name": "bot_6",
-      "governance": {
-        "address": "",
-        "abiFile": ""
+      "contracts": {
+        "contractName1": {
+          "governance": {
+            "address": "contractAddress1",
+            "abiFile": "contractAbiFileName1.json"
+          }
+        }
       }
     },
     {
@@ -89,8 +98,8 @@
           "functions": {
             "FunctionName1": {
               "expression": "amount > 6000",
-              "type": "Type",
-              "severity": "Severity"
+              "type": "Info",
+              "severity": "Info"
             }
           }
         }
@@ -101,41 +110,48 @@
       "name": "bot_8",
       "contracts": {
         "contractName1": {
-          "thresholdBlockCount": 7,
-          "thresholdTransactionCount": 7,
-          "address": "contractAddress1",
-          "filteredAddresses": [
-            "filteredAddress1",
-          "filteredAddress2"
-          ],
-          "findingType": "Type",
-          "findingSeverity": "Severity"
+          "newContractEOA": {
+            "thresholdBlockCount": 7,
+            "thresholdTransactionCount": 7,
+            "address": "contractAddress1",
+            "filteredAddresses": [
+              "filteredAddress1",
+              "filteredAddress2"
+            ],
+            "findingType": "Info",
+            "findingSeverity": "Info"
+          }
         }
       }
     },
     {
       "botType": "tornado-cash-monitor",
       "name": "bot_9",
-      "addressList": {
+      "contracts": {
         "contractName1": {
           "address": "contractAddress1",
-          "type": "type",
-          "severity": "severity"
+          "tornado": {
+            "type": "Info",
+            "severity": "Info"
+          }
         }
       }
+      "observationIntervalInBlocks": 100,
     },
     {
       "botType": "transaction-failure-count",
       "name": "bot_10",
-      "blockWindow": 25,
-      "failedTransactions": {
-        "contractName1": {
-          "address": "contractAddress2",
-          "transactionFailuresLimit": 10,
-          "type": "Type",
-          "severity": "Severity"
+      "contracts": {
+        "failedTransactions": {
+          "contractName1": {
+            "address": "contractAddress1",
+            "transactionFailuresLimit": 10,
+            "type": "Info",
+            "severity": "Info"
+          }
         }
-      }
+      },
+      "blockWindow": 25
     },
   ]
 }

@@ -6,7 +6,7 @@ const {
   getInternalAbi,
   isFilledString,
   isObject,
-  isEmptyObject
+  isEmptyObject,
 } = require('../utils');
 
 const TORNADO_CASH_ADDRESSES = [
@@ -41,67 +41,70 @@ function createAlert(
 
 const validateConfig = (config) => {
   let ok = false;
-  let errMsg = "";
+  let errMsg = '';
 
   if (!isFilledString(config.developerAbbreviation)) {
-      errMsg = `developerAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'developerAbbreviation required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-      errMsg = `protocolName required`;
-      return { ok, errMsg };
+    errMsg = 'protocolName required';
+    return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-      errMsg = `protocolAbbreviation required`;
-      return { ok, errMsg };
+    errMsg = 'protocolAbbreviation required';
+    return { ok, errMsg };
   }
 
-  if (typeof config.observationIntervalInBlocks != 'number') {
-      errMsg = `observationIntervalInBlocks key required`;
-      return { ok, errMsg };
+  if (typeof config.observationIntervalInBlocks !== 'number') {
+    errMsg = 'observationIntervalInBlocks key required';
+    return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!isObject(contracts) || isEmptyObject(contracts)) {
-    errMsg = `addressList key required`;
+    errMsg = 'addressList key required';
     return { ok, errMsg };
   }
 
-  Object.keys(contracts).forEach((key) => {
-    const { address, tornado } = contracts[key];
+  let value;
+  const entries = Object.entries(contracts);
+  for (let i = 0; i < entries.length; i += 1) {
+    [, value] = entries[i];
+    const { address, tornado } = value;
 
     // check that the address is a valid address
     if (!ethers.utils.isHexString(address, 20)) {
-      errMsg = `invalid address`;
+      errMsg = 'invalid address';
       return { ok, errMsg };
     }
 
     // check type, this will fail if 'type' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingType, tornado.type)) {
-      errMsg = `invalid tornado type!`;
+      errMsg = 'invalid tornado type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
     if (!Object.prototype.hasOwnProperty.call(FindingSeverity, tornado.severity)) {
-      errMsg = `invalid tornado severity!`;
+      errMsg = 'invalid tornado severity!';
       return { ok, errMsg };
     }
-  });
+  }
 
   ok = true;
   return { ok, errMsg };
 };
 
 const initialize = async (config) => {
-  let botState = {...config};
+  const botState = { ...config };
 
   const { ok, errMsg } = validateConfig(config);
   if (!ok) {
     throw new Error(errMsg);
   }
 
-  const abi = getInternalAbi(config.botType, "TornadoProxy.json");
+  const abi = getInternalAbi(config.botType, 'TornadoProxy.json');
   botState.iface = new ethers.utils.Interface(abi);
 
   const addressNames = Object.keys(config.contracts);
@@ -109,6 +112,7 @@ const initialize = async (config) => {
   addressNames.forEach((addressName) => {
     const info = {
       name: addressName,
+      // address: config.contracts[addressName].address.toLowerCase(),
       address: config.contracts[addressName].address,
       type: config.contracts[addressName].tornado.type,
       severity: config.contracts[addressName].tornado.severity,
@@ -137,7 +141,7 @@ const handleTransaction = async (botState, txEvent) => {
       address,
     );
 
-    if (filterResult.length > 0) {
+    if (filterResult.length > 0) { // } && txEvent.from !== undefined) {
       return txEvent.from;
     }
 
@@ -152,7 +156,7 @@ const handleTransaction = async (botState, txEvent) => {
   // an address is already present in suspiciousAddresses then simply restart its block timer
   addressesOfInterest.forEach((address) => {
     // eslint-disable-next-line no-param-reassign
-    botState.suspiciousAddresses[address] = { blockAdded: txEvent.blockNumber, };
+    botState.suspiciousAddresses[address] = { blockAdded: txEvent.blockNumber };
   });
 
   // iterate over the list of suspiciousAddresses and check to see if any address can be removed
@@ -167,7 +171,7 @@ const handleTransaction = async (botState, txEvent) => {
     }
   });
 
-  // eslint-disable-next-line no-param-reassign
+  // eslint-disable-next-line no-param-reassign,max-len
   addressesToRemove.forEach((address) => delete botState.suspiciousAddresses[address]);
 
   // now check to see if the higher level list of addresses in txEvent contains at least one
@@ -175,8 +179,10 @@ const handleTransaction = async (botState, txEvent) => {
   Object.keys(botState.suspiciousAddresses).forEach((address) => {
     botState.addressesToMonitor.forEach((addressInfo) => {
       const { address: monitoredAddress } = addressInfo;
-      if (txEvent.addresses[address] !== undefined && txEvent.addresses[monitoredAddress] !== undefined) {
-
+      if (
+        txEvent.addresses[address] !== undefined
+        && txEvent.addresses[monitoredAddress] !== undefined
+      ) {
         findings.push(createAlert(
           monitoredAddress,
           addressInfo.name,
