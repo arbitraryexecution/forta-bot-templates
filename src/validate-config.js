@@ -39,7 +39,7 @@ const validateConfig = async (botMap) => {
   }
 
   const modProms = [];
-  for (let i = 0; i < bots.length; i++) {
+  for (let i = 0; i < bots.length; i += 1) {
     const bot = bots[i];
 
     if (bot.botType === undefined) {
@@ -62,7 +62,7 @@ const validateConfig = async (botMap) => {
   }
 
   const botMods = await Promise.all(modProms);
-  for (let i = 0; i < botMods.length; i++) {
+  for (let i = 0; i < botMods.length; i += 1) {
     const bot = bots[i];
     const mod = botMods[i];
 
@@ -76,6 +76,7 @@ const validateConfig = async (botMap) => {
     };
 
     if (mod.validateConfig === undefined) {
+      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -88,7 +89,7 @@ const validateConfig = async (botMap) => {
 
 const main = async () => {
   const botMap = new Map();
-  for (let i = 0; i < botImports.length; i++) {
+  for (let i = 0; i < botImports.length; i += 1) {
     const imp = botImports[i];
     botMap.set(imp.name, imp.bot);
   }

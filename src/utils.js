@@ -3,15 +3,15 @@ const RollingMath = require('rolling-math');
 const { ethers } = require('forta-agent');
 
 function getAbi(botName, abiFile) {
-  // eslint-disable-next-line global-require,import/no-dynamic-require
   const abiPath = `../abi/${botName}`;
+  // eslint-disable-next-line global-require,import/no-dynamic-require
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }
 
 function getInternalAbi(botType, abiFile) {
-  // eslint-disable-next-line global-require,import/no-dynamic-require
   const abiPath = `./${botType}/internal-abi`;
+  // eslint-disable-next-line global-require,import/no-dynamic-require
   const { abi } = require(`${abiPath}/${abiFile}`);
   return abi;
 }
@@ -237,7 +237,7 @@ function extractFunctionArgs(args) {
 function getRandomCharacterString(numCharacters) {
   let result = '';
   let charCode;
-  for (let i = 0; i < numCharacters; i++) {
+  for (let i = 0; i < numCharacters; i += 1) {
     charCode = Math.floor(Math.random() * 52);
     if (charCode < 26) {
       charCode += 65;
@@ -279,7 +279,7 @@ function isEmptyObject(obj) {
 }
 
 function isFilledString(str) {
-  return typeof str === 'string' && str != '';
+  return typeof str === 'string' && str !== '';
 }
 
 module.exports = {

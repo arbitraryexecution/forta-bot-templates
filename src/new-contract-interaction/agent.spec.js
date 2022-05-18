@@ -227,6 +227,9 @@ describe('new contract interaction monitoring', () => {
           name, address, findingType, findingSeverity,
         } = contract;
 
+        let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+        addresses = addresses.filter((addr) => addr !== 'undefined');
+
         expectedFindings.push(createContractInteractionAlert(
           name,
           address,
@@ -236,6 +239,7 @@ describe('new contract interaction monitoring', () => {
           botState.protocolName,
           botState.protocolAbbreviation,
           botState.developerAbbreviation,
+          addresses,
         ));
       });
 
@@ -297,6 +301,9 @@ describe('new contract interaction monitoring', () => {
           name, address, findingType, findingSeverity,
         } = contract;
 
+        let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+        addresses = addresses.filter((addr) => addr !== 'undefined');
+
         expectedFindings.push(createEOAInteractionAlert(
           name,
           address,
@@ -307,6 +314,7 @@ describe('new contract interaction monitoring', () => {
           botState.protocolName,
           botState.protocolAbbreviation,
           botState.developerAbbreviation,
+          addresses,
         ));
       });
 

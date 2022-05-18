@@ -19,6 +19,7 @@ function createContractInteractionAlert(
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
+  addresses,
 ) {
   const finding = {
     name: `${protocolName} New Contract Interaction`,
@@ -32,6 +33,7 @@ function createContractInteractionAlert(
       contractAddress,
       interactionAddress,
     },
+    addresses,
   };
 
   return Finding.fromObject(finding);
@@ -48,6 +50,7 @@ function createEOAInteractionAlert(
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
+  addresses,
 ) {
   const finding = {
     name: `${protocolName} New EOA Interaction`,
@@ -62,6 +65,7 @@ function createEOAInteractionAlert(
       interactionAddress,
       transactionCount,
     },
+    addresses,
   };
 
   return Finding.fromObject(finding);
@@ -95,13 +99,15 @@ const validateConfig = (config) => {
   for (let i = 0; i < values.length; i += 1) {
     contract = values[i];
     const {
-      thresholdBlockCount,
-      thresholdTransactionCount,
-      address,
-      filteredAddresses,
-      findingType,
-      findingSeverity,
-    } = contract.newContractEOA;
+      newContractEOA: {
+        address,
+        thresholdBlockCount,
+        thresholdTransactionCount,
+        filteredAddresses,
+        findingType,
+        findingSeverity,
+      },
+    } = contract;
 
     // make sure value for thresholdBlockCount in config is a number
     if (typeof thresholdBlockCount !== 'number') {
@@ -193,8 +199,11 @@ const handleTransaction = async (botState, txEvent) => {
     const filteredTransactionAddresses = transactionAddresses
       .filter((item) => !exclusions.includes(item));
 
+    let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
+    addresses = addresses.filter((addr) => addr !== 'undefined');
+
     // watch for recently created contracts interacting with configured contract address
-    if (txEvent.transaction.to === address) {
+    if (txEvent.transaction.to.toLowerCase() === address.toLowerCase()) {
       const contractResults = {};
       const eoaAddresses = [];
 
@@ -217,7 +226,6 @@ const handleTransaction = async (botState, txEvent) => {
 
       await Promise.all(eoaAddresses.map(async (eoaAddress) => {
         const eoaTransactionCount = await botState.provider.getTransactionCount(eoaAddress);
-
         if (eoaTransactionCount < thresholdTransactionCount) {
           findings.push(createEOAInteractionAlert(
             name,
@@ -229,6 +237,7 @@ const handleTransaction = async (botState, txEvent) => {
             botState.protocolName,
             botState.protocolAbbreviation,
             botState.developerAbbreviation,
+            addresses,
           ));
         }
       }));
@@ -253,6 +262,7 @@ const handleTransaction = async (botState, txEvent) => {
               botState.protocolName,
               botState.protocolAbbreviation,
               botState.developerAbbreviation,
+              addresses,
             ));
           }
         }
