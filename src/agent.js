@@ -2,7 +2,7 @@
 const botImports = [
   { name: 'account-balance', bot: require('./account-balance/agent') },
   { name: 'address-watch', bot: require('./address-watch/agent') },
-  { name: 'admin-events', bot: require('./admin-events/agent') },
+  { name: 'monitor-events', bot: require('./monitor-events/agent') },
   { name: 'contract-variable-monitor', bot: require('./contract-variable-monitor/agent') },
   { name: 'gnosis-safe-multisig', bot: require('./gnosis-safe-multisig/agent') },
   { name: 'governance', bot: require('./governance/agent') },

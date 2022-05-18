@@ -47,7 +47,7 @@ const config = {
   developerAbbreviation: 'DEVTEST',
   protocolName: 'PROTOTEST',
   protocolAbbreviation: 'PT',
-  botType: 'admin-events',
+  botType: 'new-contract-interaction',
   name: 'test-bot',
   contracts: {
     contractName1: {

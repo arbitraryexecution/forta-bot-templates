@@ -23,7 +23,7 @@ const config = {
   developerAbbreviation: 'DEVTEST',
   protocolName: 'PROTOTEST',
   protocolAbbreviation: 'PT',
-  botType: 'admin-events',
+  botType: 'monitor-function-calls',
   name: 'test-bot',
   contracts: {
     AggregationRouterV4: {

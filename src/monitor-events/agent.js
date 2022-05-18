@@ -15,7 +15,7 @@ const {
 const { getObjectsFromAbi } = require('../test-utils');
 
 // get the Array of events for a given contract
-function getEvents(contractEventConfig, currentContract, adminEvents, contracts) {
+function getEvents(contractEventConfig, currentContract, monitorEvents, contracts) {
   const proxyName = contractEventConfig.proxy;
   let { events } = contractEventConfig;
   const eventInfo = [];
@@ -31,7 +31,7 @@ function getEvents(contractEventConfig, currentContract, adminEvents, contracts)
 
   if (proxyName) {
     // contract is a proxy, look up the events (if any) for the contract the proxy is pointing to
-    const proxyEvents = adminEvents[proxyName].events;
+    const proxyEvents = monitorEvents[proxyName].events;
     if (proxyEvents) {
       if (events === undefined) {
         events = { ...proxyEvents };
@@ -96,9 +96,9 @@ function createAlert(
 ) {
   const eventArgs = extractEventArgs(args);
   const finding = Finding.fromObject({
-    name: `${protocolName} Admin Event`,
+    name: `${protocolName} Monitor Event`,
     description: `The ${eventName} event was emitted by the ${contractName} contract`,
-    alertId: `${developerAbbreviation}-${protocolAbbreviation}-ADMIN-EVENT`,
+    alertId: `${developerAbbreviation}-${protocolAbbreviation}-MONITOR-EVENT`,
     type: FindingType[eventType],
     severity: FindingSeverity[eventSeverity],
     protocol: protocolName,
@@ -218,10 +218,10 @@ const initialize = async (config, abiOverride = null) => {
     throw new Error(errMsg);
   }
 
-  botState.adminEvents = config.contracts;
+  botState.monitorEvents = config.contracts;
 
   // load the contract addresses, abis, and ethers interfaces
-  botState.contracts = Object.entries(botState.adminEvents).map(([name, entry]) => {
+  botState.contracts = Object.entries(botState.monitorEvents).map(([name, entry]) => {
     let abi;
     if (abiOverride != null) {
       abi = abiOverride[entry.abiFile];
@@ -235,8 +235,8 @@ const initialize = async (config, abiOverride = null) => {
   });
 
   botState.contracts.forEach((contract) => {
-    const entry = botState.adminEvents[contract.name];
-    const { eventInfo } = getEvents(entry, contract, botState.adminEvents, botState.contracts);
+    const entry = botState.monitorEvents[contract.name];
+    const { eventInfo } = getEvents(entry, contract, botState.monitorEvents, botState.contracts);
     // eslint-disable-next-line no-param-reassign
     contract.eventInfo = eventInfo;
   });

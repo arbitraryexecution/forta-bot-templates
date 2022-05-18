@@ -4,14 +4,14 @@
   "protocolAbbreviation": "USDC",
   "bots": [
     {
-      "botType": "monitor-function-calls",
-      "name": "bot_7",
+      "botType": "monitor-events",
+      "name": "bot_3",
       "contracts": {
         "USDC": {
           "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "abiFile": "USDC.json",
-          "functions": {
-            "transfer": {
+          "events": {
+            "Transfer": {
               "type": "Info",
               "severity": "Info"
             }

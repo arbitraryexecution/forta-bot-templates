@@ -1,4 +1,4 @@
-# Admininstrative/Governance Events Bot Template
+# Monitor Events Bot Template
 
 This bot monitors blockchain transactions for specific events emitted from specific contract addresses.  Alert
 type and severity are specified per event per contract address.  An existing bot of this type may be modified
@@ -91,7 +91,7 @@ following:
 In this example, all events are emitted by the address corresponding to the "TransparentUpgradableProxy" entry, but
 the ABI for the implementation, containing the definition of those events, is specified by the JSON formatted file
 corresponding to the "NonFungibleTokenPositionDescriptor" entry.  What is critical here is that the string corresponding
-to the `proxy` key must be identical to one of the contract name keys in the `adminEvents` Object.  It is possible for
+to the `proxy` key must be identical to one of the contract name keys in the `monitorEvents` Object.  It is possible for
 the proxy contract to emit its own events and events from the underlying implementation contract.  In those cases,
 there may be an `"events"` key with corresponding Object value for the proxy contract as well.  Both sets of events
 will be used by the bot when monitoring blockchain transactions.

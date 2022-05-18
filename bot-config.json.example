@@ -29,7 +29,7 @@
       }
     },
     {
-      "botType": "admin-events",
+      "botType": "monitor-events",
       "name": "bot_3",
       "contracts": {
         "contractName1": {
