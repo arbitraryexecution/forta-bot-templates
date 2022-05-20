@@ -29,16 +29,16 @@ const validateConfig = (config) => {
     return { ok, errMsg };
   }
 
-  const gnosisSafe = Object.values(contracts);
+  const safes = Object.values(contracts);
   let safe;
-  for (let i = 0; i < gnosisSafe.length; i += 1) {
-    safe = gnosisSafe[i];
+  for (let i = 0; i < safes.length; i += 1) {
+    safe = safes[i];
     if (!utils.isObject(safe) || utils.isEmptyObject(safe)) {
-      errMsg = 'gnosisSafe key required';
+      errMsg = 'invalid value specified';
       return { ok, errMsg };
     }
 
-    const { address, gnosisSafe: { version } } = safe;
+    const { address, version } = safe;
 
     // check that the address is a valid address
     if (!utils.isAddress(address)) {
@@ -79,13 +79,11 @@ const initialize = async (config) => {
   const ftype = ethers.utils.FormatTypes.full;
   botState.transferSignature = erc20Interface.getEvent('Transfer').format(ftype);
 
-  // gnosis-safe specific configuration values
-  botState.gnosisSafe = config.contracts;
-
-  const safeEntries = Object.entries(botState.gnosisSafe);
+  const safeEntries = Object.entries(config.contracts);
   botState.contracts = await Promise.all(safeEntries.map(async ([, entry]) => {
-    const { version } = entry.gnosisSafe;
-    const address = entry.address.toLowerCase();
+    const { version } = entry;
+    let { address } = entry;
+    address = address.toLowerCase();
 
     // get the current block number to retrieve all past Transfer events
     const blockNumber = await botState.provider.getBlockNumber();
