@@ -78,7 +78,7 @@ const validateConfig = (config) => {
   const accounts = Object.values(config.contracts);
   for (let i = 0; i < accounts.length; i += 1) {
     account = accounts[i];
-    const { address, thresholdEth, alert: { type, severity } } = account;
+    const { address, thresholdEth, type, severity } = account;
 
     if (!isAddress(address)) {
       errMsg = 'invalid address';
@@ -126,8 +126,8 @@ const initialize = async (config) => {
       accountThresholdBN,
       startTime: 0,
       numAlertsSinceLastFinding: 0,
-      alertType: entry.alert.type,
-      alertSeverity: entry.alert.severity,
+      alertType: entry.type,
+      alertSeverity: entry.severity,
     };
   });
 

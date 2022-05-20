@@ -10,7 +10,8 @@
         "contractName1": {
           "address": "0x71660c4005BA85c37ccec55d0C4493E66Fe775d3",
           "thresholdEth": 100000,
-          "alert": { "type": "Info", "severity": "Info" }
+          "type": "Info",
+          "severity": "Info"
         }
       },
       "alertMinimumIntervalSeconds": 86400

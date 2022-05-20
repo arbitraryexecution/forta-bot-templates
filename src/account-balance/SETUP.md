@@ -11,8 +11,8 @@ configuration file.
 the account balance.  Each key in the Object is a name that we can specify, where that name is simply a string that
 we use as a label when referring to the address (the string can be any valid string that we choose, it will not
 affect the monitoring by the bot).  The Object corresponding to each name requires an address key/value pair, a
-thresholdEth key and integer value, and an alert key with an Object value that specifies the type and severity of
-the alert.  For example, to monitor the Uni contract Ether balance, we would need the address, the threshold value,
+thresholdEth key and integer value, a type key and string value, and a severity key and string value for the alert.
+For example, to monitor the Uni contract Ether balance, we would need the address, the threshold value,
 and a type and severity for the alert (must be valid type and severity from Forta SDK):
 
 ```
@@ -20,7 +20,8 @@ and a type and severity for the alert (must be valid type and severity from Fort
     "Uni": {
       "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
       "thresholdEth": 3,
-      "alert": { "type": "Suspicious", "severity": "High" }
+      "type": "Suspicious",
+      "severity": "High" 
     }
   }
 ```
