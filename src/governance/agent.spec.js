@@ -15,10 +15,8 @@ const config = {
   name: 'test-bot',
   contracts: {
     contractName1: {
-      governance: {
-        abiFile: 'Governor',
-        address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-      },
+      abiFile: 'Governor',
+      address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
     },
   },
 };
@@ -133,7 +131,7 @@ describe('monitor governance contracts for emitted events', () => {
       botState = await initialize(config);
 
       // grab the first entry from the 'contracts' key in the config file
-      validContractAddress = config.contracts[firstContractName].governance.address;
+      validContractAddress = config.contracts[firstContractName].address;
 
       const eventsInAbi = getObjectsFromAbi(abi, 'event');
       validEvent = eventsInAbi[validEventName];

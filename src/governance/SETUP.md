@@ -11,7 +11,9 @@ bot before deployment.
 
 The following steps will take you from a completely blank template to a functional bot.
 
-1. `governance` (required) - The Object corresponding to this key requires an entry for the contract
-address under the `address` key and the appropriate name of the ABI file under the `abiFile` key.  All
-of the supported ABI files are already present in the `./abi` subdirectory, so the only step necessary
+1. `address` (required) - The value corresponding to this key is the address of the governance contract
+to monitor.
+
+2. `abiFile` (required) - The name of the ABI file that corresponds to the governance contract to monitor.
+All of the supported ABI files are already present in the `./abi` subdirectory, so the only step necessary
 is to type the correct name of the applicable ABI file.
