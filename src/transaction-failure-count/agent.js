@@ -2,6 +2,13 @@ const {
   Finding, FindingSeverity, FindingType, getTransactionReceipt,
 } = require('forta-agent');
 
+const {
+  isObject,
+  isEmptyObject,
+  isFilledString,
+  isAddress,
+} = require('../utils');
+
 // formats provided data into a Forta alert
 function createAlert(
   name,
@@ -34,15 +41,81 @@ function createAlert(
   });
 }
 
+const validateConfig = (config) => {
+  let ok = false;
+  let errMsg = '';
+
+  if (!isFilledString(config.developerAbbreviation)) {
+    errMsg = 'developerAbbreviation required';
+    return { ok, errMsg };
+  }
+  if (!isFilledString(config.protocolName)) {
+    errMsg = 'protocolName required';
+    return { ok, errMsg };
+  }
+  if (!isFilledString(config.protocolAbbreviation)) {
+    errMsg = 'protocolAbbreviation required';
+    return { ok, errMsg };
+  }
+
+  const { contracts } = config;
+  if (!isObject(contracts) || isEmptyObject(contracts)) {
+    errMsg = 'contracts key required';
+    return { ok, errMsg };
+  }
+
+  let entry;
+  const entries = Object.entries(contracts);
+  for (let i = 0; i < entries.length; i += 1) {
+    [, entry] = entries[i];
+    const {
+      address,
+      transactionFailuresLimit,
+      type,
+      severity,
+    } = entry;
+
+    // check that the address is a valid address
+    if (!isAddress(address)) {
+      errMsg = 'invalid address';
+      return { ok, errMsg };
+    }
+
+    // check that the limit is a number
+    if (typeof transactionFailuresLimit !== 'number') {
+      errMsg = 'invalid value for transactionFailuresLimit';
+      return { ok, errMsg };
+    }
+
+    // check type, this will fail if 'type' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
+      errMsg = 'invalid finding type!';
+      return { ok, errMsg };
+    }
+
+    // check severity, this will fail if 'severity' is not valid
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
+      errMsg = 'invalid finding severity!';
+      return { ok, errMsg };
+    }
+  }
+
+  ok = true;
+  return { ok, errMsg };
+};
+
 const initialize = async (config) => {
   const botState = { ...config };
 
-  const { failedTransactions } = config.contracts;
+  const { ok, errMsg } = validateConfig(config);
+  if (!ok) {
+    throw new Error(errMsg);
+  }
 
-  botState.contracts = Object.entries(failedTransactions).map(([contractName, entry]) => ({
+  botState.contracts = Object.entries(config.contracts).map(([contractName, entry]) => ({
     contractName,
     contractAddress: entry.address.toLowerCase(),
-    txFailureLimit: entry.transactionFailuresLimit,
+    transactionFailuresLimit: entry.transactionFailuresLimit,
     failedTxs: {},
     alertType: entry.type,
     alertSeverity: entry.severity,
@@ -59,7 +132,7 @@ const handleTransaction = async (botState, txEvent) => {
     const {
       contractName: name,
       contractAddress: address,
-      txFailureLimit: limit,
+      transactionFailuresLimit,
       alertType,
       alertSeverity,
     } = contract;
@@ -86,13 +159,13 @@ const handleTransaction = async (botState, txEvent) => {
 
     // create finding if there are too many failed txs
     const failedTxHashes = Object.keys(contract.failedTxs);
-    if (failedTxHashes.length >= limit) {
+    if (failedTxHashes.length >= transactionFailuresLimit) {
       findings.push(
         createAlert(
           name,
           address,
           failedTxHashes,
-          limit,
+          transactionFailuresLimit,
           botState.blockWindow,
           botState.protocolName,
           botState.protocolAbbreviation,
@@ -116,6 +189,7 @@ const handleTransaction = async (botState, txEvent) => {
 };
 
 module.exports = {
+  validateConfig,
   initialize,
   handleTransaction,
   createAlert,
