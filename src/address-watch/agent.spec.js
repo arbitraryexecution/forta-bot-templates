@@ -20,10 +20,8 @@ const config = {
   contracts: {
     contractName1: {
       address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-      watch: {
-        type: 'Info',
-        severity: 'Info',
-      },
+      type: 'Info',
+      severity: 'Info',
     },
   },
 };
@@ -54,10 +52,8 @@ describe('handleTransaction', () => {
 
     const {
       address: testAddr,
-      watch: {
-        type,
-        severity,
-      },
+      type,
+      severity,
     } = contract;
 
     // build txEvent
