@@ -14,8 +14,8 @@ bot). The corresponding value for the contract name is an Object containing:
     * thresholdTransactionCount (required) - integer, number of transactions an EOA must be lower than to trigger an alert
     * address (required) - string, contract address to monitor for interactions
     * filteredAddresses (optional) - array, list of addresses to exclude from interaction alerts
-    * findingType (required) - string, Forta Finding Type
-    * findingSeverity (required) - string, Forta Finding Severity
+    * type (required) - string, Forta Finding Type
+    * severity (required) - string, Forta Finding Severity
 
 For example, to monitor if the Uniswap V3 Factory contract was interacted with we would need the following: an age threshold, a transaction count threshold, a contract address, a type, and severity:
 
@@ -26,8 +26,8 @@ For example, to monitor if the Uniswap V3 Factory contract was interacted with w
       "thresholdTransactionCount": 7,
       "address": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
       "filteredAddress": [],
-      "findingType": "Suspicious",
-      "findingSeverity": "Medium",
+      "type": "Suspicious",
+      "severity": "Medium",
     }
   }
 ```

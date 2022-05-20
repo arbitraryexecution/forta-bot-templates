@@ -14,8 +14,8 @@ function createContractInteractionAlert(
   contractName,
   contractAddress,
   interactionAddress,
-  findingType,
-  findingSeverity,
+  type,
+  severity,
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
@@ -25,8 +25,8 @@ function createContractInteractionAlert(
     name: `${protocolName} New Contract Interaction`,
     description: `The ${contractName} contract interacted with a new contract ${interactionAddress}`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-NEW-CONTRACT-INTERACTION`,
-    type: FindingType[findingType],
-    severity: FindingSeverity[findingSeverity],
+    type: FindingType[type],
+    severity: FindingSeverity[severity],
     protocol: protocolName,
     metadata: {
       contractName,
@@ -45,8 +45,8 @@ function createEOAInteractionAlert(
   contractAddress,
   interactionAddress,
   transactionCount,
-  findingType,
-  findingSeverity,
+  type,
+  severity,
   protocolName,
   protocolAbbreviation,
   developerAbbreviation,
@@ -56,8 +56,8 @@ function createEOAInteractionAlert(
     name: `${protocolName} New EOA Interaction`,
     description: `The ${contractName} contract interacted with a new EOA ${interactionAddress}`,
     alertId: `${developerAbbreviation}-${protocolAbbreviation}-NEW-EOA-INTERACTION`,
-    type: FindingType[findingType],
-    severity: FindingSeverity[findingSeverity],
+    type: FindingType[type],
+    severity: FindingSeverity[severity],
     protocol: protocolName,
     metadata: {
       contractName,
@@ -99,14 +99,12 @@ const validateConfig = (config) => {
   for (let i = 0; i < values.length; i += 1) {
     contract = values[i];
     const {
-      newContractEOA: {
-        address,
-        thresholdBlockCount,
-        thresholdTransactionCount,
-        filteredAddresses,
-        findingType,
-        findingSeverity,
-      },
+      address,
+      thresholdBlockCount,
+      thresholdTransactionCount,
+      filteredAddresses,
+      type,
+      severity,
     } = contract;
 
     // make sure value for thresholdBlockCount in config is a number
@@ -142,13 +140,13 @@ const validateConfig = (config) => {
     }
 
     // check type, this will fail if 'type' is not valid
-    if (!Object.prototype.hasOwnProperty.call(FindingType, findingType)) {
+    if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
       errMsg = 'invalid finding type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
-    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, findingSeverity)) {
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
       errMsg = 'invalid finding severity!';
       return { ok, errMsg };
     }
@@ -168,7 +166,7 @@ const initialize = async (config) => {
 
   botState.provider = getEthersProvider();
   const entries = Object.entries(botState.contracts);
-  botState.contracts = entries.map(([name, entry]) => ({ name, ...entry.newContractEOA }));
+  botState.contracts = entries.map(([name, entry]) => ({ name, ...entry }));
 
   return botState;
 };
@@ -186,8 +184,8 @@ const handleTransaction = async (botState, txEvent) => {
       filteredAddresses,
       thresholdBlockCount,
       thresholdTransactionCount,
-      findingType,
-      findingSeverity,
+      type,
+      severity,
     } = contract;
 
     let exclusions = [
@@ -232,8 +230,8 @@ const handleTransaction = async (botState, txEvent) => {
             address,
             eoaAddress,
             eoaTransactionCount,
-            findingType,
-            findingSeverity,
+            type,
+            severity,
             botState.protocolName,
             botState.protocolAbbreviation,
             botState.developerAbbreviation,
@@ -257,8 +255,8 @@ const handleTransaction = async (botState, txEvent) => {
               name,
               address,
               result.value.transactionAddress,
-              findingType,
-              findingSeverity,
+              type,
+              severity,
               botState.protocolName,
               botState.protocolAbbreviation,
               botState.developerAbbreviation,

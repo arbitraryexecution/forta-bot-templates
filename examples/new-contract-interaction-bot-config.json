@@ -8,14 +8,12 @@
       "name": "bot_8",
       "contracts": {
         "USDC": {
-          "newContractEOA": {
-            "address": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
-            "thresholdBlockCount": 10000000,
-            "thresholdTransactionCount": 1000000,
-            "filteredAddresses": [],
-            "findingType": "Info",
-            "findingSeverity": "Info"
-          }
+          "address": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+          "thresholdBlockCount": 10000000,
+          "thresholdTransactionCount": 1000000,
+          "filteredAddresses": [],
+          "type": "Info",
+          "severity": "Info"
         }
       }
     }
