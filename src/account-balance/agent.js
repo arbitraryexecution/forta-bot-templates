@@ -82,7 +82,7 @@ const validateConfig = (config) => {
       address,
       thresholdEth,
       type,
-      severity
+      severity,
     } = account;
 
     if (!isAddress(address)) {
