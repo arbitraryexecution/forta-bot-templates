@@ -78,7 +78,12 @@ const validateConfig = (config) => {
   const accounts = Object.values(config.contracts);
   for (let i = 0; i < accounts.length; i += 1) {
     account = accounts[i];
-    const { address, thresholdEth, type, severity } = account;
+    const {
+      address,
+      thresholdEth,
+      type,
+      severity
+    } = account;
 
     if (!isAddress(address)) {
       errMsg = 'invalid address';
