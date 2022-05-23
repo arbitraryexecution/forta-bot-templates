@@ -123,10 +123,8 @@
       "contracts": {
         "contractName1": {
           "address": "contractAddress1",
-          "tornado": {
-            "type": "Info",
-            "severity": "Info"
-          }
+          "type": "Info",
+          "severity": "Info"
         }
       }
       "observationIntervalInBlocks": 100,

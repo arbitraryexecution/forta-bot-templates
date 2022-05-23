@@ -71,7 +71,11 @@ const validateConfig = (config) => {
   const entries = Object.entries(contracts);
   for (let i = 0; i < entries.length; i += 1) {
     [, value] = entries[i];
-    const { address, tornado } = value;
+    const {
+      address,
+      type,
+      severity,
+    } = value;
 
     // check that the address is a valid address
     if (!ethers.utils.isHexString(address, 20)) {
@@ -80,14 +84,14 @@ const validateConfig = (config) => {
     }
 
     // check type, this will fail if 'type' is not valid
-    if (!Object.prototype.hasOwnProperty.call(FindingType, tornado.type)) {
-      errMsg = 'invalid tornado type!';
+    if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
+      errMsg = 'invalid alert type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
-    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, tornado.severity)) {
-      errMsg = 'invalid tornado severity!';
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
+      errMsg = 'invalid alert severity!';
       return { ok, errMsg };
     }
   }
@@ -107,21 +111,12 @@ const initialize = async (config) => {
   const abi = getInternalAbi(config.botType, 'TornadoProxy.json');
   botState.iface = new ethers.utils.Interface(abi);
 
-  const addressNames = Object.keys(config.contracts);
-  botState.addressesToMonitor = [];
-  addressNames.forEach((addressName) => {
-    const info = {
+  botState.addressesToMonitor = Object.entries(config.contracts).map(([addressName, entry]) => (
+    {
       name: addressName,
-      // address: config.contracts[addressName].address.toLowerCase(),
-      address: config.contracts[addressName].address,
-      type: config.contracts[addressName].tornado.type,
-      severity: config.contracts[addressName].tornado.severity,
-    };
-
-    botState.addressesToMonitor.push(info);
-  });
-
-  botState.observationIntervalInBlocks = config.observationIntervalInBlocks;
+      ...entry,
+    }
+  ));
 
   // create an object to hold addresses that have been identified as having interacted with a
   // Tornado Cash Proxy

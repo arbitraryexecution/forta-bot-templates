@@ -22,10 +22,8 @@ const config = {
   contracts: {
     contractName1: {
       address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-      tornado: {
-        type: 'Info',
-        severity: 'Info',
-      },
+      type: 'Info',
+      severity: 'Info',
     },
   },
 };
@@ -252,8 +250,8 @@ describe('handleTransaction', () => {
         + ` transaction with an address ${mockSuspiciousAddress} that has previously interacted`
         + ' with Tornado Cash',
       alertId: `${config.developerAbbreviation}-${config.protocolAbbreviation}-TORNADO-CASH-MONITOR`,
-      type: FindingType[testAddressInfo.tornado.type],
-      severity: FindingSeverity[testAddressInfo.tornado.severity],
+      type: FindingType[testAddressInfo.type],
+      severity: FindingSeverity[testAddressInfo.severity],
       metadata: {
         monitoredAddress: testAddressInfo.address,
         name: addressName,
