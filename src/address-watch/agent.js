@@ -56,19 +56,14 @@ const validateConfig = (config) => {
       return { ok, errMsg };
     }
 
-    if (!isObject(entry.watch)) {
-      errMsg = `watch field needs to be filled in configuration file for '${name}'`;
-      return { ok, errMsg };
-    }
-
     // check type, this will fail if 'type' is not valid
-    if (!Object.prototype.hasOwnProperty.call(FindingType, entry.watch.type)) {
+    if (!Object.prototype.hasOwnProperty.call(FindingType, entry.type)) {
       errMsg = 'invalid finding type!';
       return { ok, errMsg };
     }
 
     // check severity, this will fail if 'severity' is not valid
-    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, entry.watch.severity)) {
+    if (!Object.prototype.hasOwnProperty.call(FindingSeverity, entry.severity)) {
       errMsg = 'invalid finding severity!';
       return { ok, errMsg };
     }
@@ -102,10 +97,8 @@ const handleTransaction = async (botState, txEvent) => {
   Object.entries(contracts).forEach(([name, contract]) => {
     const {
       address,
-      watch: {
-        type,
-        severity,
-      },
+      type,
+      severity,
     } = contract;
     if (addresses.includes(address.toLowerCase())) {
       findings.push(createAlert(botState, address, name, type, severity, addresses));

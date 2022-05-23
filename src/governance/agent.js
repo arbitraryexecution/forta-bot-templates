@@ -233,7 +233,7 @@ const validateConfig = (config) => {
       return { ok, errMsg };
     }
 
-    const { governance: { abiFile, address } } = entry;
+    const { abiFile, address } = entry;
 
     if (address === undefined) {
       errMsg = `No address found in configuration file for '${name}'`;
@@ -281,7 +281,7 @@ const initialize = async (config) => {
   }
 
   botState.contracts = Object.entries(config.contracts).map(([, entry]) => {
-    const { governance: { abiFile, address } } = entry;
+    const { abiFile, address } = entry;
 
     const abi = getInternalAbi(config.botType, abiFile);
     const iface = new ethers.utils.Interface(abi);

@@ -51,24 +51,22 @@ const config = {
   name: 'test-bot',
   contracts: {
     contractName1: {
-      newContractEOA: {
-        thresholdBlockCount: 7,
-        thresholdTransactionCount: 7,
-        address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-        filteredAddresses: [
-          '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13E',
-          '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13F',
-        ],
-        findingType: 'Info',
-        findingSeverity: 'Info',
-      },
+      thresholdBlockCount: 7,
+      thresholdTransactionCount: 7,
+      address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+      filteredAddresses: [
+        '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13E',
+        '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13F',
+      ],
+      type: 'Info',
+      severity: 'Info',
     },
   },
 };
 
 // grab first contract to test
 const [testContract] = Object.keys(config.contracts);
-const { address: testContractAddress } = config.contracts[testContract].newContractEOA;
+const { address: testContractAddress } = config.contracts[testContract];
 
 describe('mocked APIs should work properly', () => {
   describe('mock ethers getCode request', () => {
@@ -224,7 +222,7 @@ describe('new contract interaction monitoring', () => {
       const expectedFindings = [];
       botState.contracts.forEach((contract) => {
         const {
-          name, address, findingType, findingSeverity,
+          name, address, type, severity,
         } = contract;
 
         let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
@@ -234,8 +232,8 @@ describe('new contract interaction monitoring', () => {
           name,
           address,
           transactionAddress,
-          findingType,
-          findingSeverity,
+          type,
+          severity,
           botState.protocolName,
           botState.protocolAbbreviation,
           botState.developerAbbreviation,
@@ -298,7 +296,7 @@ describe('new contract interaction monitoring', () => {
       const expectedFindings = [];
       botState.contracts.forEach((contract) => {
         const {
-          name, address, findingType, findingSeverity,
+          name, address, type, severity,
         } = contract;
 
         let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
@@ -309,8 +307,8 @@ describe('new contract interaction monitoring', () => {
           address,
           transactionAddress,
           transactionCount,
-          findingType,
-          findingSeverity,
+          type,
+          severity,
           botState.protocolName,
           botState.protocolAbbreviation,
           botState.developerAbbreviation,

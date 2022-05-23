@@ -9,9 +9,7 @@
       "contracts": {
         "CompoundCommunityMultiSig": {
           "address": "0xbbf3f1421D886E9b2c5D716B5192aC998af2012c",
-          "gnosisSafe": {
-            "version": "v1.1.1"
-          }
+          "version": "v1.1.1"
         }
       }
     }

@@ -53,9 +53,7 @@ const config = {
   contracts: {
     contractName1: {
       address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-      gnosisSafe: {
-        version: 'v1.0.0',
-      },
+      version: 'v1.0.0',
     },
   },
 };
@@ -399,7 +397,7 @@ describe('gnosis-safe multisig monitoring', () => {
 
     // grab first safe to test
     const firstContractName = Object.keys(config.contracts)[0];
-    const { version } = config.contracts[firstContractName].gnosisSafe;
+    const { version } = config.contracts[firstContractName];
     // eslint-disable-next-line import/no-dynamic-require,global-require
     const abi = utils.getInternalAbi(config.botType, `${version}/gnosis-safe.json`);
     const iface = new ethers.utils.Interface(abi);

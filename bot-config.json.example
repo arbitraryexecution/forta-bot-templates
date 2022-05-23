@@ -10,7 +10,8 @@
         "contractName1": {
           "address": "",
           "thresholdEth": 0,
-          "alert": { "type": "Info", "severity": "Info" }
+          "type": "Info",
+          "severity": "Info"
         }
       },
       "alertMinimumIntervalSeconds": 86400
@@ -21,10 +22,8 @@
       "contracts": {
         "contractName1": {
           "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
-          "watch" : {
-            "type": "Info",
-            "severity": "Info"
-          }
+          "type": "Info",
+          "severity": "Info"
         }
       }
     },
@@ -70,9 +69,7 @@
       "contracts": {
         "contractName1": {
           "address": "contractAddress1",
-          "gnosisSafe": {
-            "version": "v1.1.1"
-          }
+          "version": "v1.1.1"
         }
       }
     },
@@ -81,10 +78,8 @@
       "name": "bot_6",
       "contracts": {
         "contractName1": {
-          "governance": {
-            "address": "contractAddress1",
-            "abiFile": "contractAbiFileName1.json"
-          }
+          "address": "contractAddress1",
+          "abiFile": "contractAbiFileName1.json"
         }
       }
     },
@@ -110,17 +105,15 @@
       "name": "bot_8",
       "contracts": {
         "contractName1": {
-          "newContractEOA": {
-            "thresholdBlockCount": 7,
-            "thresholdTransactionCount": 7,
-            "address": "contractAddress1",
-            "filteredAddresses": [
-              "filteredAddress1",
-              "filteredAddress2"
-            ],
-            "findingType": "Info",
-            "findingSeverity": "Info"
-          }
+          "thresholdBlockCount": 7,
+          "thresholdTransactionCount": 7,
+          "address": "contractAddress1",
+          "filteredAddresses": [
+            "filteredAddress1",
+            "filteredAddress2"
+          ],
+          "type": "Info",
+          "severity": "Info"
         }
       }
     },
@@ -130,10 +123,8 @@
       "contracts": {
         "contractName1": {
           "address": "contractAddress1",
-          "tornado": {
-            "type": "Info",
-            "severity": "Info"
-          }
+          "type": "Info",
+          "severity": "Info"
         }
       }
       "observationIntervalInBlocks": 100,
