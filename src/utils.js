@@ -2,17 +2,25 @@ const BigNumber = require('bignumber.js');
 const RollingMath = require('rolling-math');
 const { ethers } = require('forta-agent');
 
+function buildAbiPath(botName, abiFile) {
+  return `../abi/${botName}/${abiFile}`;
+}
+
 function getAbi(botName, abiFile) {
-  const abiPath = `../abi/${botName}`;
+  const abiPath = buildAbiPath(botName, abiFile);
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  const { abi } = require(`${abiPath}/${abiFile}`);
+  const { abi } = require(abiPath);
   return abi;
 }
 
+function buildInternalAbiPath(botType, abiFile) {
+  return `./${botType}/internal-abi/${abiFile}`;
+}
+
 function getInternalAbi(botType, abiFile) {
-  const abiPath = `./${botType}/internal-abi`;
+  const abiPath = buildInternalAbiPath(botType, abiFile);
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  const { abi } = require(`${abiPath}/${abiFile}`);
+  const { abi } = require(abiPath);
   return abi;
 }
 
@@ -283,7 +291,9 @@ function isFilledString(str) {
 }
 
 module.exports = {
+  buildAbiPath,
   getAbi,
+  buildInternalAbiPath,
   getInternalAbi,
   extractFunctionArgs,
   getVariableInfo,

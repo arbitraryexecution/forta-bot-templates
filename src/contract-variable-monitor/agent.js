@@ -81,7 +81,14 @@ const validateConfig = (config, abiOverride = null) => {
     if (abiOverride != null) {
       abi = abiOverride[abiFile];
     } else {
-      abi = utils.getAbi(config.name, abiFile);
+      try {
+        abi = utils.getAbi(config.name, abiFile);
+      } catch (error) {
+        console.error(error);
+        const path = utils.buildAbiPath(config.name, abiFile);
+        errMsg = `Unable to get abi file! ${path}`;
+        return { ok, errMsg };
+      }
     }
 
     // get all of the function objects from the loaded ABI file

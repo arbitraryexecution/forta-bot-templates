@@ -1,8 +1,12 @@
 const config = require('../bot-config.json');
 const { botImports } = require('./agent');
 
-function panic(msg) {
+function errorMsg(msg) {
   console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
+}
+
+function panic(msg) {
+  errorMsg(msg);
   process.exit(1);
 }
 
@@ -61,6 +65,7 @@ const validateConfig = async (botMap) => {
     modProms.push(modProm);
   }
 
+  let isValid = true;
   const botMods = await Promise.all(modProms);
   for (let i = 0; i < botMods.length; i += 1) {
     const bot = bots[i];
@@ -82,9 +87,12 @@ const validateConfig = async (botMap) => {
 
     const { ok, errMsg } = mod.validateConfig(botConfig);
     if (!ok) {
-      panic(botErr(bot, `in config\n  - ${errMsg}`));
+      isValid = false;
+      errorMsg(botErr(bot, `in config\n  - ${errMsg}\n`));
     }
   }
+
+  return isValid;
 };
 
 const main = async () => {
@@ -94,8 +102,12 @@ const main = async () => {
     botMap.set(imp.name, imp.bot);
   }
 
-  await validateConfig(botMap);
-  console.log('Config validated successfully');
+  const isValid = await validateConfig(botMap);
+  if (isValid) {
+    console.log('Config validated successfully');
+  } else {
+    panic('Config validation failed!');
+  }
 };
 
 main();
