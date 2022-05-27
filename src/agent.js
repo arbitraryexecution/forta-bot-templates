@@ -65,6 +65,7 @@ async function generateAllBots(_config) {
 
   for all positive block findings, where we only have block handling bots:
     HandleBlock -> [Finding, Finding, Finding]
+    - HandleTransaction -> []
 
   for all positive tx findings, where we only have tx handling bots:
     HandleBlock -> []
