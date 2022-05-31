@@ -1,5 +1,10 @@
 const config = require('../bot-config.json');
 const { botImports } = require('./agent');
+const {
+  isFilledString,
+  isObject,
+  isEmptyObject,
+} = require('./utils');
 
 function errorMsg(msg) {
   console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
@@ -23,23 +28,28 @@ const validateConfig = async (botMap) => {
     developerAbbreviation,
     protocolName,
     protocolAbbreviation,
+    gatherMode,
     bots,
   } = config;
 
-  if (developerAbbreviation === undefined) {
+  if (!isFilledString(developerAbbreviation)) {
     panic('developerAbbreviation not defined!');
   }
 
-  if (protocolName === undefined) {
+  if (!isFilledString(protocolName)) {
     panic('protocolName not defined!');
   }
 
-  if (protocolAbbreviation === undefined) {
+  if (!isFilledString(protocolAbbreviation)) {
     panic('protocolAbbreviation not defined!');
   }
 
-  if (bots === undefined) {
-    panic('bots not defined!');
+  if (gatherMode !== 'any' && gatherMode !== 'all') {
+    panic('gatherMode must be any or all');
+  }
+
+  if (!isObject(bots) || isEmptyObject(bots)) {
+    panic('bots must be defined and contain at least 1 bot!');
   }
 
   const modProms = [];

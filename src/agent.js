@@ -108,8 +108,11 @@ function initializeBots(_config, _botMap, _botStates) {
   return async function initialize() {
     const botConfigs = await generateAllBots(_config, _botMap);
 
+    /* eslint-disable no-param-reassign */
     _botStates.gatherMode = config.gatherMode;
     _botStates.bots = [];
+    /* eslint-enable no-param-reassign */
+
     const botStateProms = botConfigs.map((bot) => {
       const botMod = _botMap.get(bot.botType);
       if (botMod.handleTransaction !== undefined) {
