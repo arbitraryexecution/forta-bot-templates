@@ -96,7 +96,7 @@ async function generateAllBots(_config, _botMap) {
         (i.e. not all block handlers returned findings), return []
     - if all bots return findings, cache that for the tx handlers
   for all bots with tx handlers:
-    - run the handlers, aggregate the results
+    - if there are block handlers but no cached results (i.e. not all block handlers returned findings), return []
     - if there are no block handlers, and all bots have tx findings, return the findings
     - if there are block handlers, and all bots have tx findings, return the findings
 */
