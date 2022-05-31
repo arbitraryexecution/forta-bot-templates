@@ -15,8 +15,8 @@ const botImports = [
 
 const config = require('../bot-config.json');
 
-let botStates;
-let botMap;
+const botStates = [];
+const botMap = new Map();
 
 let txHandlerCount = 0;
 let blockHandlerCount = 0;
@@ -105,40 +105,32 @@ async function generateAllBots(_config, _botMap) {
     - if there are block handlers, and all bots have tx findings, return the findings
 */
 
-async function initializeBots(_config) {
-  const initBotMap = new Map();
-  const botConfigs = await generateAllBots(_config, initBotMap);
-  gatherMode = config.gatherMode;
+function initializeBots(_config, _botMap, _botStates) {
+  return async function initialize() {
+    const botConfigs = await generateAllBots(_config, _botMap);
+    gatherMode = config.gatherMode;
 
-  const botStateProms = botConfigs.map((bot) => {
-    const botMod = initBotMap.get(bot.botType);
-    if (botMod.handleTransaction !== undefined) {
-      txHandlerCount += 1;
-    }
-    if (botMod.handleBlock !== undefined) {
-      blockHandlerCount += 1;
-    }
+    const botStateProms = botConfigs.map((bot) => {
+      const botMod = _botMap.get(bot.botType);
+      if (botMod.handleTransaction !== undefined) {
+        txHandlerCount += 1;
+      }
+      if (botMod.handleBlock !== undefined) {
+        blockHandlerCount += 1;
+      }
 
-    if (botMod.initialize === undefined) {
-      const botState = { ...bot };
-      return new Promise(() => botState);
-    }
+      if (botMod.initialize === undefined) {
+        const botState = { ...bot };
+        return new Promise(() => botState);
+      }
 
-    const prom = botMod.initialize(bot);
-    return prom;
-  });
+      const prom = botMod.initialize(bot);
+      return prom;
+    });
 
-  const initBotStates = [];
-  const results = await Promise.all(botStateProms);
-  results.forEach((result) => initBotStates.push(result));
-
-  return { initBotStates, initBotMap };
-}
-
-async function initialize() {
-  const { initBotStates, initBotMap } = await initializeBots(config);
-  botStates = initBotStates;
-  botMap = initBotMap;
+    const results = await Promise.all(botStateProms);
+    results.forEach((result) => _botStates.push(result));
+  };
 }
 
 function handleAllBlocks(_botMap, _botStates) {
@@ -243,11 +235,11 @@ function handleAllTransactions(_botMap, _botStates) {
 }
 
 module.exports = {
-  botImports,
+  initializeBots,
+  initialize: initializeBots(config, botMap, botStates),
   handleAllBlocks,
   handleBlock: handleAllBlocks(botMap, botStates),
   handleAllTransactions,
   handleTransaction: handleAllTransactions(botMap, botStates),
-  initializeBots,
-  initialize,
+  botImports,
 };
