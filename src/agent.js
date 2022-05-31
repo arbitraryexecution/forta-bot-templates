@@ -162,7 +162,11 @@ function handleAllBlocks(_botMap, _botStates) {
     // At this point, we're handling the nasty edge cases of all
     const allFindings = findings.every((finding) => finding.length > 0);
 
-    if (allFindings && _botStates.txHandlerCount === 0) {
+    if (!allFindings) {
+      return [];
+    }
+
+    if (_botStates.txHandlerCount === 0) {
       return findings.flat();
     }
 

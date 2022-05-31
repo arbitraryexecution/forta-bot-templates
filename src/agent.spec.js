@@ -74,8 +74,6 @@ describe('test multi-agents with gather mode any', () => {
 
     const finding = 'mockedFinding1';
     botMap.set('address-watch', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleTransaction: jest.fn().mockResolvedValue([finding]),
     });
 
@@ -150,8 +148,6 @@ describe('test multi-agents with gather mode any', () => {
 
     const finding = 'mockedFinding1';
     botMap.set('account-balance', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleBlock: jest.fn().mockResolvedValue([finding]),
     });
 
@@ -258,8 +254,6 @@ describe('test multi-agents with gather mode any', () => {
 
     const blockFinding = 'mockedFinding1';
     botMap.set('account-balance', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleBlock: jest.fn().mockResolvedValue([blockFinding]),
     });
 
@@ -320,8 +314,6 @@ describe('test multi-agents with gather mode any', () => {
 
     const txFinding = 'mockedFinding1';
     botMap.set('address-watch', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleTransaction: jest.fn().mockResolvedValue([txFinding]),
     });
 
@@ -377,8 +369,6 @@ describe('test multi-agents with gather mode any', () => {
 
     const blockFinding = 'mockedFinding1';
     botMap.set('account-balance', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleBlock: jest.fn().mockResolvedValue([blockFinding]),
     });
 
@@ -387,8 +377,6 @@ describe('test multi-agents with gather mode any', () => {
 
     const txFinding = 'mockedFinding2';
     botMap.set('address-watch', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleTransaction: jest.fn().mockResolvedValue([txFinding]),
     });
 
@@ -573,8 +561,6 @@ describe('test multi-agents with gather mode all', () => {
 
     const finding = 'mockedFinding1';
     botMap.set('address-watch', {
-      validateConfig: jest.fn(),
-      initialize: jest.fn(),
       handleTransaction: jest.fn().mockResolvedValue([finding]),
     });
 
@@ -582,7 +568,7 @@ describe('test multi-agents with gather mode all', () => {
     expect(findings).toStrictEqual([finding]);
   });
 
-  it('test blocks only', async () => {
+  it('returns no findings when the block handler condition is not met', async () => {
     const config = {
       developerAbbreviation: 'test',
       protocolName: 'test',
@@ -607,15 +593,17 @@ describe('test multi-agents with gather mode all', () => {
 
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
+    mockBlockEvent.transactions = [];
 
     const botStates = {};
     const botMap = new Map();
     await (initializeBots(config, botMap, botStates))();
     const handleBlock = handleAllBlocks(botMap, botStates);
-    await handleBlock(mockBlockEvent);
+    const findings = await handleBlock(mockBlockEvent);
+    expect(findings).toStrictEqual([]);
   });
 
-  it('test tx and blocks', async () => {
+  it('returns findings if a block condition handler is met', async () => {
     const config = {
       developerAbbreviation: 'test',
       protocolName: 'test',
@@ -623,12 +611,54 @@ describe('test multi-agents with gather mode all', () => {
       gatherMode: 'all',
       bots: [
         {
-          botType: 'governance',
+          botType: 'account-balance',
           name: 'test',
           contracts: {
             contractName1: {
               address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-              abiFile: 'Governor',
+              thresholdEth: 0,
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+          alertMinimumIntervalSeconds: 86400,
+        },
+      ],
+    };
+
+    const mockBlockEvent = createBlockEvent({});
+    mockBlockEvent.block = block;
+    mockBlockEvent.transactions = [];
+
+    const botStates = {};
+    const botMap = new Map();
+    await (initializeBots(config, botMap, botStates))();
+    const handleBlock = handleAllBlocks(botMap, botStates);
+
+    const finding = 'mockedFinding1';
+    botMap.set('account-balance', {
+      handleBlock: jest.fn().mockResolvedValue([finding]),
+    });
+
+    const findings = await handleBlock(mockBlockEvent);
+    expect(findings).toStrictEqual([finding]);
+  });
+
+  it('returns no findings if the block handler condition is met but the transaction handler condition is not met', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'address-watch',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
             },
           },
         },
@@ -648,19 +678,245 @@ describe('test multi-agents with gather mode all', () => {
       ],
     };
 
+    // initialize
+    const botStates = {};
+    const botMap = new Map();
+    await (initializeBots(config, botMap, botStates))();
+
+    // set up the blockEvent
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
+    mockBlockEvent.transactions = [1];
 
+    // run the block handler
+    const handleBlock = handleAllBlocks(botMap, botStates);
+    const blockFindings = await handleBlock(mockBlockEvent);
+
+    // force the mocked finding to be returned from the block handler
+    const finding = 'mockedFinding1';
+    botMap.set('account-balance', {
+      handleBlock: jest.fn().mockResolvedValue([finding]),
+    });
+
+    // check that the block handler returns no findings
+    expect(blockFindings).toStrictEqual([]);
+
+    // set up the transactionEvent
     const mockTxEvent = createTransactionEvent({});
     mockTxEvent.block = block;
 
+    // run the transaction handler
+    const handleTransactions = handleAllTransactions(botMap, botStates);
+    const transactionFindings = await handleTransactions(mockTxEvent);
+
+    // check that the transaction handler returns no findings
+    expect(transactionFindings).toStrictEqual([]);
+  });
+
+  it('returns no findings if the block handler condition is not met but the transaction handler condition is met', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'address-watch',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+        {
+          botType: 'account-balance',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              thresholdEth: 0,
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+          alertMinimumIntervalSeconds: 86400,
+        },
+      ],
+    };
+
+    // initialize
     const botStates = {};
     const botMap = new Map();
     await (initializeBots(config, botMap, botStates))();
-    const handleBlock = handleAllBlocks(botMap, botStates);
-    await handleBlock(mockBlockEvent);
 
-    const handleTransaction = handleAllTransactions(botMap, botStates);
-    await handleTransaction(mockTxEvent);
+    // set up the blockEvent
+    const mockBlockEvent = createBlockEvent({});
+    mockBlockEvent.block = block;
+    mockBlockEvent.transactions = [1];
+
+    // run the block handler
+    const handleBlock = handleAllBlocks(botMap, botStates);
+    const blockFindings = await handleBlock(mockBlockEvent);
+
+    // check that the block handler returns no findings
+    expect(blockFindings).toStrictEqual([]);
+
+    // set up the transactionEvent
+    const mockTxEvent = createTransactionEvent({});
+    mockTxEvent.block = block;
+
+    // force the transaction handler to return the mocked finding
+    const finding = 'mockedFinding1';
+    botMap.set('address-watch', {
+      handleTransaction: jest.fn().mockResolvedValue([finding]),
+    });
+
+    // run the transaction handler
+    const handleTransactions = handleAllTransactions(botMap, botStates);
+    const transactionFindings = await handleTransactions(mockTxEvent);
+
+    // check that the transaction handler returns no findings
+    expect(transactionFindings).toStrictEqual([]);
+  });
+
+  it('returns no findings if the block handler condition is not met and the transaction handler condition is not met', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'address-watch',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+        {
+          botType: 'account-balance',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              thresholdEth: 0,
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+          alertMinimumIntervalSeconds: 86400,
+        },
+      ],
+    };
+
+    // initialize
+    const botStates = {};
+    const botMap = new Map();
+    await (initializeBots(config, botMap, botStates))();
+
+    // set up the blockEvent
+    const mockBlockEvent = createBlockEvent({});
+    mockBlockEvent.block = block;
+    mockBlockEvent.transactions = [1];
+
+    // run the block handler
+    const handleBlock = handleAllBlocks(botMap, botStates);
+    const blockFindings = await handleBlock(mockBlockEvent);
+
+    // check that the block handler returns no findings
+    expect(blockFindings).toStrictEqual([]);
+
+    // set up the transactionEvent
+    const mockTxEvent = createTransactionEvent({});
+    mockTxEvent.block = block;
+
+    // run the transaction handler
+    const handleTransactions = handleAllTransactions(botMap, botStates);
+    const transactionFindings = await handleTransactions(mockTxEvent);
+
+    // check that the transaction handler returns no findings
+    expect(transactionFindings).toStrictEqual([]);
+  });
+
+  it('returns findings if the block handler condition is met and the transaction handler condition is met', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'address-watch',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+        {
+          botType: 'account-balance',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              thresholdEth: 0,
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+          alertMinimumIntervalSeconds: 86400,
+        },
+      ],
+    };
+
+    // initialize
+    const botStates = {};
+    const botMap = new Map();
+    await (initializeBots(config, botMap, botStates))();
+
+    // set up the blockEvent
+    const mockBlockEvent = createBlockEvent({});
+    mockBlockEvent.block = block;
+    mockBlockEvent.transactions = [1];
+
+    // force the mocked finding to be returned from the block handler
+    const mockedBlockFinding = 'mockedFinding1';
+    botMap.set('account-balance', {
+      handleBlock: jest.fn().mockResolvedValue([mockedBlockFinding]),
+    });
+
+    // run the block handler
+    const handleBlock = handleAllBlocks(botMap, botStates);
+    const blockFindings = await handleBlock(mockBlockEvent);
+
+    // check that the block handler returns no findings
+    expect(blockFindings).toStrictEqual([]);
+
+    // set up the transactionEvent
+    const mockTxEvent = createTransactionEvent({});
+    mockTxEvent.block = block;
+
+    // force the transaction handler to return the mocked finding
+    const mockedTransactionFinding = 'mockedFinding2';
+    botMap.set('address-watch', {
+      handleTransaction: jest.fn().mockResolvedValue([mockedTransactionFinding]),
+    });
+
+    // run the transaction handler
+    const handleTransactions = handleAllTransactions(botMap, botStates);
+    const transactionFindings = await handleTransactions(mockTxEvent);
+
+    // check that the transaction handler returns no findings
+    expect(transactionFindings).toStrictEqual([mockedBlockFinding, mockedTransactionFinding]);
   });
 });
