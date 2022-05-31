@@ -160,7 +160,7 @@ function handleAllBlocks(_botMap, _botStates) {
       return findings.flat();
     }
 
-    cachedResults[blockEvent.hash] = {
+    cachedResults[blockEvent.block.hash] = {
       txTotal: blockEvent.transactions,
       txDone: 0,
       blockFindings: findings.flat(),
