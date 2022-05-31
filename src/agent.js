@@ -15,12 +15,11 @@ const botImports = [
 
 const config = require('../bot-config.json');
 
-const botStates = [];
+const botStates = {};
 const botMap = new Map();
 
 let txHandlerCount = 0;
 let blockHandlerCount = 0;
-let gatherMode = 'any';
 const cachedResults = {};
 
 async function generateAllBots(_config, _botMap) {
@@ -108,8 +107,9 @@ async function generateAllBots(_config, _botMap) {
 function initializeBots(_config, _botMap, _botStates) {
   return async function initialize() {
     const botConfigs = await generateAllBots(_config, _botMap);
-    gatherMode = config.gatherMode;
 
+    _botStates.gatherMode = config.gatherMode;
+    _botStates.bots = [];
     const botStateProms = botConfigs.map((bot) => {
       const botMod = _botMap.get(bot.botType);
       if (botMod.handleTransaction !== undefined) {
@@ -129,15 +129,15 @@ function initializeBots(_config, _botMap, _botStates) {
     });
 
     const results = await Promise.all(botStateProms);
-    results.forEach((result) => _botStates.push(result));
+    results.forEach((result) => _botStates.bots.push(result));
   };
 }
 
 function handleAllBlocks(_botMap, _botStates) {
   return async function handleBlock(blockEvent) {
     const findProms = [];
-    for (let i = 0; i < _botStates.length; i += 1) {
-      const bot = _botStates[i];
+    for (let i = 0; i < _botStates.bots.length; i += 1) {
+      const bot = _botStates.bots[i];
       const botMod = _botMap.get(bot.botType);
       if (botMod.handleBlock !== undefined) {
         findProms.push(botMod.handleBlock(bot, blockEvent));
@@ -145,7 +145,7 @@ function handleAllBlocks(_botMap, _botStates) {
     }
     const findings = await Promise.all(findProms);
 
-    if (gatherMode === 'any') {
+    if (_botStates.gatherMode === 'any') {
       return findings.flat();
     }
 
@@ -176,13 +176,13 @@ function handleAllTransactions(_botMap, _botStates) {
     const cachedBlock = cachedResults[blockHash];
 
     // if there are block handlers, but they didn't return all positive findings
-    if (gatherMode === 'all' && blockHandlerCount > 0 && cachedBlock === undefined) {
+    if (_botStates.gatherMode === 'all' && blockHandlerCount > 0 && cachedBlock === undefined) {
       return [];
     }
 
     const findProms = [];
-    for (let i = 0; i < _botStates.length; i += 1) {
-      const bot = _botStates[i];
+    for (let i = 0; i < _botStates.bots.length; i += 1) {
+      const bot = _botStates.bots[i];
       const botMod = _botMap.get(bot.botType);
       if (botMod.handleTransaction !== undefined) {
         findProms.push(botMod.handleTransaction(bot, txEvent));
@@ -190,7 +190,7 @@ function handleAllTransactions(_botMap, _botStates) {
     }
     const findings = await Promise.all(findProms);
 
-    if (gatherMode === 'any') {
+    if (_botStates.gatherMode === 'any') {
       return findings.flat();
     }
 

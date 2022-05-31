@@ -35,9 +35,9 @@ describe('test multi-agents with gather mode any', () => {
     const mockTxEvent = createTransactionEvent({});
     mockTxEvent.block = block;
 
-    const botStates = [];
+    const botStates = {};
     const botMap = new Map();
-    initializeBots(config, botMap, botStates)();
+    await (initializeBots(config, botMap, botStates))();
     const handleTransactions = handleAllTransactions(botMap, botStates);
     await handleTransactions(mockTxEvent);
   });
@@ -68,9 +68,9 @@ describe('test multi-agents with gather mode any', () => {
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
 
-    const botStates = [];
+    const botStates = {};
     const botMap = new Map();
-    initializeBots(config, botMap, botStates)();
+    await (initializeBots(config, botMap, botStates))();
     const handleBlock = handleAllBlocks(botMap, botStates);
     await handleBlock(mockBlockEvent);
   });
@@ -114,9 +114,9 @@ describe('test multi-agents with gather mode any', () => {
     const mockTxEvent = createTransactionEvent({});
     mockTxEvent.block = block;
 
-    const botStates = [];
+    const botStates = {};
     const botMap = new Map();
-    initializeBots(config, botMap, botStates)();
+    await (initializeBots(config, botMap, botStates))();
     const handleBlock = handleAllBlocks(botMap, botStates);
     await handleBlock(mockBlockEvent);
 
@@ -149,9 +149,9 @@ describe('test multi-agents with gather mode all', () => {
     const mockTxEvent = createTransactionEvent({});
     mockTxEvent.block = block;
 
-    const botStates = [];
+    const botStates = {};
     const botMap = new Map();
-    initializeBots(config, botMap, botStates)();
+    await (initializeBots(config, botMap, botStates))();
     const handleTransactions = handleAllTransactions(botMap, botStates);
     await handleTransactions(mockTxEvent);
   });
@@ -182,9 +182,9 @@ describe('test multi-agents with gather mode all', () => {
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
 
-    const botStates = [];
+    const botStates = {};
     const botMap = new Map();
-    initializeBots(config, botMap, botStates)();
+    await (initializeBots(config, botMap, botStates))();
     const handleBlock = handleAllBlocks(botMap, botStates);
     await handleBlock(mockBlockEvent);
   });
@@ -228,9 +228,9 @@ describe('test multi-agents with gather mode all', () => {
     const mockTxEvent = createTransactionEvent({});
     mockTxEvent.block = block;
 
-    const botStates = [];
+    const botStates = {};
     const botMap = new Map();
-    initializeBots(config, botMap, botStates)();
+    await (initializeBots(config, botMap, botStates))();
     const handleBlock = handleAllBlocks(botMap, botStates);
     await handleBlock(mockBlockEvent);
 
