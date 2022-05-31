@@ -13,16 +13,17 @@ const botImports = [
 ];
 /* eslint-enable global-require */
 
-const botStates = [];
-const botMap = new Map();
 const config = require('../bot-config.json');
+
+let botStates;
+let botMap;
 
 let txHandlerCount = 0;
 let blockHandlerCount = 0;
 let gatherMode = 'any';
 const cachedResults = {};
 
-async function generateAllBots(_config) {
+async function generateAllBots(_config, _botMap) {
   const modProms = [];
   const modNames = [];
   for (let i = 0; i < botImports.length; i += 1) {
@@ -35,7 +36,7 @@ async function generateAllBots(_config) {
     for (let i = 0; i < data.length; i += 1) {
       const module = data[i];
       const name = modNames[i];
-      botMap.set(name, module);
+      _botMap.set(name, module);
     }
   });
 
@@ -104,12 +105,13 @@ async function generateAllBots(_config) {
     - if there are block handlers, and all bots have tx findings, return the findings
 */
 
-async function initialize() {
-  const botConfigs = await generateAllBots(config);
+async function initializeBots(_config) {
+  const initBotMap = new Map();
+  const botConfigs = await generateAllBots(_config, initBotMap);
   gatherMode = config.gatherMode;
 
   const botStateProms = botConfigs.map((bot) => {
-    const botMod = botMap.get(bot.botType);
+    const botMod = initBotMap.get(bot.botType);
     if (botMod.handleTransaction !== undefined) {
       txHandlerCount += 1;
     }
@@ -126,8 +128,17 @@ async function initialize() {
     return prom;
   });
 
+  const initBotStates = [];
   const results = await Promise.all(botStateProms);
-  results.forEach((result) => botStates.push(result));
+  results.forEach((result) => initBotStates.push(result));
+
+  return { initBotStates, initBotMap };
+}
+
+async function initialize() {
+  const { initBotStates, initBotMap } = await initializeBots(config);
+  botStates = initBotStates;
+  botMap = initBotMap;
 }
 
 function handleAllBlocks(_botMap, _botStates) {
@@ -237,5 +248,6 @@ module.exports = {
   handleBlock: handleAllBlocks(botMap, botStates),
   handleAllTransactions,
   handleTransaction: handleAllTransactions(botMap, botStates),
+  initializeBots,
   initialize,
 };

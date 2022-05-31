@@ -4,6 +4,28 @@ This repository contains Forta Bot templates that can be used to quickly create 
 simply by creating configuration files. These Bot templates were designed by [Arbitrary Execution](https://www.arbitraryexecution.com/).
 More projects are available on [Arbitrary Execution's Github](https://github.com/arbitraryexecution)
 
+## Bot Setup Walkthrough
+
+The following steps will take you from a completely blank template to a functional bot.
+
+1. Copy the `bot-config.json.example` file to a new file named `bot-config.json`.
+
+2. `developerAbbreviation` (required) - Type in your desired abbreviation to specify your name or your development
+team name.  For example, Arbitrary Execution uses the abbreviation `"AE"` for its `developerAbbreviation` value.
+
+3. `protocolName` (required) - Type in the name of the protocol.  For example, for the Uniswap protocol you may
+type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may type in `"Sushi"` or `"SushiSwap"`, etc.
+
+4. `protocolAbbreviation` (required) - Type in an appropriate abbreviation for the value in `protocolName`.  For
+example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbreviated `"SUSH"`, etc.
+
+5. `gatherMode` (required) - This can either be `any`, or `all`.
+- `any` returns any/all findings, for any bot added the the template list.
+- `all` returns findings only if all bots had findings for that transaction **and** containing block
+
+6. `bots` (required) - This is where you stick config information for all bots you'd like to run.
+Check the appropriate Bot Templates setup for more details on each one.
+
 ## Validating Your Config
 
 Once you're ready to deploy, `npm run validate` will check that your `bot-config.json` file is ready to go,
