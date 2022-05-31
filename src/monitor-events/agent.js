@@ -4,6 +4,7 @@ const {
 
 const {
   getAbi,
+  buildAbiPath,
   extractEventArgs,
   parseExpression,
   checkLogAgainstExpression,
@@ -159,7 +160,14 @@ const validateConfig = (config, abiOverride = null) => {
     if (abiOverride != null) {
       abi = abiOverride[abiFile];
     } else {
-      abi = getAbi(config.name, abiFile);
+      try {
+        abi = getAbi(config.name, abiFile);
+      } catch (error) {
+        console.error(error);
+        const path = buildAbiPath(config.name, abiFile);
+        errMsg = `Unable to get abi file! ${path}`;
+        return { ok, errMsg };
+      }
     }
 
     const eventObjects = getObjectsFromAbi(abi, 'event');

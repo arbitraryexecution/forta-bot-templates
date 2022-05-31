@@ -200,6 +200,11 @@ const handleTransaction = async (botState, txEvent) => {
     let addresses = Object.keys(txEvent.addresses).map((addr) => addr.toLowerCase());
     addresses = addresses.filter((addr) => addr !== 'undefined');
 
+    // transaction to can be null, it's weird, but it happens
+    if (txEvent.transaction.to == null) {
+      return;
+    }
+
     // watch for recently created contracts interacting with configured contract address
     if (txEvent.transaction.to.toLowerCase() === address.toLowerCase()) {
       const contractResults = {};

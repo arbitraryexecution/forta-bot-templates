@@ -2,11 +2,12 @@
   "developerAbbreviation": "",
   "protocolName": "",
   "protocolAbbreviation": "",
+  "gatherMode": "any",
   "bots": [
     {
       "botType": "account-balance",
       "name": "bot_1",
-      "accountBalance": {
+      "contracts": {
         "contractName1": {
           "address": "",
           "thresholdEth": 0,
@@ -21,7 +22,7 @@
       "name": "bot_2",
       "contracts": {
         "contractName1": {
-          "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+          "address": "",
           "type": "Info",
           "severity": "Info"
         }
@@ -32,7 +33,7 @@
       "name": "bot_3",
       "contracts": {
         "contractName1": {
-          "address": "contractAddress1",
+          "address": "",
           "abiFile": "filename1.json",
           "events": {
             "eventName": {
@@ -49,7 +50,7 @@
       "name": "bot_4",
       "contracts": {
         "contractName1": {
-          "address": "contractAddress1",
+          "address": "",
           "abiFile": "filename1.json",
           "variables": {
             "variableName1": {
@@ -68,7 +69,7 @@
       "name": "bot_5",
       "contracts": {
         "contractName1": {
-          "address": "contractAddress1",
+          "address": "",
           "version": "v1.1.1"
         }
       }
@@ -78,8 +79,8 @@
       "name": "bot_6",
       "contracts": {
         "contractName1": {
-          "address": "contractAddress1",
-          "abiFile": "contractAbiFileName1.json"
+          "address": "",
+          "abiFile": "Governor"
         }
       }
     },
@@ -88,7 +89,7 @@
       "name": "bot_7",
       "contracts": {
         "contractName1": {
-          "address": "contractAddress1",
+          "address": "",
           "abiFile": "contractAbiFileName1.json",
           "functions": {
             "FunctionName1": {
@@ -107,10 +108,10 @@
         "contractName1": {
           "thresholdBlockCount": 7,
           "thresholdTransactionCount": 7,
-          "address": "contractAddress1",
+          "address": "",
           "filteredAddresses": [
-            "filteredAddress1",
-            "filteredAddress2"
+            "",
+            ""
           ],
           "type": "Info",
           "severity": "Info"
@@ -122,27 +123,25 @@
       "name": "bot_9",
       "contracts": {
         "contractName1": {
-          "address": "contractAddress1",
+          "address": "",
           "type": "Info",
           "severity": "Info"
         }
-      }
-      "observationIntervalInBlocks": 100,
+      },
+      "observationIntervalInBlocks": 100
     },
     {
       "botType": "transaction-failure-count",
       "name": "bot_10",
       "contracts": {
-        "failedTransactions": {
-          "contractName1": {
-            "address": "contractAddress1",
-            "transactionFailuresLimit": 10,
-            "type": "Info",
-            "severity": "Info"
-          }
+        "contractName1": {
+          "address": "",
+          "transactionFailuresLimit": 10,
+          "type": "Info",
+          "severity": "Info"
         }
       },
       "blockWindow": 25
-    },
+    }
   ]
 }

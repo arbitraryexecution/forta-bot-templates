@@ -6,6 +6,7 @@ const {
   parseExpression,
   checkLogAgainstExpression,
   getAbi,
+  buildAbiPath,
   extractFunctionArgs,
   isFilledString,
   isAddress,
@@ -90,7 +91,14 @@ const validateConfig = (config, abiOverride = null) => {
     if (abiOverride != null) {
       abi = abiOverride[abiFile];
     } else {
-      abi = getAbi(config.name, abiFile);
+      try {
+        abi = getAbi(config.name, abiFile);
+      } catch (error) {
+        console.error(error);
+        const path = buildAbiPath(config.name, abiFile);
+        errMsg = `Unable to get abi file! ${path}`;
+        return { ok, errMsg };
+      }
     }
 
     // get all of the function objects from the loaded ABI file

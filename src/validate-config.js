@@ -1,8 +1,17 @@
 const config = require('../bot-config.json');
 const { botImports } = require('./agent');
+const {
+  isFilledString,
+  isObject,
+  isEmptyObject,
+} = require('./utils');
+
+function errorMsg(msg) {
+  console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
+}
 
 function panic(msg) {
-  console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
+  errorMsg(msg);
   process.exit(1);
 }
 
@@ -19,23 +28,28 @@ const validateConfig = async (botMap) => {
     developerAbbreviation,
     protocolName,
     protocolAbbreviation,
+    gatherMode,
     bots,
   } = config;
 
-  if (developerAbbreviation === undefined) {
+  if (!isFilledString(developerAbbreviation)) {
     panic('developerAbbreviation not defined!');
   }
 
-  if (protocolName === undefined) {
+  if (!isFilledString(protocolName)) {
     panic('protocolName not defined!');
   }
 
-  if (protocolAbbreviation === undefined) {
+  if (!isFilledString(protocolAbbreviation)) {
     panic('protocolAbbreviation not defined!');
   }
 
-  if (bots === undefined) {
-    panic('bots not defined!');
+  if (gatherMode !== 'any' && gatherMode !== 'all') {
+    panic('gatherMode must be any or all');
+  }
+
+  if (!isObject(bots) || isEmptyObject(bots)) {
+    panic('bots must be defined and contain at least 1 bot!');
   }
 
   const modProms = [];
@@ -61,6 +75,7 @@ const validateConfig = async (botMap) => {
     modProms.push(modProm);
   }
 
+  let isValid = true;
   const botMods = await Promise.all(modProms);
   for (let i = 0; i < botMods.length; i += 1) {
     const bot = bots[i];
@@ -82,9 +97,12 @@ const validateConfig = async (botMap) => {
 
     const { ok, errMsg } = mod.validateConfig(botConfig);
     if (!ok) {
-      panic(botErr(bot, `in config\n  - ${errMsg}`));
+      isValid = false;
+      errorMsg(botErr(bot, `in config\n  - ${errMsg}\n`));
     }
   }
+
+  return isValid;
 };
 
 const main = async () => {
@@ -94,8 +112,12 @@ const main = async () => {
     botMap.set(imp.name, imp.bot);
   }
 
-  await validateConfig(botMap);
-  console.log('Config validated successfully');
+  const isValid = await validateConfig(botMap);
+  if (isValid) {
+    console.log('Config validated successfully');
+  } else {
+    panic('Config validation failed!');
+  }
 };
 
 main();
