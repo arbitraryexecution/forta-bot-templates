@@ -83,7 +83,7 @@ async function generateAllBots(_config, _botMap) {
     HandleBlock -> []
     - HandleTransaction -> []
 
-  Bots can have a block handler, a transaction handler, or both
+  Bots can have block handlers, transaction handlers, or both
 
   if there are only bots with block handlers:
     - run the block handlers, aggregate the results
@@ -96,7 +96,8 @@ async function generateAllBots(_config, _botMap) {
 
   if you've got mixed tx and block handlers:
   for all bots with block handlers:
-    - run the handlers, aggregate the results
+    - if there are block handlers but no cached results
+        (i.e. not all block handlers returned findings), return []
     - if all bots return findings, cache that for the tx handlers
   for all bots with tx handlers:
     - run the handlers, aggregate the results
@@ -109,7 +110,7 @@ function initializeBots(_config, _botMap, _botStates) {
     const botConfigs = await generateAllBots(_config, _botMap);
 
     /* eslint-disable no-param-reassign */
-    _botStates.gatherMode = config.gatherMode;
+    _botStates.gatherMode = _config.gatherMode;
     _botStates.bots = [];
     /* eslint-enable no-param-reassign */
 
@@ -202,9 +203,9 @@ function handleAllTransactions(_botMap, _botStates) {
 
     let blockFindings = [];
     if (blockHandlerCount > 0) {
-      // This is grody. I'm making the assumption that the JS async scheduler
-      // switches threadlets on a timer in addition to explicit yields, so without this, we *may*
-      // wind up in a race condition where we delete the cachedResults twice if we're *very* unlucky
+      // Assumption: That the JS async scheduler switches threadlets on a timer in addition to
+      // explicit yields, so without this, we *may* wind up in a race condition where we
+      // delete the cachedResults twice if we're *very* unlucky
       blockFindings = cachedBlock.blockFindings;
 
       // if we've finished all the transactions for a block, delete the cachedResults
