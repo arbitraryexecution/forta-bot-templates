@@ -150,24 +150,16 @@ function handleAllBlocks(_botMap, _botStates) {
     }
 
     // At this point, we're handling the nasty edge cases of all
+    const allFindings = findings.every((finding) => finding.length > 0);
 
-    let allEvents = true;
-    for (let i = 0; i < findings.length; i += 1) {
-      const find = findings[i];
-      if (find.length === 0) {
-        allEvents = false;
-        break;
-      }
-    }
-
-    if (allEvents && txHandlerCount === 0) {
+    if (allFindings && txHandlerCount === 0) {
       return findings.flat();
     }
 
     cachedResults[blockEvent.hash] = {
       txTotal: blockEvent.transactions,
       txDone: 0,
-      blockEvents: findings.flat(),
+      blockFindings: findings.flat(),
     };
     return [];
   };
@@ -203,34 +195,29 @@ function handleAllTransactions(_botMap, _botStates) {
     }
 
     // At this point, we're only handling the nasty edge cases of all
-    let allEvents = true;
-    for (let i = 0; i < findings.length; i += 1) {
-      const find = findings[i];
-      if (find.length === 0) {
-        allEvents = false;
-        break;
-      }
-    }
+    const allFindings = findings.every((finding) => finding.length > 0);
 
-    let blockEvents = [];
+    let blockFindings = [];
     if (blockHandlerCount > 0) {
       // This is grody. I'm making the assumption that the JS async scheduler
       // switches threadlets on a timer in addition to explicit yields, so without this, we *may*
-      // wind up in a race condtion where we delete the cachedResults twice if we're *SUPER* unlucky
-      blockEvents = cachedBlock.blockEvents;
-      if (cachedResults[blockHash].txDoneCount + 1 >= txHandlerCount) {
+      // wind up in a race condition where we delete the cachedResults twice if we're *very* unlucky
+      blockFindings = cachedBlock.blockFindings;
+
+      // if we've finished all the transactions for a block, delete the cachedResults
+      if (cachedResults[blockHash].txDone + 1 >= cachedResults[blockHash].txTotal) {
         delete cachedResults[blockHash];
       } else {
-        cachedResults[blockHash].txDoneCount += 1;
+        cachedResults[blockHash].txDone += 1;
       }
     }
 
     // If we didn't see enough tx findings
-    if (!allEvents) {
+    if (!allFindings) {
       return [];
     }
 
-    return [...blockEvents, ...findings.flat()];
+    return [...blockFindings, ...findings.flat()];
   };
 }
 
