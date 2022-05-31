@@ -18,10 +18,6 @@ const config = require('../bot-config.json');
 const botStates = {};
 const botMap = new Map();
 
-let txHandlerCount = 0;
-let blockHandlerCount = 0;
-const cachedResults = {};
-
 async function generateAllBots(_config, _botMap) {
   const modProms = [];
   const modNames = [];
@@ -111,17 +107,22 @@ function initializeBots(_config, _botMap, _botStates) {
 
     /* eslint-disable no-param-reassign */
     _botStates.gatherMode = _config.gatherMode;
+    _botStates.txHandlerCount = 0;
+    _botStates.blockHandlerCount = 0;
+    _botStates.cachedResults = {};
     _botStates.bots = [];
     /* eslint-enable no-param-reassign */
 
     const botStateProms = botConfigs.map((bot) => {
       const botMod = _botMap.get(bot.botType);
+      /* eslint-disable no-param-reassign */
       if (botMod.handleTransaction !== undefined) {
-        txHandlerCount += 1;
+        _botStates.txHandlerCount += 1;
       }
       if (botMod.handleBlock !== undefined) {
-        blockHandlerCount += 1;
+        _botStates.blockHandlerCount += 1;
       }
+      /* eslint-enable no-param-reassign */
 
       if (botMod.initialize === undefined) {
         const botState = { ...bot };
@@ -139,6 +140,10 @@ function initializeBots(_config, _botMap, _botStates) {
 
 function handleAllBlocks(_botMap, _botStates) {
   return async function handleBlock(blockEvent) {
+    if (_botStates.blockHandlerCount === 0) {
+      return [];
+    }
+
     const findProms = [];
     for (let i = 0; i < _botStates.bots.length; i += 1) {
       const bot = _botStates.bots[i];
@@ -147,6 +152,7 @@ function handleAllBlocks(_botMap, _botStates) {
         findProms.push(botMod.handleBlock(bot, blockEvent));
       }
     }
+
     const findings = await Promise.all(findProms);
 
     if (_botStates.gatherMode === 'any') {
@@ -156,12 +162,13 @@ function handleAllBlocks(_botMap, _botStates) {
     // At this point, we're handling the nasty edge cases of all
     const allFindings = findings.every((finding) => finding.length > 0);
 
-    if (allFindings && txHandlerCount === 0) {
+    if (allFindings && _botStates.txHandlerCount === 0) {
       return findings.flat();
     }
 
-    cachedResults[blockEvent.block.hash] = {
-      txTotal: blockEvent.transactions,
+    // eslint-disable-next-line no-param-reassign
+    _botStates.cachedResults[blockEvent.block.hash] = {
+      txTotal: blockEvent.transactions.length,
       txDone: 0,
       blockFindings: findings.flat(),
     };
@@ -172,15 +179,15 @@ function handleAllBlocks(_botMap, _botStates) {
 function handleAllTransactions(_botMap, _botStates) {
   return async function handleTransaction(txEvent) {
     // We can't have any findings if we have no handlers!
-    if (txHandlerCount === 0) {
+    if (_botStates.txHandlerCount === 0) {
       return [];
     }
 
     const blockHash = txEvent.block.hash;
-    const cachedBlock = cachedResults[blockHash];
+    const cachedBlock = _botStates.cachedResults[blockHash];
 
     // if there are block handlers, but they didn't return all positive findings
-    if (_botStates.gatherMode === 'all' && blockHandlerCount > 0 && cachedBlock === undefined) {
+    if (_botStates.gatherMode === 'all' && _botStates.blockHandlerCount > 0 && cachedBlock === undefined) {
       return [];
     }
 
@@ -202,18 +209,21 @@ function handleAllTransactions(_botMap, _botStates) {
     const allFindings = findings.every((finding) => finding.length > 0);
 
     let blockFindings = [];
-    if (blockHandlerCount > 0) {
+    if (_botStates.blockHandlerCount > 0) {
       // Assumption: That the JS async scheduler switches threadlets on a timer in addition to
       // explicit yields, so without this, we *may* wind up in a race condition where we
       // delete the cachedResults twice if we're *very* unlucky
       blockFindings = cachedBlock.blockFindings;
 
       // if we've finished all the transactions for a block, delete the cachedResults
-      if (cachedResults[blockHash].txDone + 1 >= cachedResults[blockHash].txTotal) {
-        delete cachedResults[blockHash];
+      /* eslint-disable no-param-reassign */
+      // eslint-disable-next-line max-len
+      if (_botStates.cachedResults[blockHash].txDone + 1 >= _botStates.cachedResults[blockHash].txTotal) {
+        delete _botStates.cachedResults[blockHash];
       } else {
-        cachedResults[blockHash].txDone += 1;
+        _botStates.cachedResults[blockHash].txDone += 1;
       }
+      /* eslint-enable no-param-reassign */
     }
 
     // If we didn't see enough tx findings

@@ -398,8 +398,8 @@ describe('test multi-agents with gather mode any', () => {
   });
 });
 
-describe('test multi-agents with gather mode all', () => {
-  it('test transactions only', async () => {
+describe('test multi-bot initializer', () => {
+  it('should add any bots that match the botImports Array', async () => {
     const config = {
       developerAbbreviation: 'test',
       protocolName: 'test',
@@ -407,26 +407,179 @@ describe('test multi-agents with gather mode all', () => {
       gatherMode: 'all',
       bots: [
         {
-          botType: 'governance',
-          name: 'test',
+          botType: 'account-balance',
+          name: 'bot_1',
           contracts: {
-            contractName1: {
+            contractName: {
               address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-              abiFile: 'Governor',
+              thresholdEth: 0,
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+          alertMinimumIntervalSeconds: 86400,
+        },
+        {
+          botType: 'address-watch',
+          name: 'bot_2',
+          contracts: {
+            contractName: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+      ],
+    };
+    const botStates = {};
+    const botMap = new Map();
+    await (initializeBots(config, botMap, botStates))();
+    expect(botStates.bots.length).toStrictEqual(2);
+  });
+
+  it('should fail when trying to add a bot that is not in the botImports Array', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'account-balance',
+          name: 'bot_1',
+          contracts: {
+            contractName: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              thresholdEth: 0,
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+          alertMinimumIntervalSeconds: 86400,
+        },
+        {
+          botType: 'address-watch',
+          name: 'bot_2',
+          contracts: {
+            contractName: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+        {
+          botType: 'invalid-bot-type',
+          name: 'bot_3',
+          contracts: {
+            contractName: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
             },
           },
         },
       ],
     };
 
-    const mockTxEvent = createTransactionEvent({});
-    mockTxEvent.block = block;
+    const botStates = {};
+    const botMap = new Map();
+
+    try {
+      await (initializeBots(config, botMap, botStates))();
+    } catch (error) {
+      expect(error.name).toStrictEqual('TypeError');
+      expect(error.message.startsWith('Cannot read properties of undefined')).toStrictEqual(true);
+    }
+  });
+});
+
+describe('test multi-agents with gather mode all', () => {
+  it('returns no findings if the transaction handler is not met', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'address-watch',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+      ],
+    };
 
     const botStates = {};
     const botMap = new Map();
     await (initializeBots(config, botMap, botStates))();
+
+    const mockBlockEvent = createBlockEvent({});
+    mockBlockEvent.block = block;
+
+    const handleBlocks = handleAllBlocks(botMap, botStates);
+    const blockFindings = await handleBlocks(mockBlockEvent);
+    expect(blockFindings).toStrictEqual([]);
+
+    const mockTxEvent = createTransactionEvent({});
+    mockTxEvent.block = block;
+
     const handleTransactions = handleAllTransactions(botMap, botStates);
-    await handleTransactions(mockTxEvent);
+    const findings = await handleTransactions(mockTxEvent);
+    expect(findings).toStrictEqual([]);
+  });
+
+  it('returns findings if the transaction handler condition is met', async () => {
+    const config = {
+      developerAbbreviation: 'test',
+      protocolName: 'test',
+      protocolAbbreviation: 'test',
+      gatherMode: 'all',
+      bots: [
+        {
+          botType: 'address-watch',
+          name: 'test',
+          contracts: {
+            contractName1: {
+              address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
+              type: 'Info',
+              severity: 'Info',
+            },
+          },
+        },
+      ],
+    };
+
+    const botStates = {};
+    const botMap = new Map();
+    await (initializeBots(config, botMap, botStates))();
+
+    const mockBlockEvent = createBlockEvent({});
+    mockBlockEvent.block = block;
+    const handleBlocks = handleAllBlocks(botMap, botStates);
+    const blockFindings = await handleBlocks(mockBlockEvent);
+    expect(blockFindings).toStrictEqual([]);
+
+    const mockTxEvent = createTransactionEvent({});
+    mockTxEvent.block = block;
+    const handleTransactions = handleAllTransactions(botMap, botStates);
+
+    const finding = 'mockedFinding1';
+    botMap.set('address-watch', {
+      validateConfig: jest.fn(),
+      initialize: jest.fn(),
+      handleTransaction: jest.fn().mockResolvedValue([finding]),
+    });
+
+    const findings = await handleTransactions(mockTxEvent);
+    expect(findings).toStrictEqual([finding]);
   });
 
   it('test blocks only', async () => {
