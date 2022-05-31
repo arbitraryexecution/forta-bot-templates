@@ -173,7 +173,7 @@ function handleAllBlocks(_botMap, _botStates) {
 
     // eslint-disable-next-line no-param-reassign
     _botStates.cachedResults[blockEvent.block.hash] = {
-      txTotal: blockEvent.transactions.length,
+      txTotal: blockEvent.block.transactions.length,
       txDone: 0,
       blockFindings: findings.flat(),
     };

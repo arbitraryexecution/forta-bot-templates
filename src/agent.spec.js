@@ -593,7 +593,7 @@ describe('test multi-agents with gather mode all', () => {
 
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
-    mockBlockEvent.transactions = [];
+    mockBlockEvent.block.transactions = [];
 
     const botStates = {};
     const botMap = new Map();
@@ -628,7 +628,7 @@ describe('test multi-agents with gather mode all', () => {
 
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
-    mockBlockEvent.transactions = [];
+    mockBlockEvent.block.transactions = [];
 
     const botStates = {};
     const botMap = new Map();
@@ -686,7 +686,7 @@ describe('test multi-agents with gather mode all', () => {
     // set up the blockEvent
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
-    mockBlockEvent.transactions = [1];
+    mockBlockEvent.block.transactions = [1];
 
     // run the block handler
     const handleBlock = handleAllBlocks(botMap, botStates);
@@ -755,7 +755,7 @@ describe('test multi-agents with gather mode all', () => {
     // set up the blockEvent
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
-    mockBlockEvent.transactions = [1];
+    mockBlockEvent.block.transactions = [1];
 
     // run the block handler
     const handleBlock = handleAllBlocks(botMap, botStates);
@@ -824,7 +824,7 @@ describe('test multi-agents with gather mode all', () => {
     // set up the blockEvent
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
-    mockBlockEvent.transactions = [1];
+    mockBlockEvent.block.transactions = [1];
 
     // run the block handler
     const handleBlock = handleAllBlocks(botMap, botStates);
@@ -887,7 +887,7 @@ describe('test multi-agents with gather mode all', () => {
     // set up the blockEvent
     const mockBlockEvent = createBlockEvent({});
     mockBlockEvent.block = block;
-    mockBlockEvent.transactions = [1];
+    mockBlockEvent.block.transactions = [1];
 
     // force the mocked finding to be returned from the block handler
     const mockedBlockFinding = 'mockedFinding1';
