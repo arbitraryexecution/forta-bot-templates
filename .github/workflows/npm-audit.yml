@@ -1,0 +1,56 @@
+---
+# Custom workflow for running NPM audit
+name: NPM Vulnerability Checker
+# yamllint disable-line rule:truthy
+on:
+  # Enabling manual test
+  # REF: https://stackoverflow.com/questions/58933155/manual-workflow-triggers-in-github-actions
+  workflow_dispatch:
+  push:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Add your Bot directory here
+        all-dir:
+          [
+            "asset-monitor",
+            "comp-delegations-monitor",
+            "ctoken-monitor",
+            "defender",
+            "distribution",
+            "gnosis-safe-deploy",
+            "governance",
+            "large-borrows-governance",
+            "liquidation-monitor",
+            "low-liquidity-market-attack-monitor",
+            "multisig-transactions-monitor",
+            "oracle-price-monitor",
+          ]
+      fail-fast: false
+    defaults:
+      run:
+        working-directory: ${{ matrix.all-dir }}
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+      - name: Install Packages
+        run: npm install
+
+      - name: Check for vulnerabilities
+        id: VulnerabilityCheck
+        continue-on-error: true
+        run: npm audit
+      - name: List outdated packages if vulnerabilities are detected
+        if: steps.VulnerabilityCheck.outcome == 'failure'
+        run: npm outdated

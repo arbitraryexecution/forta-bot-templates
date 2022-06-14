@@ -1,3 +1,4 @@
+---
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
@@ -8,12 +9,8 @@
 # and https://eslint.org
 
 name: ESLint
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ main ]
+# yamllint disable-line rule:truthy
+on: [push]
 
 jobs:
   eslint:
@@ -25,12 +22,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2.4.2
-
       - name: Install ESLint
         run: npm install
-
       - name: Create Dummy Bot Config
         run: touch bot-config.json
-
       - name: Run ESLint
         run: npx eslint . --config .eslintrc.js

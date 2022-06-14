@@ -1,0 +1,64 @@
+---
+# MegaLinter GitHub Action configuration file
+# More info at https://megalinter.github.io
+name: MegaLinter
+# yamllint disable-line rule:truthy
+on:
+  # Trigger mega-linter at every push. Action will also be visible from Pull Requests to master
+  push: # Comment this line to trigger action only on pull-requests (not recommended if you don't pay for GH Actions)
+  pull_request:
+    branches: [master, main]
+
+env: # Comment env block if you do not want to apply fixes
+  # Apply linter fixes configuration
+  APPLY_FIXES: all
+  # Fixes will be available in the artifact
+  APPLY_FIXES_EVENT: none
+  APPLY_FIXES_MODE: pull_request
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: MegaLinter
+    runs-on: ubuntu-latest
+    steps:
+      # Git Checkout
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # MegaLinter
+      - name: MegaLinter
+        id: ml
+        # You can override MegaLinter flavor used to have faster performances
+        # More info at https://megalinter.github.io/flavors/
+        uses: megalinter/megalinter/flavors/javascript@v5
+        env:
+          # All available variables are described in documentation
+          # https://megalinter.github.io/configuration/
+          VALIDATE_ALL_CODEBASE: true # Set ${{ github.event_name == &#39;push&#39; &amp;&amp; github.ref == &#39;refs/heads/main&#39; }} to validate only diff with main branch
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ADD YOUR CUSTOM ENV VARIABLES HERE TO OVERRIDE VALUES OF .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
+          DISABLE: COPYPASTE
+          DISABLE_LINTERS: JAVASCRIPT_STANDARD,JSON_PRETTIER,YAML_PRETTIER,SPELL_MISSPELL
+          SHOW_ELAPSED_TIME: true
+          FILEIO_REPORTER: false
+          SPELL_CSPELL_CONFIG_FILE: .github/.cspell.json
+          # Treat misspellings as a warning
+          SPELL_CSPELL_DISABLE_ERRORS: true
+          # DISABLE_ERRORS: true # Uncomment if you want MegaLinter to detect errors but not block CI to pass
+
+      # Upload MegaLinter artifacts
+      - name: Archive production artifacts
+        if: ${{ success() }} || ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: MegaLinter reports
+          path: |
+            report
+            mega-linter.log
