@@ -14,24 +14,7 @@ jobs:
   npm-audit:
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        # Add your Bot directory here
-        all-dir:
-          [
-            "asset-monitor",
-            "comp-delegations-monitor",
-            "ctoken-monitor",
-            "defender",
-            "distribution",
-            "gnosis-safe-deploy",
-            "governance",
-            "large-borrows-governance",
-            "liquidation-monitor",
-            "low-liquidity-market-attack-monitor",
-            "multisig-transactions-monitor",
-            "oracle-price-monitor",
-          ]
-      fail-fast: false
+        fail-fast: false
     defaults:
       run:
         working-directory: ${{ matrix.all-dir }}

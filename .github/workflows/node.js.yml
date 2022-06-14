@@ -20,5 +20,7 @@ jobs:
           node-version: lts/*
       - name: Install Packages
         run: npm install
+      - name: Create Dummy Bot Config
+        run: touch bot-config.json
       - name: Standard Tests
         run: npm test
