@@ -20,8 +20,8 @@ type in `"Uniswap"` or `"Uniswap V3"`, for the SushiSwap protocol you may type i
 example, `"Uniswap"` may be abbreviated `"UNI"` and `"SushiSwap"` may be abbreviated `"SUSH"`, etc.
 
 5. `gatherMode` (required) - This can either be `any`, or `all`.
- - `any` returns any/all findings, from any bot added the the template list.
- - `all` returns findings only if all bots had findings for that transaction **and** the containing block
+- `any` returns any/all findings, from any bot added the the template list.
+- `all` returns findings only if all bots had findings for that transaction **and** the containing block
 
 6. `bots` (required) - This Object contains configuration information for all bots you'd like to run.
 Check the individual Bot Templates SETUP.md files for more details how to create each one.

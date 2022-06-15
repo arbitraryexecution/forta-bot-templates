@@ -8,7 +8,7 @@ and alert type and severity are specified per variable per contract address.
 
 The following steps will take you from a completely blank template to a functional bot.
 
-1.  `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor variable
+1. `contracts` (required) - The Object value for this key corresponds to contracts that we want to monitor variable
 values for.  Each key in the Object is a contract name that we can specify, where that name is simply a string that we use
 as a label when referring to the contract (the string can be any valid string that we choose, it will not affect the
 monitoring by the bot). The Object corresponding to each contract name requires an `address` key/value pair,
@@ -60,7 +60,7 @@ address of the proxy contract.
 corresponding to the original contract code that was compiled and deployed onto the blockchain. This typically will
 come from the Github repository of the protocol being monitored. For the Uniswap example provided thus far, the
 deployed contracts are all present in the Uniswap Github repository here:
-    https://github.com/Uniswap
+    <https://github.com/Uniswap>
 If the aforementioned route is chosen, a solidity compiler will need to be used with the smart contract(s) to output
 and store the corresponding ABI.
 

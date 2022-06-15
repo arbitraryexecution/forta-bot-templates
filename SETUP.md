@@ -19,7 +19,7 @@ example, `"Uniswap"` may be abbreviated `"UNI"` and `"Sushi Swap"` may be abbrev
 5. Check out the SETUP.md in each bot directory for details on configuring each bot you want to use.
 
 6. Set up any abi files that your bots need in the following directory structure:
-```
+```text
   abi/
     <bot_name>/
       <abi_file.json>
@@ -32,7 +32,7 @@ repository.  Additionally, update the `name` entry in `package.json` to match th
 `bot-config.json` file.
 
 7. Move files to have the following directory structure:
-  ```
+  ```text
   forta-bot-templates/
     Dockerfile
     README.md
@@ -60,4 +60,4 @@ consider edge cases that may arise in production.
 
 10. After sufficient testing, the bot may be published and deployed using the steps outlined in the Forta SDK
 documentation:
-  https://docs.forta.network/en/latest/deploying/
+  <https://docs.forta.network/en/latest/deploying/>

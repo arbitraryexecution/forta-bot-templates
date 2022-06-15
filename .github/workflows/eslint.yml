@@ -21,7 +21,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.4.2
+        uses: actions/checkout@v3
       - name: Install ESLint
         run: npm install
       - name: Create Dummy Bot Config
