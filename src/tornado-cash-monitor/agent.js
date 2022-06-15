@@ -161,7 +161,7 @@ const handleTransaction = async (botState, txEvent) => {
     const { blockAdded } = botState.suspiciousAddresses[address];
     if ((currBlock - blockAdded) > botState.observationIntervalInBlocks) {
       // block is older than observationIntervalInBlocks and can be removed from
-      // suspicousAddresses
+      // suspiciousAddresses
       addressesToRemove.push(address);
     }
   });

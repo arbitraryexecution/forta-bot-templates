@@ -1,5 +1,5 @@
 {
-  "name": "forta-{developerAbbreviation}-{protocolAbbreviation}-bigagent",
+  "name": "forta-developer-protocol-bigagent",
   "version": "0.0.1",
   "description": "Forta Bot template for monitoring a large combination of conditions",
   "scripts": {

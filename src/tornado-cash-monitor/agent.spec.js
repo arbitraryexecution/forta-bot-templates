@@ -124,7 +124,7 @@ describe('handleTransaction', () => {
     expect(findings).toStrictEqual([]);
   });
 
-  it('returns no findings when suspicous addresses have been found but subsequent interactions with monitored addresses occur outside the observation interval', async () => {
+  it('returns no findings when suspicious addresses have been found but subsequent interactions with monitored addresses occur outside the observation interval', async () => {
     const mockSuspiciousAddress = '0x2222222222222222222222222222222222222222';
 
     // setup some mock function arguments to be encoded as mock function data
@@ -189,7 +189,7 @@ describe('handleTransaction', () => {
     expect(findings).toStrictEqual([]);
   });
 
-  it('returns a finding when a suspicious address was found and subsequent interactions with monitored functions have occurred within the observaion interval', async () => {
+  it('returns a finding when a suspicious address was found and subsequent interactions with monitored functions have occurred within the observation interval', async () => {
     const mockSuspiciousAddress = '0x2222222222222222222222222222222222222222';
 
     // setup some mock function arguments to be encoded as mock function data

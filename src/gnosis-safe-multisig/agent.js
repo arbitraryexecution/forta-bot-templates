@@ -220,7 +220,7 @@ const handleBlock = async (botState) => {
       });
     });
 
-    // check the current balances aginst the previous balances
+    // check the current balances against the previous balances
     const findings = [];
     Object.entries(contract.previousBalances).forEach(([key, value]) => {
       if (key === 'Ether') {
