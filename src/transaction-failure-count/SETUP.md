@@ -9,7 +9,7 @@ to add/remove/update contracts in the bot configuration file.
 1. `blockWindow` (required) - The Integer value for this key corresponds to how long failed
 transactions should be counted against a contract's failed transactions limit before being removed.
 
-2.  `contracts` (required) - The Object value for this key corresponds to contracts that we
+2. `contracts` (required) - The Object value for this key corresponds to contracts that we
 want to monitor the number of failed transactions for. Each key in the Object is a contract name that
 we can specify, where that name is simply a string that we use as a label when referring to the contract
 (the string can be any valid string that we choose, it will not affect the monitoring by the bot).
@@ -20,7 +20,7 @@ will cause the bot to throw an error). For example, to monitor the Uniswap V3 Fa
 the contract address, the number of failed transactions that are allowed to occur before an alert is
 generated, and a type and severity for the alert:
 
-```
+```json
   "contracts": {
     "UniswapV3Factory": {
       "address": "0x1F98431c8aD98523631AE4a59f267346ea31F984",

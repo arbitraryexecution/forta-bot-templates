@@ -55,7 +55,7 @@ the file, but these are not valid entries for running the bot.
 to the original contract code that was compiled and deployed onto the blockchain.  This typically will come from the
 Github repository of the protocol being monitored.  For the Uniswap example provided thus far, the deployed contracts
 are all present in the Uniswap Github repository here:
-    https://github.com/Uniswap
+    <https://github.com/Uniswap>
 If the aforementioned route is chosen, a solidity compiler will need to be used with the smart contract(s) to output
 and store the corresponding ABI.
 
@@ -65,7 +65,7 @@ to the search bar, and check the `Contract` tab.  If the code has been published
 section where the code can be exported in JSON format or copied to the clipboard.  For the case of copying the ABI,
 the result would look something like:
 
-```
+```json
   [
     {
       "inputs": [
@@ -102,7 +102,7 @@ the result would look something like:
 We need to modify the ABI to make the copied/pasted result an entry in an Array corresponding to the key "abi"
 in the file:
 
-```
+```json
 {
   "abi":
   [
@@ -147,9 +147,9 @@ parse transaction logs for function calls.
 
 ### Expression Compatibility Table
 
-|          | __Expression__ | ===  | !== | >= | <= | < | > |
-| -------- | -------------- | ---- | --- | -- | -- | - | - |
-| __Type__ |                |      |     |    |    |   |   |
-| String   |                |  ✅  | ✅   |    |    |   |   |
-| Boolean  |                |  ✅  | ✅   |    |    |   |   |
-| Number   |                |  ✅  | ✅   | ✅ | ✅ | ✅ | ✅ |
+|          | __Expression__ | === | !== | >= | <= | < | > |
+|----------|----------------|-----|-----|----|----|---|---|
+| __Type__ |                |     |     |    |    |   |   |
+| String   |                | ✅   | ✅   |    |    |   |   |
+| Boolean  |                | ✅   | ✅   |    |    |   |   |
+| Number   |                | ✅   | ✅   | ✅  | ✅  | ✅ | ✅ |

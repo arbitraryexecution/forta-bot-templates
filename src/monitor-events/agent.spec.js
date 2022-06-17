@@ -269,9 +269,9 @@ describe('handleTransaction', () => {
     const overrideValue = getExpressionOperand(operator, operand, true);
 
     // encode event data with argument override value
-    const { mockArgs, mockTopics, data } = createMockEventLogs(
-      eventInConfig, iface, { name: argName, value: overrideValue },
-    );
+    const {
+      mockArgs, mockTopics, data,
+    } = createMockEventLogs(eventInConfig, iface, { name: argName, value: overrideValue });
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;
@@ -319,9 +319,9 @@ describe('handleTransaction', () => {
     const overrideValue = getExpressionOperand(operator, operand, false);
 
     // encode event data with argument override value
-    const { mockTopics, data } = createMockEventLogs(
-      eventInConfig, iface, { name: argName, value: overrideValue },
-    );
+    const {
+      mockTopics, data,
+    } = createMockEventLogs(eventInConfig, iface, { name: argName, value: overrideValue });
 
     // update mock transaction event
     const [defaultLog] = mockTxEvent.logs;

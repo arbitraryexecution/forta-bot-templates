@@ -100,7 +100,7 @@ will be used by the bot when monitoring blockchain transactions.
 corresponding to the original contract code that was compiled and deployed onto the blockchain.  This typically will
 come from the Github repository of the protocol being monitored.  For the Uniswap example provided thus far, the
 deployed contracts are all present in the Uniswap Github repository here:
-    https://github.com/Uniswap
+    <https://github.com/Uniswap>
 If the aforementioned route is chosen, a solidity compiler will need to be used with the smart contract(s) to output
 and store the corresponding ABI.
 
@@ -171,9 +171,9 @@ parse transaction logs for events.
 
 ### Expression Compatibility Table
 
-|          | __Expression__ | ===  | !== | >= | <= | < | > |
-| -------- | -------------- | ---- | --- | -- | -- | - | - |
-| __Type__ |                |      |     |    |    |   |   |
-| String   |                |  ✅  | ✅   |    |    |   |   |
-| Boolean  |                |  ✅  | ✅   |    |    |   |   |
-| Number   |                |  ✅  | ✅   | ✅ | ✅ | ✅ | ✅ |
+|          | __Expression__ | === | !== | >= | <= | < | > |
+|----------|----------------|-----|-----|----|----|---|---|
+| __Type__ |                |     |     |    |    |   |   |
+| String   |                | ✅   | ✅   |    |    |   |   |
+| Boolean  |                | ✅   | ✅   |    |    |   |   |
+| Number   |                | ✅   | ✅   | ✅  | ✅  | ✅ | ✅ |

@@ -1,0 +1,42 @@
+{
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/vscode-extension/**",
+    "**/.git/**",
+    ".vscode",
+    "megalinter",
+    "package-lock.json",
+    "report"
+  ],
+  "language": "en",
+  "noConfigSearch": true,
+  "words": [
+    "aaaaaaaaaaaaaaaaaaaagaaaaaaaaaaaaaaaaaaa",
+    "bigagent",
+    "bignumber",
+    "calldatas",
+    "ctoken",
+    "devtest",
+    "faketokenaddress",
+    "faketransactionhash",
+    "forta",
+    "ftype",
+    "invalidaddress",
+    "keyfile",
+    "newtokenaddress",
+    "nonfungible",
+    "plusplus",
+    "prototest",
+    "proxied",
+    "sush",
+    "synthetix",
+    "threadlets",
+    "timelock",
+    "typehash",
+    "unobfuscated",
+    "walkthrough",
+    "watchlist",
+    "xaaaaaaaaaaaaaaaaaaaaaaaaagaaaaaaaaaaaaaa"
+  ],
+  "version": "0.2"
+}
