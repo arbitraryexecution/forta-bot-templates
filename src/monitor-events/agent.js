@@ -1,6 +1,9 @@
 const {
-  Finding, FindingSeverity, FindingType, ethers,
-} = require('forta-agent');
+  Finding,
+  FindingSeverity,
+  FindingType,
+  ethers,
+} = require("forta-agent");
 
 const {
   getAbi,
@@ -12,11 +15,19 @@ const {
   isAddress,
   isObject,
   isEmptyObject,
-} = require('../utils');
-const { getObjectsFromAbi } = require('../test-utils');
+} = require("../utils");
+const { getObjectsFromAbi } = require("../test-utils");
+
+let VAULT_STATUS_IRR = 0;
+let lAST_TURNED_OFF = Date.now();
 
 // get the Array of events for a given contract
-function getEvents(contractEventConfig, currentContract, monitorEvents, contracts) {
+function getEvents(
+  contractEventConfig,
+  currentContract,
+  monitorEvents,
+  contracts
+) {
   const proxyName = contractEventConfig.proxy;
   let { events } = contractEventConfig;
   const eventInfo = [];
@@ -41,12 +52,16 @@ function getEvents(contractEventConfig, currentContract, monitorEvents, contract
       }
 
       // find the abi for the contract the proxy is pointing to and get the event signatures
-      const [proxiedContract] = contracts.filter((contract) => proxyName === contract.name);
+      const [proxiedContract] = contracts.filter(
+        (contract) => proxyName === contract.name
+      );
       Object.keys(proxyEvents).forEach((eventName) => {
         const eventObject = {
           name: eventName,
           // eslint-disable-next-line max-len
-          signature: proxiedContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
+          signature: proxiedContract.iface
+            .getEvent(eventName)
+            .format(ethers.utils.FormatTypes.full),
           type: proxyEvents[eventName].type,
           severity: proxyEvents[eventName].severity,
         };
@@ -65,7 +80,9 @@ function getEvents(contractEventConfig, currentContract, monitorEvents, contract
   eventNames.forEach((eventName) => {
     const eventObject = {
       name: eventName,
-      signature: currentContract.iface.getEvent(eventName).format(ethers.utils.FormatTypes.full),
+      signature: currentContract.iface
+        .getEvent(eventName)
+        .format(ethers.utils.FormatTypes.full),
       type: events[eventName].type,
       severity: events[eventName].severity,
     };
@@ -93,7 +110,7 @@ function createAlert(
   protocolAbbreviation,
   developerAbbreviation,
   expression,
-  addresses,
+  addresses
 ) {
   const eventArgs = extractEventArgs(args);
   const finding = Finding.fromObject({
@@ -121,24 +138,24 @@ function createAlert(
 
 const validateConfig = (config, abiOverride = null) => {
   let ok = false;
-  let errMsg = '';
+  let errMsg = "";
 
   if (!isFilledString(config.developerAbbreviation)) {
-    errMsg = 'developerAbbreviation required';
+    errMsg = "developerAbbreviation required";
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolName)) {
-    errMsg = 'protocolName required';
+    errMsg = "protocolName required";
     return { ok, errMsg };
   }
   if (!isFilledString(config.protocolAbbreviation)) {
-    errMsg = 'protocolAbbreviation required';
+    errMsg = "protocolAbbreviation required";
     return { ok, errMsg };
   }
 
   const { contracts } = config;
   if (!isObject(contracts) || isEmptyObject(contracts)) {
-    errMsg = 'contracts key required';
+    errMsg = "contracts key required";
     return { ok, errMsg };
   }
 
@@ -150,7 +167,7 @@ const validateConfig = (config, abiOverride = null) => {
 
     // check that the address is a valid address
     if (!isAddress(address)) {
-      errMsg = 'invalid address';
+      errMsg = "invalid address";
       return { ok, errMsg };
     }
 
@@ -170,7 +187,7 @@ const validateConfig = (config, abiOverride = null) => {
       }
     }
 
-    const eventObjects = getObjectsFromAbi(abi, 'event');
+    const eventObjects = getObjectsFromAbi(abi, "event");
 
     // for all of the events specified, verify that they exist in the ABI
     let eventName;
@@ -178,7 +195,7 @@ const validateConfig = (config, abiOverride = null) => {
     for (let j = 0; j < eventNames.length; j += 1) {
       eventName = eventNames[j];
       if (Object.keys(eventObjects).indexOf(eventName) === -1) {
-        errMsg = 'invalid event';
+        errMsg = "invalid event";
         return { ok, errMsg };
       }
 
@@ -195,20 +212,20 @@ const validateConfig = (config, abiOverride = null) => {
 
         // verify that the argument name is present in the event Object
         if (argumentNames.indexOf(expressionObject.variableName) === -1) {
-          errMsg = 'invalid argument';
+          errMsg = "invalid argument";
           return { ok, errMsg };
         }
       }
 
       // check type, this will fail if 'type' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingType, type)) {
-        errMsg = 'invalid finding type!';
+        errMsg = "invalid finding type!";
         return { ok, errMsg };
       }
 
       // check severity, this will fail if 'severity' is not valid
       if (!Object.prototype.hasOwnProperty.call(FindingSeverity, severity)) {
-        errMsg = 'invalid finding severity!';
+        errMsg = "invalid finding severity!";
         return { ok, errMsg };
       }
     }
@@ -229,22 +246,29 @@ const initialize = async (config, abiOverride = null) => {
   botState.monitorEvents = config.contracts;
 
   // load the contract addresses, abis, and ethers interfaces
-  botState.contracts = Object.entries(botState.monitorEvents).map(([name, entry]) => {
-    let abi;
-    if (abiOverride != null) {
-      abi = abiOverride[entry.abiFile];
-    } else {
-      abi = getAbi(config.name, entry.abiFile);
-    }
-    const iface = new ethers.utils.Interface(abi);
+  botState.contracts = Object.entries(botState.monitorEvents).map(
+    ([name, entry]) => {
+      let abi;
+      if (abiOverride != null) {
+        abi = abiOverride[entry.abiFile];
+      } else {
+        abi = getAbi(config.name, entry.abiFile);
+      }
+      const iface = new ethers.utils.Interface(abi);
 
-    const contract = { name, address: entry.address, iface };
-    return contract;
-  });
+      const contract = { name, address: entry.address, iface };
+      return contract;
+    }
+  );
 
   botState.contracts.forEach((contract) => {
     const entry = botState.monitorEvents[contract.name];
-    const { eventInfo } = getEvents(entry, contract, botState.monitorEvents, botState.contracts);
+    const { eventInfo } = getEvents(
+      entry,
+      contract,
+      botState.monitorEvents,
+      botState.contracts
+    );
     // eslint-disable-next-line no-param-reassign
     contract.eventInfo = eventInfo;
   });
@@ -253,43 +277,63 @@ const initialize = async (config, abiOverride = null) => {
 };
 
 const handleTransaction = async (botState, txEvent) => {
-  if (!botState.contracts) throw new Error('handleTransaction called before initialization');
+  if (!botState.contracts)
+    throw new Error("handleTransaction called before initialization");
 
   const findings = [];
   botState.contracts.forEach((contract) => {
     contract.eventInfo.forEach((ev) => {
       const parsedLogs = txEvent.filterLog(ev.signature, contract.address);
 
+      let addresses = Object.keys(txEvent.addresses).map((address) =>
+      address.toLowerCase()
+    );
+    addresses = addresses.filter((address) => address !== "undefined");
+
       // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
       // configuration file for each Event log, respectively
       parsedLogs.forEach((parsedLog) => {
-        // if there is an expression to check, verify the condition before creating an alert
-        if (ev.expression !== undefined) {
-          if (!checkLogAgainstExpression(ev.expressionObject, parsedLog)) {
-            return;
+        
+        if (
+          parsedLog.args["deposit0Max"].isZero() ||
+          parsedLog.args["deposit1Max"].isZero()
+        ) {
+          if (VAULT_STATUS_IRR == 1) {
+            VAULT_STATUS_IRR = 0;
+            lAST_TURNED_OFF - Date.now();
+          } else {
+            const hours = (Date.now() - lAST_TURNED_OFF) / 3600000;
+            if (hours >= 1) {
+              findings.push(
+                createAlert(
+                  ev.name,
+                  contract.name,
+                  contract.address,
+                  ev.type,
+                  ev.severity,
+                  parsedLog.args,
+                  botState.protocolName,
+                  botState.protocolAbbreviation,
+                  botState.developerAbbreviation,
+                  ev.expression,
+                  addresses
+                )
+              );
+            }
           }
         }
 
-        let addresses = Object.keys(txEvent.addresses).map((address) => address.toLowerCase());
-        addresses = addresses.filter((address) => address !== 'undefined');
-
-        findings.push(createAlert(
-          ev.name,
-          contract.name,
-          contract.address,
-          ev.type,
-          ev.severity,
-          parsedLog.args,
-          botState.protocolName,
-          botState.protocolAbbreviation,
-          botState.developerAbbreviation,
-          ev.expression,
-          addresses,
-        ));
+        if (
+          !parsedLog.args["deposit0Max"].isZero() ||
+          !parsedLog.args["deposit1Max"].isZero()
+        ) {
+          VAULT_STATUS_IRR = 1;
+          return;
+        }
       });
     });
   });
-
+  
   return findings;
 };
 

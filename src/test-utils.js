@@ -16,6 +16,7 @@ const defaultTypeMap = {
 };
 
 function getObjectsFromAbi(abi, objectType) {
+
   const contractObjects = {};
   abi.forEach((entry) => {
     if (entry.type === objectType) {
