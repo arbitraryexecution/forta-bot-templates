@@ -19,7 +19,62 @@ const {
 const { getObjectsFromAbi } = require("../test-utils");
 
 let VAULT_STATUS_IRR = 0;
-let lAST_TURNED_OFF = Date.now();
+
+let findingsCache = [];
+let isTaskRunning = false;
+
+const runLongTask = async (botState, txEvent) => {
+  isTaskRunning = true;
+
+  // long-running code goes here and adds any findings to findingsCache
+  botState.contracts.forEach((contract) => {
+    contract.eventInfo.forEach((ev) => {
+      const parsedLogs = txEvent.filterLog(ev.signature, contract.address);
+
+      let addresses = Object.keys(txEvent.addresses).map((address) =>
+        address.toLowerCase()
+      );
+      addresses = addresses.filter((address) => address !== "undefined");
+
+      parsedLogs.forEach((parsedLog) => {
+        if (
+          parsedLog.args["deposit0Max"].isZero() ||
+          parsedLog.args["deposit1Max"].isZero()
+        ) {
+          VAULT_STATUS_IRR = 0;
+          console.log(`${contract.address} turned off`);
+              findings.push(
+                createAlert(
+                  ev.name,
+                  contract.name,
+                  contract.address,
+                  ev.type,
+                  ev.severity,
+                  parsedLog.args,
+                  botState.protocolName,
+                  botState.protocolAbbreviation,
+                  botState.developerAbbreviation,
+                  ev.expression,
+                  addresses
+                )
+              );
+          return;
+        }
+
+        if (
+          !parsedLog.args["deposit0Max"].isZero() ||
+          !parsedLog.args["deposit1Max"].isZero()
+        ) {
+          VAULT_STATUS_IRR = 1;
+          console.log(`${parsedLog.address} turned on`);
+          return;
+        }
+      });
+    });
+  });
+
+  isTaskRunning = false;
+};
 
 // get the Array of events for a given contract
 function getEvents(
@@ -280,60 +335,19 @@ const handleTransaction = async (botState, txEvent) => {
   if (!botState.contracts)
     throw new Error("handleTransaction called before initialization");
 
-  const findings = [];
-  botState.contracts.forEach((contract) => {
-    contract.eventInfo.forEach((ev) => {
-      const parsedLogs = txEvent.filterLog(ev.signature, contract.address);
+  let findings = [];
 
-      let addresses = Object.keys(txEvent.addresses).map((address) =>
-      address.toLowerCase()
-    );
-    addresses = addresses.filter((address) => address !== "undefined");
+  // make sure only one task is running at a time
+  if (!isTaskRunning) {
+    runLongTask(botState, txEvent);
+  }
 
-      // iterate over each item in parsedLogs and evaluate expressions (if any) given in the
-      // configuration file for each Event log, respectively
-      parsedLogs.forEach((parsedLog) => {
-        
-        if (
-          parsedLog.args["deposit0Max"].isZero() ||
-          parsedLog.args["deposit1Max"].isZero()
-        ) {
-          if (VAULT_STATUS_IRR == 1) {
-            VAULT_STATUS_IRR = 0;
-            lAST_TURNED_OFF - Date.now();
-          } else {
-            const hours = (Date.now() - lAST_TURNED_OFF) / 3600000;
-            if (hours >= 1) {
-              findings.push(
-                createAlert(
-                  ev.name,
-                  contract.name,
-                  contract.address,
-                  ev.type,
-                  ev.severity,
-                  parsedLog.args,
-                  botState.protocolName,
-                  botState.protocolAbbreviation,
-                  botState.developerAbbreviation,
-                  ev.expression,
-                  addresses
-                )
-              );
-            }
-          }
-        }
+  // check if we have any findings cached
+  if (findingsCache.length > 0) {
+    findings = findingsCache;
+    findingsCache = [];
+  }
 
-        if (
-          !parsedLog.args["deposit0Max"].isZero() ||
-          !parsedLog.args["deposit1Max"].isZero()
-        ) {
-          VAULT_STATUS_IRR = 1;
-          return;
-        }
-      });
-    });
-  });
-  
   return findings;
 };
 
