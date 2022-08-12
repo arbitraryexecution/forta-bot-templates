@@ -1,10 +1,6 @@
 const config = require('../bot-config.json');
 const { botImports } = require('./agent');
-const {
-  isFilledString,
-  isObject,
-  isEmptyObject,
-} = require('./utils');
+const { isFilledString, isObject, isEmptyObject } = require('./utils');
 
 function errorMsg(msg) {
   console.error('\x1b[31m', 'ERROR:', '\x1b[0m', msg);
@@ -33,23 +29,23 @@ const validateConfig = async (botMap) => {
   } = config;
 
   if (!isFilledString(developerAbbreviation)) {
-    panic('developerAbbreviation not defined!');
+    panic("developerAbbreviation not defined!");
   }
 
   if (!isFilledString(protocolName)) {
-    panic('protocolName not defined!');
+    panic("protocolName not defined!");
   }
 
   if (!isFilledString(protocolAbbreviation)) {
-    panic('protocolAbbreviation not defined!');
+    panic("protocolAbbreviation not defined!");
   }
 
-  if (gatherMode !== 'any' && gatherMode !== 'all') {
-    panic('gatherMode must be any or all');
+  if (gatherMode !== "any" && gatherMode !== "all") {
+    panic("gatherMode must be any or all");
   }
 
   if (!isObject(bots) || isEmptyObject(bots)) {
-    panic('bots must be defined and contain at least 1 bot!');
+    panic("bots must be defined and contain at least 1 bot!");
   }
 
   const modProms = [];
@@ -65,12 +61,12 @@ const validateConfig = async (botMap) => {
     }
 
     if (bot.contracts === undefined) {
-      panic(botErr(bot, 'has no contracts!'));
+      panic(botErr(bot, "has no contracts!"));
     }
 
     const modProm = botMap.get(bot.botType);
     if (modProm === undefined) {
-      panic(botErr(bot, 'module not found!'));
+      panic(botErr(bot, "module not found!"));
     }
     modProms.push(modProm);
   }
@@ -114,9 +110,9 @@ const main = async () => {
 
   const isValid = await validateConfig(botMap);
   if (isValid) {
-    console.log('Config validated successfully');
+    console.log("Config validated successfully");
   } else {
-    panic('Config validation failed!');
+    panic("Config validation failed!");
   }
 };
 

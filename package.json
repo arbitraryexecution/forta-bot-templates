@@ -8,6 +8,7 @@
     "start:prod": "forta-agent run --prod",
     "tx": "forta-agent run --tx",
     "block": "forta-agent run --block",
+    "configure": "node ./src/generate-config.js",
     "range": "forta-agent run --range",
     "file": "forta-agent run --file",
     "publish": "forta-agent publish",
@@ -19,8 +20,9 @@
     "validate": "node ./src/validate-config.js"
   },
   "dependencies": {
-    "forta-agent": "^0.1.6",
+    "@ichidao/ichi-sdk": "^0.0.34",
     "bignumber.js": "^9.0.2",
+    "forta-agent": "^0.1.6",
     "rolling-math": "^0.0.3"
   },
   "devDependencies": {
